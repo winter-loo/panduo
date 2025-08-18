@@ -67,71 +67,143 @@
         // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
         this.renderer.resize(30000, MovingStaff.STAVE_HEIGHT);
         this.context = this.renderer.getContext();
-        this.staves = [];
-        this.currentStaveIndex = 0;
         // do not count the treble clef width
         this.staveX = 0;
-
-        let nHiddenMeasures = 1;
-        let maxMeasures = Math.ceil(staveAreaWidth / MovingStaff.MEASURE_WIDTH);
-        maxMeasures += nHiddenMeasures;
-        for (let i = 0; i < maxMeasures; i++) {
-          this.addStave();
-        }
       }
 
-      addStave() {
+      addMeasure(notes) {
+        // add stave
         const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH);
         this.staveX += MovingStaff.MEASURE_WIDTH;
-        this.staves.push(measureStave);
         // draw five staff lines and treble clef
         measureStave.setContext(this.context).draw();
-      }
 
-      addNotes(notes) {
         let staveNotes = [];
-        notes.forEach((note) => staveNotes.push(new VexFlow.StaveNote(note)));
+        notes.forEach((note) => {
+          let sn = new VexFlow.StaveNote(note);
+          staveNotes.push(sn);
+          // NOTE: why does VexFlow not draw a dotted quarter note for me?
+          if (note.duration.indexOf("d") != -1) {
+            const dot = new VexFlow.Dot();
+            sn.addModifier(dot, 0);
+          }
+        });
         if (staveNotes.length > 0) {
-          let measureStave = this.staves[this.currentStaveIndex];
-          this.currentStaveIndex = Math.min(this.currentStaveIndex + 1, this.staves.length - 1);
           VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
         }
       }
     };
 
+    const SONG_DATA = {
+      title: "Different Colors",
+      artist: "Walk the Moon",
+      measures: [
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        }
+      ]
+    };
+
     let movingStaff = new MovingStaff();
-    movingStaff.addNotes([
-      {keys: ["d/4"], duration: "q"},
-      {keys: ["f/4"], duration: "q"},
-      {keys: ["c/4"], duration: "q"},
-      {keys: ["r/4"], duration: "qr"}
-    ]);
-    movingStaff.addNotes([
-      {keys: ["g/4"], duration: "q"},
-      {keys: ["a/4"], duration: "8"},
-      {keys: ["g/4"], duration: "8"},
-      {keys: ["f/4"], duration: "q"},
-      {keys: ["r/4"], duration: "qr"}
-    ]);
-    movingStaff.addNotes([
-      {keys: ["d/4"], duration: "q"},
-      {keys: ["f/4"], duration: "q"},
-      {keys: ["c/4"], duration: "q"},
-      {keys: ["r/4"], duration: "qr"}
-    ]);
-    movingStaff.addNotes([
-      {keys: ["g/4"], duration: "q"},
-      {keys: ["a/4"], duration: "8"},
-      {keys: ["g/4"], duration: "8"},
-      {keys: ["f/4"], duration: "q"},
-      {keys: ["r/4"], duration: "qr"}
-    ]);
-    movingStaff.addNotes([
-      {keys: ["a/4"], duration: "4"},
-      {keys: ["c/5"], duration: "4"},
-      {keys: ["a/4"], duration: "4d"},
-      {keys: ["f/4"], duration: "8"},
-    ]);
+    for (let i = 0; i < SONG_DATA.measures.length; i++) {
+      movingStaff.addMeasure(SONG_DATA.measures[i].notes);
+    }
+    // add extra measures at the end so that we do not see empty spaces at the end
+    for (let i = 0; i < 10; i++) {
+      movingStaff.addMeasure([]);
+    }
 
     let animationId = null;
     let xOffset = 0;
@@ -142,9 +214,10 @@
         let ncw = document.getElementById('notes-container');
         ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
 
-        if (xOffset > 1200) {
+        if (xOffset > SONG_DATA.measures.length * MovingStaff.MEASURE_WIDTH) {
           cancelAnimationFrame(animationId);
           animationId = null;
+          return;
         }
 
         animationId = requestAnimationFrame(animate);
