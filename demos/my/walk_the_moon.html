@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>walk the moon</title>
+  <style>
+    #moving-staff {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: row;
+    }
+
+    #notes-container-wrapper {
+      width: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="moving-staff">
+    <div id="fixed-clef"></div>
+    <div id="notes-container-wrapper">
+      <div id="notes-container"></div>
+    </div>
+  </div>
+
+  <button type="button" id="pauseButton">pause</button>
+  <button type="button" id="resumeButton">resume</button>
+  <button type="button" id="resetButton">reset</button>
+
+  <script src="../../build/cjs/vexflow-debug.js"></script>
+  <script>
+    console.log(VexFlow.BUILD);
+
+    class MovingStaff {
+      static MEASURE_WIDTH = 300;
+      static STAVE_HEIGHT = 130;
+
+      constructor() {
+        // Create an SVG renderer and attach it to the DIV element with id="output".
+        // const div = document.getElementById("moving-staff");
+
+        // draw the treble clef on the staff independently
+        const TREBLE_CLEF_STAVE_WIDTH = 90;
+        const clef = document.getElementById("fixed-clef");
+        const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
+        renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
+        this.clefStave = new VexFlow.Stave(10, 0, TREBLE_CLEF_STAVE_WIDTH);
+        this.clefStave.addClef("treble");
+        this.clefStave.setContext(renderer.getContext()).draw();
+
+        const nc = document.getElementById("notes-container");
+        this.renderer = new VexFlow.Renderer(nc, VexFlow.Renderer.Backends.SVG);
+
+        // Current viewport width (including scrollbar)
+        const viewportWidth = window.innerWidth;
+        // Viewport width excluding scrollbar (more accurate for CSS matching)
+        const viewportWidthWithoutScrollbar = document.documentElement.clientWidth;
+        const padding = 20;
+        const staveAreaWidth = viewportWidthWithoutScrollbar - padding - TREBLE_CLEF_STAVE_WIDTH;
+
+        // Configure the rendering context.
+        // this.renderer.resize(staveAreaWidth, MovingStaff.STAVE_HEIGHT);
+        // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
+        this.renderer.resize(30000, MovingStaff.STAVE_HEIGHT);
+        this.context = this.renderer.getContext();
+        this.staves = [];
+        this.currentStaveIndex = 0;
+        // do not count the treble clef width
+        this.staveX = 0;
+
+        let nHiddenMeasures = 1;
+        let maxMeasures = Math.ceil(staveAreaWidth / MovingStaff.MEASURE_WIDTH);
+        maxMeasures += nHiddenMeasures;
+        for (let i = 0; i < maxMeasures; i++) {
+          this.addStave();
+        }
+      }
+
+      addStave() {
+        const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH);
+        this.staveX += MovingStaff.MEASURE_WIDTH;
+        this.staves.push(measureStave);
+        // draw five staff lines and treble clef
+        measureStave.setContext(this.context).draw();
+      }
+
+      addNotes(notes) {
+        let staveNotes = [];
+        notes.forEach((note) => staveNotes.push(new VexFlow.StaveNote(note)));
+        if (staveNotes.length > 0) {
+          let measureStave = this.staves[this.currentStaveIndex];
+          this.currentStaveIndex = Math.min(this.currentStaveIndex + 1, this.staves.length - 1);
+          VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
+        }
+      }
+    };
+
+    let movingStaff = new MovingStaff();
+    movingStaff.addNotes([
+      {keys: ["d/4"], duration: "q"},
+      {keys: ["f/4"], duration: "q"},
+      {keys: ["c/4"], duration: "q"},
+      {keys: ["r/4"], duration: "qr"}
+    ]);
+    movingStaff.addNotes([
+      {keys: ["g/4"], duration: "q"},
+      {keys: ["a/4"], duration: "8"},
+      {keys: ["g/4"], duration: "8"},
+      {keys: ["f/4"], duration: "q"},
+      {keys: ["r/4"], duration: "qr"}
+    ]);
+    movingStaff.addNotes([
+      {keys: ["d/4"], duration: "q"},
+      {keys: ["f/4"], duration: "q"},
+      {keys: ["c/4"], duration: "q"},
+      {keys: ["r/4"], duration: "qr"}
+    ]);
+    movingStaff.addNotes([
+      {keys: ["g/4"], duration: "q"},
+      {keys: ["a/4"], duration: "8"},
+      {keys: ["g/4"], duration: "8"},
+      {keys: ["f/4"], duration: "q"},
+      {keys: ["r/4"], duration: "qr"}
+    ]);
+    movingStaff.addNotes([
+      {keys: ["a/4"], duration: "4"},
+      {keys: ["c/5"], duration: "4"},
+      {keys: ["a/4"], duration: "4d"},
+      {keys: ["f/4"], duration: "8"},
+    ]);
+
+    let animationId = null;
+    let xOffset = 0;
+
+    const moving = () => {
+      const animate = (timestamp) => {
+        xOffset += 1;
+        let ncw = document.getElementById('notes-container');
+        ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+
+        if (xOffset > 1200) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        animationId = requestAnimationFrame(animate);
+      };
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      moving();
+    });
+
+    document.getElementById('pauseButton').addEventListener('click', () => {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    });
+    document.getElementById('resumeButton').addEventListener('click', () => {
+      moving();
+    });
+    document.getElementById('resetButton').addEventListener('click', () => {
+      xOffset = 0;
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      let ncw = document.getElementById('notes-container');
+      ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+    });
+
+  </script>
+</body>
+
+</html>

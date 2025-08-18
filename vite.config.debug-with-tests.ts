@@ -7,10 +7,10 @@ export default defineConfig({
     sourcemap: true,
     minify: false,
     lib: {
-      entry: resolve(__dirname, 'entry/vexflow-debug.ts'),
+      entry: resolve(__dirname, 'entry/vexflow-debug-with-tests.ts'),
       name: 'VexFlow',
       formats: ['umd'],
-      fileName: (format) => `vexflow-debug.js`,
+      fileName: (format) => `vexflow-debug-with-tests.js`,
     },
   },
 });

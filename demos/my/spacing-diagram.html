@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VexFlow spaceAboveStaffLn Diagram</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    .diagram { margin: 20px 0; }
+    .controls { margin: 20px 0; }
+    button { margin: 5px; padding: 8px 16px; }
+    .info { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>VexFlow spaceAboveStaffLn Spacing Diagram</h1>
+  
+  <div class="controls">
+    <button onclick="setSpacing(0)">spaceAboveStaffLn: 0</button>
+    <button onclick="setSpacing(2)">spaceAboveStaffLn: 2</button>
+    <button onclick="setSpacing(4)">spaceAboveStaffLn: 4 (default)</button>
+    <button onclick="setSpacing(6)">spaceAboveStaffLn: 6</button>
+  </div>
+  
+  <div class="info">
+    <strong>Current Setting:</strong> <span id="current-setting">spaceAboveStaffLn: 0</span><br>
+    <strong>Staff Position:</strong> <span id="staff-position">Y = 10</span><br>
+    <strong>Bottom Staff Line:</strong> <span id="bottom-line">Y = 10</span>
+  </div>
+  
+  <div class="diagram">
+    <svg width="600" height="400" id="diagram">
+      <!-- Grid -->
+      <defs>
+        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+          <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#ddd" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)" />
+      
+      <!-- Major grid lines -->
+      <g id="major-grid"></g>
+      
+      <!-- Stave outline -->
+      <rect id="stave-outline" x="50" y="10" width="500" height="300" fill="none" stroke="#ff0000" stroke-width="2" stroke-dasharray="5,5" opacity="0.5"/>
+      
+      <!-- Space above staff visualization -->
+      <g id="space-above"></g>
+      
+      <!-- Staff lines -->
+      <g id="staff-lines"></g>
+      
+      <!-- Labels -->
+      <g id="labels"></g>
+    </svg>
+  </div>
+  
+  <div class="info">
+    <h3>Explanation:</h3>
+    <ul>
+      <li><strong>Red dashed box:</strong> Total stave area (from stave.y to bottom)</li>
+      <li><strong>Blue area:</strong> Space above staff (spaceAboveStaffLn × 10px)</li>
+      <li><strong>Black lines:</strong> The 5 staff lines</li>
+      <li><strong>Green arrows:</strong> Show the spacing measurements</li>
+    </ul>
+    
+    <h3>Formula:</h3>
+    <code>getYForLine(line) = stave.y + line × spacing + headroom × spacing</code><br>
+    <code>Bottom staff line (line 0) = 10 + 0 × 10 + spaceAboveStaffLn × 10</code>
+  </div>
+
+  <script>
+    let currentSpacing = 0;
+    
+    function drawMajorGrid() {
+      const grid = document.getElementById('major-grid');
+      grid.innerHTML = '';
+      
+      // Major horizontal lines every 50px
+      for (let y = 0; y <= 400; y += 50) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', 0);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', 600);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', '#aaa');
+        line.setAttribute('stroke-width', '1');
+        grid.appendChild(line);
+        
+        // Y coordinate labels
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', 5);
+        text.setAttribute('y', y - 3);
+        text.setAttribute('font-size', '12');
+        text.setAttribute('fill', '#666');
+        text.textContent = `Y=${y}`;
+        grid.appendChild(text);
+      }
+    }
+    
+    function setSpacing(spacing) {
+      currentSpacing = spacing;
+      drawDiagram();
+      updateInfo();
+    }
+    
+    function updateInfo() {
+      document.getElementById('current-setting').textContent = `spaceAboveStaffLn: ${currentSpacing}`;
+      document.getElementById('staff-position').textContent = `Y = 10`;
+      const bottomLineY = 10 + currentSpacing * 10;
+      document.getElementById('bottom-line').textContent = `Y = ${bottomLineY}`;
+    }
+    
+    function drawDiagram() {
+      const staveY = 10;
+      const spacing = 10; // spacingBetweenLinesPx
+      const headroom = currentSpacing; // spaceAboveStaffLn
+      
+      // Clear previous drawings
+      document.getElementById('space-above').innerHTML = '';
+      document.getElementById('staff-lines').innerHTML = '';
+      document.getElementById('labels').innerHTML = '';
+      
+      const spaceAbove = document.getElementById('space-above');
+      const staffLines = document.getElementById('staff-lines');
+      const labels = document.getElementById('labels');
+      
+      // Draw space above staff (blue area)
+      if (headroom > 0) {
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', 50);
+        rect.setAttribute('y', staveY);
+        rect.setAttribute('width', 500);
+        rect.setAttribute('height', headroom * spacing);
+        rect.setAttribute('fill', 'rgba(0, 100, 255, 0.2)');
+        rect.setAttribute('stroke', 'blue');
+        rect.setAttribute('stroke-width', '1');
+        spaceAbove.appendChild(rect);
+        
+        // Label for space above
+        const spaceLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        spaceLabel.setAttribute('x', 60);
+        spaceLabel.setAttribute('y', staveY + (headroom * spacing / 2) + 5);
+        spaceLabel.setAttribute('font-size', '14');
+        spaceLabel.setAttribute('fill', 'blue');
+        spaceLabel.setAttribute('font-weight', 'bold');
+        spaceLabel.textContent = `spaceAboveStaffLn: ${headroom} (${headroom * spacing}px)`;
+        spaceAbove.appendChild(spaceLabel);
+      }
+      
+      // Draw staff lines (5 lines)
+      const staffStartY = staveY + headroom * spacing;
+      for (let line = 0; line < 5; line++) {
+        const lineY = staffStartY + line * spacing;
+        
+        const staffLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        staffLine.setAttribute('x1', 50);
+        staffLine.setAttribute('y1', lineY);
+        staffLine.setAttribute('x2', 550);
+        staffLine.setAttribute('y2', lineY);
+        staffLine.setAttribute('stroke', 'black');
+        staffLine.setAttribute('stroke-width', '2');
+        staffLines.appendChild(staffLine);
+        
+        // Line labels
+        const lineLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        lineLabel.setAttribute('x', 560);
+        lineLabel.setAttribute('y', lineY + 5);
+        lineLabel.setAttribute('font-size', '12');
+        lineLabel.setAttribute('fill', 'black');
+        lineLabel.textContent = `Line ${line} (Y=${lineY})`;
+        staffLines.appendChild(lineLabel);
+      }
+      
+      // Draw measurement arrows
+      if (headroom > 0) {
+        // Arrow showing space above
+        const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        arrow.innerHTML = `
+          <line x1="30" y1="${staveY}" x2="30" y2="${staffStartY}" stroke="green" stroke-width="2" marker-end="url(#arrowhead)" marker-start="url(#arrowhead)"/>
+          <text x="35" y="${staveY + (headroom * spacing / 2)}" font-size="12" fill="green">${headroom * spacing}px</text>
+        `;
+        labels.appendChild(arrow);
+      }
+      
+      // Add arrow markers
+      const defs = document.querySelector('defs');
+      if (!document.getElementById('arrowhead')) {
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead');
+        marker.setAttribute('markerWidth', '10');
+        marker.setAttribute('markerHeight', '7');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '3.5');
+        marker.setAttribute('orient', 'auto');
+        marker.innerHTML = '<polygon points="0 0, 10 3.5, 0 7" fill="green"/>';
+        defs.appendChild(marker);
+      }
+      
+      // Key measurements text
+      const keyMeasurements = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      keyMeasurements.setAttribute('x', 60);
+      keyMeasurements.setAttribute('y', 380);
+      keyMeasurements.setAttribute('font-size', '14');
+      keyMeasurements.setAttribute('fill', 'black');
+      keyMeasurements.textContent = `Bottom staff line Y = ${staveY} + ${headroom} × 10 = ${staffStartY}`;
+      labels.appendChild(keyMeasurements);
+    }
+    
+    // Initialize
+    drawMajorGrid();
+    setSpacing(4);
+  </script>
+</body>
+</html>

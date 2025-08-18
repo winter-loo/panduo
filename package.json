@@ -4,27 +4,27 @@
   "description": "A JavaScript library for rendering music notation and guitar tablature.",
   "exports": {
     ".": {
-      "types": "./build/types/entry/vexflow.d.ts",
-      "require": "./build/cjs/vexflow.js",
-      "import": "./build/esm/entry/vexflow.js"
+      "types": "./dist/types/entry/vexflow.d.ts",
+      "require": "./dist/cjs/vexflow.js",
+      "import": "./dist/esm/vexflow.js"
     },
     "./core": {
-      "types": "./build/types/entry/vexflow-core.d.ts",
-      "require": "./build/cjs/vexflow-core.js",
-      "import": "./build/esm/entry/vexflow-core.js"
+      "types": "./dist/types/entry/vexflow-core.d.ts",
+      "require": "./dist/cjs/vexflow-core.js",
+      "import": "./dist/esm/vexflow-core.js"
     },
     "./bravura": {
-      "types": "./build/types/entry/vexflow-bravura.d.ts",
-      "require": "./build/cjs/vexflow-bravura.js",
-      "import": "./build/esm/entry/vexflow-bravura.js"
+      "types": "./dist/types/entry/vexflow-bravura.d.ts",
+      "require": "./dist/cjs/vexflow-bravura.js",
+      "import": "./dist/esm/vexflow-bravura.js"
     }
   },
-  "main": "./build/cjs/vexflow.js",
-  "browser": "./build/cjs/vexflow.js",
-  "module": "./build/esm/entry/vexflow.js",
-  "types": "./build/types/entry/vexflow.d.ts",
-  "unpkg": "./build/cjs/vexflow.js",
-  "jsdelivr": "./build/cjs/vexflow.js",
+  "main": "./dist/cjs/vexflow.js",
+  "browser": "./dist/umd/vexflow.js",
+  "module": "./dist/esm/vexflow.js",
+  "types": "./dist/types/entry/vexflow.d.ts",
+  "unpkg": "./dist/umd/vexflow.js",
+  "jsdelivr": "./dist/umd/vexflow.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/vexflow/vexflow.git"
@@ -36,7 +36,7 @@
   },
   "license": "MIT",
   "files": [
-    "build",
+    "dist",
     "tests/flow.html",
     "tests/flow.css",
     "tests/qunit/qunit.css",
@@ -82,6 +82,7 @@
     "@vexflow-fonts/sebastian": "^1.0.1",
     "@vexflow-fonts/sebastiantext": "^1.0.0",
     "canvas": "^3.1.0",
+    "concurrently": "^9.1.2",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.31.0",
@@ -101,25 +102,14 @@
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "start": "vite build",
-    "dev": "vite",
-    "build": "vite build",
-    "build:watch": "vite build --watch",
-    "build:prod": "vite build --mode production",
-    "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:browser": "vite dev --open /tests/flow.html",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:umd && npm run build:types",
+    "build:esm": "vite build --config vite.config.esm.ts",
+    "build:cjs": "vite build --config vite.config.cjs.ts",
+    "build:umd": "vite build --config vite.config.umd.ts",
+    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist/types",
     "lint": "eslint entry/**/*.ts src/**/*.ts tests/**/*.ts",
-    "lint:fix": "eslint entry/**/*.ts src/**/*.ts tests/**/*.ts --fix",
-    "clean": "rm -rf build/",
-    "typecheck": "tsc --noEmit",
-    "reference": "grunt reference",
-    "test:reference": "grunt test:reference",
-    "test:reference:cache": "grunt test:reference:cache",
-    "generate:current": "grunt generate:current",
-    "generate:reference": "grunt generate:reference",
-    "diff:reference": "grunt diff:reference"
+    "clean": "rm -rf dist/",
+    "test": "vitest run"
   },
   "homepage": "https://vexflow.com/",
   "keywords": [

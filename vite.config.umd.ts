@@ -1,16 +1,17 @@
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    outDir: 'dist',
+    outDir: 'dist/umd',
     sourcemap: true,
-    minify: false,
+    minify: true,
     lib: {
-      entry: resolve(__dirname, 'entry/vexflow-debug.ts'),
-      name: 'VexFlow',
+      entry: resolve(__dirname, 'entry/vexflow-umd.ts'),
+      name: 'Vex',
       formats: ['umd'],
-      fileName: (format) => `vexflow-debug.js`,
+      fileName: (format, entryName) => `vexflow.js`,
     },
   },
 });
