@@ -19,6 +19,12 @@
     #notes-container-wrapper {
       width: 100%;
       overflow: hidden;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #notes-container-wrapper:active {
+      cursor: grabbing;
     }
 
     #grid {
@@ -64,6 +70,11 @@
     // Grid functionality
     let gridSize = 10;
     let gridVisible = true;
+
+    // Horizontal drag functionality
+    let isDragging = false;
+    let dragStartX = 0;
+    let containerStartX = 0;
 
     function drawGrid(size) {
       const grid = document.getElementById('grid');
@@ -134,7 +145,7 @@
 
     class MovingStaff {
       static MEASURE_WIDTH = 300;
-      static STAVE_HEIGHT = 130;
+      static STAVE_HEIGHT = 120;
 
       constructor() {
         // Create an SVG renderer and attach it to the DIV element with id="output".
@@ -145,22 +156,14 @@
         const clef = document.getElementById("fixed-clef");
         const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
         renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
-        this.clefStave = new VexFlow.Stave(10, 0, TREBLE_CLEF_STAVE_WIDTH);
+        this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH);
         this.clefStave.addClef("treble");
         this.clefStave.setContext(renderer.getContext()).draw();
 
         const nc = document.getElementById("notes-container");
         this.renderer = new VexFlow.Renderer(nc, VexFlow.Renderer.Backends.SVG);
 
-        // Current viewport width (including scrollbar)
-        const viewportWidth = window.innerWidth;
-        // Viewport width excluding scrollbar (more accurate for CSS matching)
-        const viewportWidthWithoutScrollbar = document.documentElement.clientWidth;
-        const padding = 20;
-        const staveAreaWidth = viewportWidthWithoutScrollbar - padding - TREBLE_CLEF_STAVE_WIDTH;
-
         // Configure the rendering context.
-        // this.renderer.resize(staveAreaWidth, MovingStaff.STAVE_HEIGHT);
         // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
         this.renderer.resize(30000, MovingStaff.STAVE_HEIGHT);
         this.context = this.renderer.getContext();
@@ -345,13 +348,47 @@
     // Initialize grid
     drawGrid(gridSize);
 
-    // Add mouse coordinate tracking
+    // Horizontal drag functionality for notes-container-wrapper
+    const notesContainerWrapper = document.getElementById('notes-container-wrapper');
+    const notesContainer = document.getElementById('notes-container');
+
+    notesContainerWrapper.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      dragStartX = e.clientX;
+
+      // Get current horizontal transform value
+      const transform = notesContainer.style.transform;
+      const translateMatch = transform.match(/translate3d\((-?\d+)px/);
+
+      if (translateMatch) {
+        containerStartX = parseInt(translateMatch[1]);
+      } else {
+        containerStartX = 0;
+      }
+
+      e.preventDefault();
+    });
+
     document.addEventListener('mousemove', function(e) {
       const container = document.getElementById('container');
       const rect = container.getBoundingClientRect();
       const x = Math.round(e.clientX - rect.left);
       const y = Math.round(e.clientY - rect.top);
-      document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y})`;
+
+      if (isDragging) {
+        const deltaX = e.clientX - dragStartX;
+        const newX = containerStartX + deltaX;
+
+        // Apply horizontal transform only
+        notesContainer.style.transform = `translate3d(${newX}px, 0, 0)`;
+        document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y}) | Container X: ${newX}`;
+      } else {
+        document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y})`;
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
     });
 
     // Redraw grid on window resize
