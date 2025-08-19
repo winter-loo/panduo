@@ -97,19 +97,25 @@
     "qunit": "^2.24.1",
     "svg2pdf.js": "^2.5.0",
     "typescript": "^5.8.3",
+    "unplugin-fonts": "^1.4.0",
     "vite": "^7.1.2",
     "vite-plugin-dts": "^4.0.0",
     "vitest": "^3.2.4"
   },
   "scripts": {
-    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:umd && npm run build:types",
+    "dev": "vite",
+    "build": "npm run build:prod",
+    "build:debug": "vite build --mode debug --config vite.config.ts",
+    "test": "npm run build:test",
+    "build:prod": "npm run build:prod:core && npm run build:prod:bravura && npm run build:prod:full",
+    "build:prod:full": "vite build --mode production --config vite.config.ts",
+    "build:prod:core": "vite build --config vite.config.umd-core.ts",
+    "build:prod:bravura": "vite build --config vite.config.umd-bravura.ts",
+    "build:test": "vite build --config vite.config.umd-debug-with-tests.ts",
     "build:esm": "vite build --config vite.config.esm.ts",
-    "build:cjs": "vite build --config vite.config.cjs.ts",
-    "build:umd": "vite build --config vite.config.umd.ts",
-    "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist/types",
+    "build:types": "tsc --project tsconfig.types.json",
     "lint": "eslint entry/**/*.ts src/**/*.ts tests/**/*.ts",
-    "clean": "rm -rf dist/",
-    "test": "vitest run"
+    "clean": "rm -rf dist/"
   },
   "homepage": "https://vexflow.com/",
   "keywords": [

@@ -63,8 +63,9 @@
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
 
-  <script src="../../dist/umd/vexflow-debug.js"></script>
-  <script>
+  <script type="module">
+    import { VexFlow } from "./entry/vexflow.ts";
+
     console.log(VexFlow.BUILD);
 
     // Grid functionality
@@ -194,7 +195,7 @@
       }
     };
 
-    const SONG_DATA_DIFFERENT_COLORS = {
+    const SONG_DATA = {
       title: "Different Colors",
       artist: "Walk the Moon",
       measures: [
@@ -296,231 +297,9 @@
       ]
     };
 
-    const SONG_DATA_LIVING_IN_AMERICA = {
-      title: "Living in America",
-      artist: "James Brown",
-      measures: [
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["f/4"], duration: "4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["a/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["c/4"], duration: "4", fingering: null },
-            { keys: ["c/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["a/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["e/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["a/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "8", fingering: null },
-            { keys: ["a/4"], duration: "8", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["d/5"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["c/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-            { keys: ["r/4"], duration: "r8", fingering: null },
-            { keys: ["f/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "8", fingering: null },
-            { keys: ["a/4"], duration: "8", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["r/4"], duration: "w", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["a/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "h", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-            { keys: ["r/4"], duration: "h", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["f/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "8", fingering: null },
-            { keys: ["a/4"], duration: "8", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["f/4"], duration: "8", fingering: null },
-            { keys: ["d/4"], duration: "8", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["e/4"], duration: "4", fingering: null },
-            { keys: ["g/4"], duration: "4", fingering: null },
-            { keys: ["c/5"], duration: "4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/5"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["d/4"], duration: "4", fingering: null },
-            { keys: ["r/4"], duration: "r4", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["r/4"], duration: "w", fingering: null },
-          ],
-        },
-        {
-          notes: [
-            { keys: ["r/4"], duration: "w", fingering: null },
-          ],
-        },
-      ]
-    };
-
     let movingStaff = new MovingStaff();
-    for (let i = 0; i < SONG_DATA_LIVING_IN_AMERICA.measures.length; i++) {
-      movingStaff.addMeasure(SONG_DATA_LIVING_IN_AMERICA.measures[i].notes);
+    for (let i = 0; i < SONG_DATA.measures.length; i++) {
+      movingStaff.addMeasure(SONG_DATA.measures[i].notes);
     }
     // add extra measures at the end so that we do not see empty spaces at the end
     for (let i = 0; i < 10; i++) {

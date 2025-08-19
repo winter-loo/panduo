@@ -1,16 +1,19 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
+// build only for production use
 export default defineConfig({
   build: {
-    outDir: 'dist',
-    sourcemap: false,
+    outDir: 'dist/umd',
+    emptyOutDir: false,
+    sourcemap: true,
     minify: true,
     lib: {
       entry: resolve(__dirname, 'entry/vexflow-bravura.ts'),
       name: 'VexFlow',
-      formats: ['es', 'cjs', 'umd'],
-      fileName: (format) => `${format}/vexflow-bravura.js`,
+      formats: ['umd'],
+      fileName: () => 'vexflow-bravura.js',
     },
+    assetsInlineLimit: 4096000,
   },
 });
