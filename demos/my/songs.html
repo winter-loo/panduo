@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vexflow Songs</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    #container {
+      position: relative;
+    }
+
+    #moving-staff {
+      display: flex;
+      align-items: flex-start;
+      flex-direction: row;
+      position: relative;
+      z-index: 2;
+    }
+
+    #notes-container-wrapper {
+      width: 100%;
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #notes-container-wrapper:active {
+      cursor: grabbing;
+    }
+
+    #grid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.3;
+    }
+
+    .controls {
+      margin-bottom: 10px;
+    }
+
+    button {
+      margin-right: 10px;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="controls">
+    <button onclick="toggleGrid()">Toggle Grid</button>
+    <button onclick="changeGridSize(5)">5px Grid</button>
+    <button onclick="changeGridSize(10)">10px Grid</button>
+    <button onclick="changeGridSize(20)">20px Grid</button>
+    <select id="song-select"></select>
+    <span id="info">Grid: 10px</span>
+  </div>
+
+  <div id="container">
+    <svg id="grid" width="100%" height="300"></svg>
+    <div id="moving-staff">
+      <div id="fixed-clef"></div>
+      <div id="notes-container-wrapper">
+        <div id="notes-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" id="pauseButton">pause</button>
+  <button type="button" id="resumeButton">resume</button>
+  <button type="button" id="resetButton">reset</button>
+
+  <script src="../../dist/umd/vexflow-debug.js"></script>
+  <script>
+    console.log(VexFlow.BUILD);
+
+    // Grid functionality
+    let gridSize = 10;
+    let gridVisible = true;
+
+    // Horizontal drag functionality
+    let isDragging = false;
+    let dragStartX = 0;
+    let containerStartX = 0;
+
+    function drawGrid(size) {
+      const grid = document.getElementById('grid');
+      const container = document.getElementById('container');
+      const width = container.offsetWidth || window.innerWidth - 40;
+      const height = 300;
+
+      grid.innerHTML = '';
+      grid.setAttribute('width', width);
+      grid.setAttribute('height', height);
+
+      // Vertical lines
+      for (let x = 0; x <= width; x += size) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', 0);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', height);
+        line.setAttribute('stroke', x % (size * 5) === 0 ? '#ff0000' : '#cccccc');
+        line.setAttribute('stroke-width', x % (size * 5) === 0 ? '1' : '0.5');
+        grid.appendChild(line);
+      }
+
+      // Horizontal lines
+      for (let y = 0; y <= height; y += size) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', 0);
+        line.setAttribute('y1', y);
+        line.setAttribute('x2', width);
+        line.setAttribute('y2', y);
+        line.setAttribute('stroke', y % (size * 5) === 0 ? '#ff0000' : '#cccccc');
+        line.setAttribute('stroke-width', y % (size * 5) === 0 ? '1' : '0.5');
+        grid.appendChild(line);
+      }
+
+      // Add coordinate labels
+      for (let x = 0; x <= width; x += size * 5) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x + 2);
+        text.setAttribute('y', 12);
+        text.setAttribute('font-size', '10');
+        text.setAttribute('fill', '#666');
+        text.textContent = x;
+        grid.appendChild(text);
+      }
+
+      for (let y = size * 5; y <= height; y += size * 5) {
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', 2);
+        text.setAttribute('y', y - 2);
+        text.setAttribute('font-size', '10');
+        text.setAttribute('fill', '#666');
+        text.textContent = y;
+        grid.appendChild(text);
+      }
+    }
+
+    function toggleGrid() {
+      gridVisible = !gridVisible;
+      document.getElementById('grid').style.display = gridVisible ? 'block' : 'none';
+    }
+
+    function changeGridSize(size) {
+      gridSize = size;
+      drawGrid(size);
+      document.getElementById('info').textContent = `Grid: ${size}px`;
+    }
+
+    class MovingStaff {
+      static MEASURE_WIDTH = 200;
+      static STAVE_HEIGHT = 120;
+
+      constructor(timeSignature) {
+        // Create an SVG renderer and attach it to the DIV element with id="output".
+        // const div = document.getElementById("moving-staff");
+        this.timeSignature = timeSignature;
+
+        // draw the treble clef on the staff independently
+        const TREBLE_CLEF_STAVE_WIDTH = 100;
+        const clef = document.getElementById("fixed-clef");
+        const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
+        renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
+        this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH);
+        this.clefStave.addClef("treble").addTimeSignature(timeSignature);
+        this.clefStave.setContext(renderer.getContext()).draw();
+
+        const nc = document.getElementById("notes-container");
+        this.renderer = new VexFlow.Renderer(nc, VexFlow.Renderer.Backends.SVG);
+
+        // Configure the rendering context.
+        // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
+        this.renderer.resize(30000, MovingStaff.STAVE_HEIGHT);
+        this.context = this.renderer.getContext();
+        // do not count the treble clef width
+        this.staveX = 0;
+      }
+
+      addMeasure(notes) {
+        // add stave
+        const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH);
+        this.staveX += MovingStaff.MEASURE_WIDTH;
+        // draw five staff lines and treble clef
+        measureStave.setContext(this.context).draw();
+
+        let staveNotes = [];
+        notes.forEach((note) => {
+          let sn = new VexFlow.StaveNote(note);
+          staveNotes.push(sn);
+          // NOTE: why does VexFlow not draw a dotted quarter note for me?
+          if (note.duration.indexOf("d") != -1) {
+            const dot = new VexFlow.Dot();
+            sn.addModifier(dot, 0);
+          }
+          // add a beam line if we are told to
+          if (note.beam) {
+            let notes_in_a_beam = [];
+            for (let i = 0; i < note.beam; i++) {
+              notes_in_a_beam.push(staveNotes[staveNotes.length - i - 1]);
+            }
+            // internally, this new beam is referenced by each note
+            new VexFlow.Beam(notes_in_a_beam, true);
+          }
+        });
+        if (staveNotes.length > 0) {
+          // must have `{ autoBeam: true}` to ensure beam lines are drew
+          VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes, {autoBeam: true});
+        }
+      }
+
+      clear() {
+        // remove all already drew staves
+        document.getElementById('fixed-clef').innerHTML = '';
+        document.getElementById('notes-container').innerHTML = '';
+      }
+    };
+
+    const SONG_DATA_DIFFERENT_COLORS = {
+      title: "Different Colors",
+      artist: "Walk the Moon",
+      timeSignature: "4/4",
+      measures: [
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: 3},
+            {keys: ["a/4"], duration: "4d", fingering: 1},
+            {keys: ["f/4"], duration: "8", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: 1},
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "4", fingering: 4},
+            {keys: ["c/4"], duration: "4", fingering: 1},
+            {keys: ["r/4"], duration: "4r", fingering: null}
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: 5},
+            {keys: ["a/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "8", fingering: 5},
+            {keys: ["f/4"], duration: "2", fingering: 4}
+          ]
+        }
+      ]
+    };
+
+    const SONG_DATA_LIVING_IN_AMERICA = {
+      title: "Living in America",
+      artist: "James Brown",
+      timeSignature: "4/4",
+      measures: [
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["f/4"], duration: "4", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["c/4"], duration: "4", fingering: null},
+            {keys: ["c/4"], duration: "4", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["a/4"], duration: "4", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["e/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["a/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "8", fingering: null},
+            {keys: ["a/4"], duration: "8", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            // stemDirection: DOWN
+            {keys: ["d/5"], duration: "4", stemDirection: -1, fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["c/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+            {keys: ["r/4"], duration: "8r", fingering: null},
+            {keys: ["f/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "8", fingering: null},
+            {keys: ["a/4"], duration: "8", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "w", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+            {keys: ["r/4"], duration: "hr", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["f/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "8", fingering: null},
+            {keys: ["a/4"], duration: "8", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["f/4"], duration: "8", fingering: null},
+            {keys: ["d/4"], duration: "8", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["e/4"], duration: "4", fingering: null},
+            {keys: ["g/4"], duration: "4", fingering: null},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["d/5"], duration: "4", stemDirection: -1, fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            // stemDirection: DOWN
+            {keys: ["d/5"], duration: "4", stemDirection: -1, fingering: null},
+            {keys: ["d/5"], duration: "4", stemDirection: -1, fingering: null},
+            {keys: ["d/5"], duration: "4", stemDirection: -1, fingering: null},
+            {keys: ["r/4"], duration: "4r", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "w", fingering: null},
+          ],
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "w", fingering: null},
+          ],
+        },
+      ]
+    };
+
+    const SONG_DATA_TOWN_OF_WINDMILL = {
+      title: "Town of Windmill",
+      artist: "Aihara Hisa",
+      timeSignature: "3/4",
+      measures: [
+        {
+          notes: [
+            {keys: ["r/4"], duration: "4r", fingering: []},
+            {keys: ["r/4"], duration: "4r", fingering: []},
+            {keys: ["e/4"], duration: "4", fingering: [1]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: [3]},
+            {keys: ["c/5"], duration: "8", stemDirection: -1, fingering: [3]},
+            // draw a beam line with 2 notes including the previous note
+            {keys: ["d/5"], duration: "8", stemDirection: -1, beam: 2, fingering: [4]},
+            {keys: ["e/5"], duration: "4", stemDirection: -1, fingering: [5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["b/4"], duration: "4", stemDirection: -1, fingering: [1]},
+            {keys: ["e/5", "g/5"], duration: "2", stemDirection: -1, fingering: [3, 5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: [1]},
+            {keys: ["a/4"], duration: "8", fingering: [1]},
+            {keys: ["b/4"], duration: "8", beam: 2, fingering: [2]},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: [3]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: [1]},
+            {keys: ["c/5", "e/5"], duration: "h", stemDirection: -1, fingering: [3, 5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["f/4"], duration: "4", fingering: [1]},
+            {keys: ["f/4"], duration: "8", fingering: [1]},
+            {keys: ["g/4"], duration: "8", beam: 2, fingering: [2]},
+            {keys: ["a/4"], duration: "4", fingering: [3]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["b/4"], duration: "4", fingering: [4]},
+            {keys: ["a/4"], duration: "4", fingering: [3]},
+            {keys: ["g/4"], duration: "4", fingering: [2]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["e/4"], duration: "h", fingering: [1]},
+            {keys: ["d/4"], duration: "4", fingering: [2]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["e/4"], duration: "h", fingering: [3]},
+            {keys: ["e/4"], duration: "4", fingering: [1]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: [3]},
+            {keys: ["c/5"], duration: "8", stemDirection: -1, fingering: [3]},
+            {keys: ["d/5"], duration: "8", stemDirection: -1, beam: 2, fingering: [4]},
+            {keys: ["e/5"], duration: "4", stemDirection: -1, fingering: [5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["b/4"], duration: "4", stemDirection: -1, fingering: [1]},
+            {keys: ["e/5", "g/5"], duration: "h", stemDirection: -1, fingering: [3, 5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "4", fingering: [1]},
+            {keys: ["a/4"], duration: "8", fingering: [1]},
+            {keys: ["b/4"], duration: "8", beam: 2, fingering: [2]},
+            {keys: ["c/5"], duration: "4", stemDirection: -1, fingering: [3]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["g/4"], duration: "4", fingering: [1]},
+            {keys: ["c/5", "e/5"], duration: "h", stemDirection: -1, fingering: [3, 5]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["f/4"], duration: "4", fingering: [1]},
+            {keys: ["f/4"], duration: "8", fingering: [1]},
+            {keys: ["g/4"], duration: "8", beam: 2, fingering: [2]},
+            {keys: ["a/4"], duration: "4", fingering: [3]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["b/4"], duration: "4", stemDirection: -1, fingering: [4]},
+            {keys: ["a/4"], duration: "4", fingering: [3]},
+            {keys: ["g/4"], duration: "4", fingering: [2]},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["a/4"], duration: "h", fingering: [3]},
+            {keys: ["r/4"], duration: "4r", fingering: []},
+          ]
+        },
+        {
+          notes: [
+            {keys: ["r/4"], duration: "w", fingering: []},
+          ]
+        },
+      ]
+    };
+
+    let movingStaff = null;
+
+    function renderSong(song) {
+      if (movingStaff) {
+        movingStaff.clear();
+      }
+      movingStaff = new MovingStaff(song.timeSignature);
+      for (let i = 0; i < song.measures.length; i++) {
+        movingStaff.addMeasure(song.measures[i].notes);
+      }
+      // add extra measures at the end so that we do not see empty spaces at the end
+      for (let i = 0; i < 10; i++) {
+        movingStaff.addMeasure([]);
+      }
+    }
+
+    const songs = [SONG_DATA_DIFFERENT_COLORS, SONG_DATA_LIVING_IN_AMERICA, SONG_DATA_TOWN_OF_WINDMILL];
+    const songSelect = document.getElementById('song-select');
+    let selectedSong = SONG_DATA_TOWN_OF_WINDMILL;
+
+    renderSong(selectedSong);
+
+    songs.forEach((song, index) => {
+      const option = document.createElement('option');
+      option.value = index;
+      option.textContent = song.title;
+      option.selected = selectedSong.title == song.title;
+      songSelect.appendChild(option);
+    });
+
+    songSelect.addEventListener('change', (event) => {
+      selectedSong = songs[event.target.value];
+      renderSong(selectedSong);
+      xOffset = 0;
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      let ncw = document.getElementById('notes-container');
+      ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+      moving();
+    });
+
+    let animationId = null;
+    let xOffset = 0;
+
+    const moving = () => {
+      const animate = (timestamp) => {
+        xOffset += 1;
+        let ncw = document.getElementById('notes-container');
+        ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+
+        if (xOffset > selectedSong.measures.length * MovingStaff.MEASURE_WIDTH) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+          return;
+        }
+
+        animationId = requestAnimationFrame(animate);
+      };
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      moving();
+    });
+
+    document.getElementById('pauseButton').addEventListener('click', () => {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    });
+    document.getElementById('resumeButton').addEventListener('click', () => {
+      moving();
+    });
+    document.getElementById('resetButton').addEventListener('click', () => {
+      xOffset = 0;
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      let ncw = document.getElementById('notes-container');
+      ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+    });
+
+    // Initialize grid
+    drawGrid(gridSize);
+
+    // Horizontal drag functionality for notes-container-wrapper
+    const notesContainerWrapper = document.getElementById('notes-container-wrapper');
+    const notesContainer = document.getElementById('notes-container');
+
+    notesContainerWrapper.addEventListener('mousedown', function (e) {
+      isDragging = true;
+      dragStartX = e.clientX;
+
+      // Get current horizontal transform value
+      const transform = notesContainer.style.transform;
+      const translateMatch = transform.match(/translate3d\((-?\d+)px/);
+
+      if (translateMatch) {
+        containerStartX = parseInt(translateMatch[1]);
+      } else {
+        containerStartX = 0;
+      }
+
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', function (e) {
+      const container = document.getElementById('container');
+      const rect = container.getBoundingClientRect();
+      const x = Math.round(e.clientX - rect.left);
+      const y = Math.round(e.clientY - rect.top);
+
+      if (isDragging) {
+        const deltaX = e.clientX - dragStartX;
+        const newX = Math.min(containerStartX + deltaX, 0);
+
+        // Apply horizontal transform only
+        notesContainer.style.transform = `translate3d(${newX}px, 0, 0)`;
+        document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y}) | Container X: ${newX}`;
+      } else {
+        document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y})`;
+      }
+    });
+
+    document.addEventListener('mouseup', function () {
+      isDragging = false;
+    });
+
+    // Redraw grid on window resize
+    window.addEventListener('resize', () => {
+      drawGrid(gridSize);
+    });
+
+  </script>
+</body>
+
+</html>
