@@ -76,7 +76,7 @@
   </div>
 
   <button type="button" id="pauseButton">pause</button>
-  <button type="button" id="resumeButton">resume</button>
+  <button type="button" id="resumeButton">play/resume</button>
   <button type="button" id="resetButton">reset</button>
 
   <script src="../../dist/umd/vexflow-debug.js"></script>
@@ -726,10 +726,6 @@
 
       animationId = requestAnimationFrame(animate);
     };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      moving();
-    });
 
     document.getElementById('pauseButton').addEventListener('click', () => {
       cancelAnimationFrame(animationId);
