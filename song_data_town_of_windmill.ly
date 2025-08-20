@@ -42,6 +42,7 @@
 % demand Lilypond creating a midi file
 % Lilypond can not output a midi file and a svg/pdf file at the same time
 % uncomment line below will create a midi file but no svg/pdf file
+% use https://cifkao.github.io/html-midi-player to play the midi file.
 % \midi {}
 
 }
