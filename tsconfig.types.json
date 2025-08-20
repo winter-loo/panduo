@@ -1,13 +1,32 @@
-// Emit the *.d.ts files for the src/ and entry/ folders.
-// It ignores the tests/ folder because users of our npm package don't need
-// to have the type definitions for tests.
 {
-  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./build/types/",
+    "target": "es6",
+    "module": "esnext",
+    "allowJs": true,
     "declaration": true,
-    "emitDeclarationOnly": true
+    "emitDeclarationOnly": true,
+    "outDir": "./dist/types",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "lib": [
+      "dom",
+      "es2020"
+    ],
+    "noImplicitOverride": true
   },
-  "include": ["./src", "./entry"],
-  "exclude": ["./entry/vexflow-debug-with-tests.ts"]
+  "include": [
+    "./src",
+    "./entry"
+  ],
+  "exclude": [
+    "node_modules/**/*",
+    "tools/fonts/legacy",
+    "releases",
+    "reference",
+    "build",
+    "dist"
+  ]
 }
