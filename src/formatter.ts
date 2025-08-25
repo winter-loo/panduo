@@ -240,7 +240,7 @@ export class Formatter {
     const beams = options.autoBeam ? Beam.applyAndGetBeams(voice) : [];
 
     // Instantiate a `Formatter` and format the notes.
-    new Formatter()
+    new Formatter({softmaxFactor: 1})
       .joinVoices([voice]) // , { alignRests: options.alignRests })
       .formatToStave([voice], stave, { alignRests: options.alignRests, stave });
 

@@ -6,8 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>walk the moon</title>
   <style>
-    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-    #container { position: relative; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+
+    #container {
+      position: relative;
+    }
+
     #moving-staff {
       display: flex;
       align-items: flex-start;
@@ -35,8 +43,15 @@
       z-index: 1;
       opacity: 0.3;
     }
-    .controls { margin-bottom: 10px; }
-    button { margin-right: 10px; padding: 5px 10px; }
+
+    .controls {
+      margin-bottom: 10px;
+    }
+
+    button {
+      margin-right: 10px;
+      padding: 5px 10px;
+    }
   </style>
 </head>
 
@@ -64,7 +79,7 @@
   <button type="button" id="resetButton">reset</button>
 
   <script type="module">
-    import { VexFlow } from "./entry/vexflow.ts";
+    import {VexFlow} from "./entry/vexflow.ts";
 
     console.log(VexFlow.BUILD);
 
@@ -144,6 +159,12 @@
       document.getElementById('info').textContent = `Grid: ${size}px`;
     }
 
+    VexFlow.NoteHead.DEBUG = true;
+    VexFlow.Stem.DEBUG = true;
+    VexFlow.StaveNote.DEBUG = true;
+    VexFlow.Formatter.DEBUG = true;
+    VexFlow.EasyScore.DEBUG = true;
+
     class MovingStaff {
       static MEASURE_WIDTH = 300;
       static STAVE_HEIGHT = 120;
@@ -154,12 +175,15 @@
 
         // draw the treble clef on the staff independently
         const TREBLE_CLEF_STAVE_WIDTH = 90;
-        const clef = document.getElementById("fixed-clef");
-        const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
-        renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
-        this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH);
-        this.clefStave.addClef("treble");
-        this.clefStave.setContext(renderer.getContext()).draw();
+        // const clef = document.getElementById("fixed-clef");
+        // const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
+        // renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
+        // this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
+        //   spaceAboveStaffLn: 0,
+        //   spaceBelowStaffLn: 0,
+        // });
+        // this.clefStave.addClef("treble");
+        // this.clefStave.setContext(renderer.getContext()).draw();
 
         const nc = document.getElementById("notes-container");
         this.renderer = new VexFlow.Renderer(nc, VexFlow.Renderer.Backends.SVG);
@@ -174,7 +198,10 @@
 
       addMeasure(notes) {
         // add stave
-        const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH);
+        const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
+          spaceAboveStaffLn: 0,
+          spaceBelowStaffLn: 0,
+        });
         this.staveX += MovingStaff.MEASURE_WIDTH;
         // draw five staff lines and treble clef
         measureStave.setContext(this.context).draw();
@@ -202,96 +229,14 @@
         {
           notes: [
             {keys: ["d/4"], duration: "4", fingering: 2},
-            {keys: ["f/4"], duration: "4", fingering: 4},
-            {keys: ["c/4"], duration: "4", fingering: 1},
-            {keys: ["r/4"], duration: "4r", fingering: null}
+            {keys: ["f/4"], duration: "8", fingering: 4},
+            {keys: ["c/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "2", fingering: null}
           ]
         },
         {
           notes: [
-            {keys: ["g/4"], duration: "4", fingering: 5},
-            {keys: ["a/4"], duration: "8", fingering: 1},
-            {keys: ["g/4"], duration: "8", fingering: 5},
-            {keys: ["f/4"], duration: "4", fingering: 4},
-            {keys: ["r/4"], duration: "4r", fingering: null}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["d/4"], duration: "4", fingering: 2},
-            {keys: ["f/4"], duration: "4", fingering: 4},
-            {keys: ["c/4"], duration: "4", fingering: 1},
-            {keys: ["r/4"], duration: "4r", fingering: null}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["g/4"], duration: "4", fingering: 5},
-            {keys: ["a/4"], duration: "8", fingering: 1},
-            {keys: ["g/4"], duration: "8", fingering: 5},
-            {keys: ["f/4"], duration: "4", fingering: 4},
-            {keys: ["r/4"], duration: "4r", fingering: null}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4", fingering: 1},
-            {keys: ["c/5"], duration: "4", fingering: 3},
-            {keys: ["a/4"], duration: "4d", fingering: 1},
-            {keys: ["f/4"], duration: "8", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4d", fingering: 1},
-            {keys: ["g/4"], duration: "8", fingering: 5},
-            {keys: ["f/4"], duration: "2", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4", fingering: 1},
-            {keys: ["c/5"], duration: "4", fingering: 3},
-            {keys: ["a/4"], duration: "4d", fingering: 1},
-            {keys: ["f/4"], duration: "8", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4d", fingering: 1},
-            {keys: ["g/4"], duration: "8", fingering: 5},
-            {keys: ["f/4"], duration: "2", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4", fingering: 1},
-            {keys: ["c/5"], duration: "4", fingering: 3},
-            {keys: ["a/4"], duration: "4d", fingering: 1},
-            {keys: ["f/4"], duration: "8", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["a/4"], duration: "4", fingering: 1},
-            {keys: ["g/4"], duration: "4", fingering: 5},
-            {keys: ["f/4"], duration: "2", fingering: 4}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["d/4"], duration: "4", fingering: 2},
-            {keys: ["f/4"], duration: "4", fingering: 4},
-            {keys: ["c/4"], duration: "4", fingering: 1},
-            {keys: ["r/4"], duration: "4r", fingering: null}
-          ]
-        },
-        {
-          notes: [
-            {keys: ["g/4"], duration: "4", fingering: 5},
-            {keys: ["a/4"], duration: "8", fingering: 1},
-            {keys: ["g/4"], duration: "8", fingering: 5},
-            {keys: ["f/4"], duration: "2", fingering: 4}
+            {keys: ["g/4"], duration: "1", fingering: 5},
           ]
         }
       ]
@@ -302,9 +247,9 @@
       movingStaff.addMeasure(SONG_DATA.measures[i].notes);
     }
     // add extra measures at the end so that we do not see empty spaces at the end
-    for (let i = 0; i < 10; i++) {
-      movingStaff.addMeasure([]);
-    }
+    // for (let i = 0; i < 10; i++) {
+    //   movingStaff.addMeasure([]);
+    // }
 
     let animationId = null;
     let xOffset = 0;
@@ -328,7 +273,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
-      moving();
+      // moving();
     });
 
     document.getElementById('pauseButton').addEventListener('click', () => {
@@ -353,7 +298,7 @@
     const notesContainerWrapper = document.getElementById('notes-container-wrapper');
     const notesContainer = document.getElementById('notes-container');
 
-    notesContainerWrapper.addEventListener('mousedown', function(e) {
+    notesContainerWrapper.addEventListener('mousedown', function (e) {
       isDragging = true;
       dragStartX = e.clientX;
 
@@ -370,7 +315,7 @@
       e.preventDefault();
     });
 
-    document.addEventListener('mousemove', function(e) {
+    document.addEventListener('mousemove', function (e) {
       const container = document.getElementById('container');
       const rect = container.getBoundingClientRect();
       const x = Math.round(e.clientX - rect.left);
@@ -388,7 +333,7 @@
       }
     });
 
-    document.addEventListener('mouseup', function() {
+    document.addEventListener('mouseup', function () {
       isDragging = false;
     });
 

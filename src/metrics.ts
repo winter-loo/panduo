@@ -140,6 +140,7 @@ export const MetricsDefaults: Record<string, any> = {
 
   NoteHead: {
     minPadding: 2,
+    pointerRect: true,
   },
 
   PedalMarking: {
@@ -168,9 +169,9 @@ export const MetricsDefaults: Record<string, any> = {
   Stave: {
     strokeStyle: '#999999',
     fontSize: 8,
-    padding: 12,
-    endPaddingMax: 10,
-    endPaddingMin: 5,
+    padding: 0,
+    endPaddingMax: 0,
+    endPaddingMin: 0,
     unalignedNotePadding: 10,
   },
 

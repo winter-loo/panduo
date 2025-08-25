@@ -629,6 +629,9 @@ export class Element {
     this._height = this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
     this._width = this._textMetrics.width;
     this.metricsValid = true;
+    if (this.text != "") {
+      console.log(`measure text ${this.text} width: ${this._width}`);
+    }
     return this._textMetrics;
   }
 

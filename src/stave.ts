@@ -89,7 +89,7 @@ export class Stave extends Element {
     this.y = y;
     this.width = width;
     this.formatted = false;
-    this.startX = x + 5;
+    this.startX = x + 0;
     this.endX = x + width;
     this.modifiers = []; // stave modifiers (clef, key, time, barlines, coda, segno, etc.)
     this.measure = 0;
@@ -190,6 +190,7 @@ export class Stave extends Element {
 
   override setX(x: number): this {
     const shift = x - this.x;
+    console.log('shift...', shift);
     this.formatted = false;
     this.x = x;
     this.startX += shift;
@@ -618,7 +619,9 @@ export class Stave extends Element {
       if (padding + width === 0) offset--;
     }
 
+    console.log(`set startX is ${this.startX}`);
     this.startX = x;
+    console.log(`... set startX is ${this.startX}`);
     x = this.x + this.width;
 
     const widths = {
