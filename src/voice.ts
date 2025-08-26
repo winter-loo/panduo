@@ -214,6 +214,7 @@ export class Voice extends Element {
     const totalTicks = this.ticksUsed.value();
     const exp = (v: number) => Math.pow(this.options.softmaxFactor, v / totalTicks);
     const sm = exp(tickValue) / this.expTicksUsed;
+    console.log(`tick ${tickValue} sm=${sm}`);
     return sm;
   }
 

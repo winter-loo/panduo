@@ -683,6 +683,7 @@ export class Formatter {
       context.preFormat();
 
       const width = context.getWidth();
+      console.log(`tick ${tick}, context width: ${width}`);
       this.minTotalWidth += width;
 
       const maxTicks = context.getMaxTicks().value();
@@ -690,19 +691,24 @@ export class Formatter {
 
       const metrics = context.getMetrics();
       x = x + shift + metrics.totalLeftPx;
+      console.log(`tick ${tick}, set x: ${x}`);
       context.setX(x);
 
       // Calculate shift for the next tick.
       shift = width - metrics.totalLeftPx;
     });
+    console.log(`minTotalWidth: ${this.minTotalWidth}`)
 
     // Use softmax based on all notes across all staves. (options.globalSoftmax)
     const { globalSoftmax, softmaxFactor, maxIterations } = this.formatterOptions;
 
     const exp = (tick: number) => softmaxFactor ** (contextMap[tick].getMaxTicks().value() / totalTicks);
     const expTicksUsed = sumArray(contextList.map(exp));
+    console.log(`expTicksUsed: ${expTicksUsed}`);
 
     this.minTotalWidth = x + shift;
+    console.log(`update minTotalWidth: ${this.minTotalWidth}`)
+
     this.hasMinTotalWidth = true;
 
     // No justification needed. End formatting.
@@ -716,6 +722,7 @@ export class Formatter {
     // Calculate the "distance error" between the tick contexts. The expected distance is the spacing proportional to
     // the softmax of the ticks.
     function calculateIdealDistances(adjustedJustifyWidth: number): Distance[] {
+      console.log(`adjustedJustifyWidth: ${adjustedJustifyWidth}`);
       const distances: Distance[] = contextList.map((tick: number, i: number) => {
         const context: TickContext = contextMap[tick];
         const voices = context.getTickablesByVoice();
@@ -755,14 +762,18 @@ export class Formatter {
                 const insideLeftEdge =
                   thisTickable.getX() -
                   (thisTickable.getMetrics().modLeftPx + thisTickable.getMetrics().leftDisplacedHeadPx);
+                console.log(`insideLeftEdge: ${insideLeftEdge}`);
 
                 const backMetrics = backVoices[v].getMetrics();
                 const insideRightEdge =
                   backVoices[v].getX() + backMetrics.notePx + backMetrics.modRightPx + backMetrics.rightDisplacedHeadPx;
+                console.log(`insideRightEdge: ${insideRightEdge}`);
 
                 // Don't allow shifting if notes in the same voice can collide
                 maxNegativeShiftPx = Math.min(maxNegativeShiftPx, insideLeftEdge - insideRightEdge);
               });
+
+              console.log(`tick ${tick}, maxTicks: ${maxTicks}`);
 
               // Don't shift further left than the notehead of the last context. Actually, stay at most 5% to the right
               // so that two different tick contexts don't align across staves.
@@ -812,6 +823,7 @@ export class Formatter {
             negativeShiftPx = Math.min(ideal.maxNegativeShiftPx, Math.abs(errorPx));
             spaceAccum += -negativeShiftPx;
           }
+          console.log(`update tick ${tick} X to ${contextX+ spaceAccum}`);
           context.setX(contextX + spaceAccum);
         }
         // Move center aligned tickables to middle
@@ -832,8 +844,11 @@ export class Formatter {
     const configMaxPadding = Metrics.get('Stave.endPaddingMax');
     const leftPadding = Metrics.get('Stave.padding');
     let targetWidth = adjustedJustifyWidth;
+    console.log(`targetWidth: ${targetWidth}(${justifyWidth} - ${lastContext.getMetrics().notePx})`);
     const distances = calculateIdealDistances(targetWidth);
+    console.log('ideal distances:', distances);
     let actualWidth = shiftToIdealDistances(distances);
+    console.log(`targetWidth: ${targetWidth}, actualWidth: ${actualWidth}`);
 
     // Just one context. Done formatting.
     if (contextList.length === 1) return 0;
@@ -847,6 +862,7 @@ export class Formatter {
       return mdCalc;
     };
     const minDistance = calcMinDistance(targetWidth, distances);
+    console.log(`minDistance: ${minDistance}`);
 
     // right justify to either the configured padding, or the min distance between notes, whichever is greatest.
     // This * 2 keeps the existing formatting unless there is 'a lot' of extra whitespace, which won't break
@@ -858,19 +874,27 @@ export class Formatter {
         const voice = lastTickable.getVoice();
         // If the number of actual ticks in the measure <> configured ticks, right-justify
         // because the softmax won't yield the correct value
+        console.log(`last tickable voice has ${voice.getTicksUsed().value()} ticks used`);
+        console.log(`the total ticks is ${voice.getTotalTicks().value()}`);
         if (voice.getTicksUsed().value() > voice.getTotalTicks().value()) {
           return configMaxPadding * 2 < minDistance ? minDistance : configMaxPadding;
         }
         const tickWidth = lastTickable.getWidth();
+        console.log(`last tickable width: ${tickWidth}`);
         lastTickablePadding =
           voice.softmax(lastContext.getMaxTicks().value()) * curTargetWidth - (tickWidth + leftPadding);
+        console.log(`last tickable padding: ${lastTickablePadding}`);
       }
       return configMaxPadding * 2 < lastTickablePadding ? lastTickablePadding : configMaxPadding;
     };
     let paddingMax = paddingMaxCalc(targetWidth);
+    console.log(`paddingMax(what's this padding?): ${paddingMax}`);
     let paddingMin = paddingMax - (configMaxPadding - configMinPadding);
+    console.log(`paddingMin(what's this padding?): ${paddingMin}`);
     const maxX = adjustedJustifyWidth - paddingMin;
+    console.log(`the maxX is ${maxX}`);
 
+    console.log(`what's the maxIterations? ${maxIterations}`);
     let iterations = maxIterations;
     // Adjust justification width until the right margin is as close as possible to the calculated padding,
     // without going over
@@ -882,7 +906,14 @@ export class Formatter {
       iterations--;
     }
 
+    console.log(`this.justifyWidth: ${justifyWidth}`);
     this.justifyWidth = justifyWidth;
+
+    console.log(`Finally, here's the X position of each tick context:::`);
+    contextList.forEach((tick, _index) => {
+        const context = contextMap[tick];
+        console.log(`tick=${tick} X=${context.getX()}`);
+    });
     return this.evaluate();
   }
 
@@ -1032,6 +1063,7 @@ export class Formatter {
    * Calls postFormat on each ModifierContext and TickContext.
    */
   postFormat(): this {
+    console.log('................postFormat........');
     this.modifierContexts.forEach((modifierContexts) => {
       modifierContexts.array.forEach((mc) => mc.postFormat());
     });
@@ -1076,7 +1108,7 @@ export class Formatter {
     }
 
     this.alignRests(voices, opts.alignRests);
-    this.createTickContexts(voices);
+    console.log('tick contexts created: ', this.createTickContexts(voices));
     this.preFormat(justifyWidth, opts.context, voices, opts.stave);
 
     // Only postFormat if a stave was supplied for y value formatting

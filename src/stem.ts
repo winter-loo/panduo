@@ -110,7 +110,6 @@ export class Stem extends Element {
 
   // Set the x bounds for the default notehead
   setNoteHeadXBounds(xBegin: number, xEnd: number): this {
-    console.trace(`... set xEnd ${xEnd}`);
     this.xBegin = xBegin;
     this.xEnd = xEnd;
     return this;

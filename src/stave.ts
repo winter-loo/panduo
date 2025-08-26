@@ -619,9 +619,7 @@ export class Stave extends Element {
       if (padding + width === 0) offset--;
     }
 
-    console.log(`set startX is ${this.startX}`);
     this.startX = x;
-    console.log(`... set startX is ${this.startX}`);
     x = this.x + this.width;
 
     const widths = {

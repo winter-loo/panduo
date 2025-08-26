@@ -656,11 +656,13 @@ export class StaveNote extends StemmableNote {
 
   // Determine if the `StaveNote` has a stem
   override hasStem(): boolean {
-    return this.glyphProps.stem;
+    return false;
+    // return this.glyphProps.stem;
   }
 
   override hasFlag(): boolean {
-    return super.hasFlag() && !this.isRest();
+    return false;
+    // return super.hasFlag() && !this.isRest();
   }
 
   override getStemX(): number {
@@ -1087,10 +1089,11 @@ export class StaveNote extends StemmableNote {
   }
 
   shouldDrawFlag(): boolean {
-    const hasStem = this.stem !== undefined;
-    const hasFlag = this.glyphProps.codeFlagUp !== undefined;
-    const hasNoBeam = this.beam === undefined;
-    return hasStem && hasFlag && hasNoBeam && !this.isRest();
+    return false;
+    // const hasStem = this.stem !== undefined;
+    // const hasFlag = this.glyphProps.codeFlagUp !== undefined;
+    // const hasNoBeam = this.beam === undefined;
+    // return hasStem && hasFlag && hasNoBeam && !this.isRest();
   }
 
   // Draw the flag for the note

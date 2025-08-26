@@ -139,7 +139,7 @@ export const MetricsDefaults: Record<string, any> = {
   },
 
   NoteHead: {
-    minPadding: 2,
+    minPadding: 0,
     pointerRect: true,
   },
 

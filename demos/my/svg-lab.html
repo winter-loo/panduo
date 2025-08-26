@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <link href="css/style.css" rel="stylesheet">
+  <style>
+    .css-animated-svg circle {
+      fill: dodgerblue;
+    }
+
+    .pulse {
+      animation: pulse 2s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        r: 30;
+      }
+
+      to {
+        r: 60;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <svg width="300" height="120" style="border:1px solid #ccc">
+    <circle cx="60" cy="60" r="20" fill="dodgerblue">
+      <!-- move horizontally -->
+      <animate attributeName="cx" values="60;240;60" dur="4s" repeatCount="indefinite" />
+
+      <!-- fade in and out -->
+      <animate attributeName="opacity" values="1;0.2;1" dur="4s" repeatCount="indefinite" />
+
+      <!-- scale -->
+      <animateTransform attributeName="transform" attributeType="XML" type="scale" values="1;1.5;1" additive="sum"
+        dur="4s" repeatCount="indefinite" />
+    </circle>
+  </svg>
+
+  <svg width="200" height="200" class="css-animated-svg">
+    <circle cx="100" cy="100" r="50" class="pulse" />
+  </svg>
+
+  <svg width="200" height="200">
+    <circle id="ball" cx="50" cy="100" r="20" fill="purple" />
+  </svg>
+
+  <script>
+    const ball = document.getElementById("ball");
+    let x = 50, dx = 2;
+
+    function animate() {
+      x += dx;
+      if (x > 180 || x < 20) dx = -dx; // bounce
+      ball.setAttribute("cx", x);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  </script>
+
+  <button id="expandBtn">Expand Rectangle</button>
+
+  <svg width="400" height="200">
+    <rect id="rect" x="50" y="80" width="10" height="40" fill="dodgerblue" />
+  </svg>
+
+  <script>
+    const rect = document.getElementById("rect");
+    const button = document.getElementById("expandBtn");
+
+    button.addEventListener("click", () => {
+      let width = parseInt(rect.getAttribute("width"));
+      let targetWidth = 300;
+
+      function animate() {
+        if (width < targetWidth) {
+          width += 5; // speed of expansion
+          rect.setAttribute("width", width);
+          requestAnimationFrame(animate);
+        }
+      }
+
+      animate();
+    });
+  </script>
+
+</body>
+
+</html>

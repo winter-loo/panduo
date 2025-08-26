@@ -373,7 +373,7 @@ export class SVGContext extends RenderContext {
   }
 
   pointerRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { fill: 'none', 'stroke-width': 1.0, opacity: '0.8', 'pointer-events': 'auto' };
+    const attributes = { fill: 'none', 'stroke-width': 1.0, opacity: '0.8', 'stroke': 'green', 'pointer-events': 'auto' };
     this.rect(x, y, width, height, attributes);
     return this;
   }

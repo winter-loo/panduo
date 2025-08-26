@@ -626,17 +626,15 @@ export class Element {
       return this._textMetrics;
     }
     context.font = Font.toCSSString(Font.validate(this.fontInfo));
-    if (this.text != "") {
-      console.log(`font: ${context.font}`);
-    }
     this._textMetrics = context.measureText(this.text);
-    if (this.text != "") {
-      const unicodeEscapes = Array.from(this.text).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
-      console.log(`measure text ${unicodeEscapes} metrics: `, this._textMetrics);
-    }
     this._height = this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
     this._width = this._textMetrics.width;
     this.metricsValid = true;
+
+    if (this.text != "") {
+      const unicodeEscapes = Array.from(this.text).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+      console.log(`text ${unicodeEscapes} width: ${this._width}`);
+    }
 
     return this._textMetrics;
   }
