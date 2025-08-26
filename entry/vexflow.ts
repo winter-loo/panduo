@@ -40,7 +40,7 @@ VexFlow.BUILD.INFO = 'vexflow';
 VexFlow.setFonts('Bravura', 'Academico');
 
 Promise.allSettled(fontLoadPromises).then(() => {
-  //
+  console.log('!!!! ALL FONTS LOADED !!!');
 });
 
 export * from '../src/index';

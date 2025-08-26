@@ -525,6 +525,7 @@ export class Element {
   }
 
   get width(): number {
+    // if (!this.metricsValid) this.measureText().then(textMetrics => console.log(`font width: ${textMetrics.width}`));
     if (!this.metricsValid) this.measureText();
     return this._width;
   }
@@ -625,13 +626,18 @@ export class Element {
       return this._textMetrics;
     }
     context.font = Font.toCSSString(Font.validate(this.fontInfo));
+    if (this.text != "") {
+      console.log(`font: ${context.font}`);
+    }
     this._textMetrics = context.measureText(this.text);
+    if (this.text != "") {
+      const unicodeEscapes = Array.from(this.text).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+      console.log(`measure text ${unicodeEscapes} metrics: `, this._textMetrics);
+    }
     this._height = this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
     this._width = this._textMetrics.width;
     this.metricsValid = true;
-    if (this.text != "") {
-      console.log(`measure text ${this.text} width: ${this._width}`);
-    }
+
     return this._textMetrics;
   }
 

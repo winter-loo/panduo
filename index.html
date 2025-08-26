@@ -5,6 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>walk the moon</title>
+
+  <!-- PRELOAD MUSIC FONT -->
+  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2" as="font"
+    type="font/woff2" crossorigin="anonymous">
+  <style>
+    @font-face {
+      font-family: "Bravura";
+      src: url("https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2") format("woff2");
+      font-display: block;
+    }
+  </style>
+  <!-- END FONT CONFIGURATION -->
+
   <style>
     body {
       margin: 0;
@@ -74,14 +87,22 @@
     </div>
   </div>
 
+  <button type="button" id="renderButton">render</button>
   <button type="button" id="pauseButton">pause</button>
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
 
   <script type="module">
-    import {VexFlow} from "./entry/vexflow.ts";
+    import {VexFlow} from "./entry/vexflow-core.ts";
 
     console.log(VexFlow.BUILD);
+
+    // This is the correct font setup! Be sure to preload Bravura font. See file header above.
+    //
+    // If use "./entry/vexflow.ts", the font will load asynchrnously which results Element.measureText()
+    // getting wrong text metrics. Even with `await document.fonts.ready`, it yet does not work.
+    const musicFontName = 'Bravura';
+    VexFlow.setFonts(`${musicFontName}`);
 
     // Grid functionality
     let gridSize = 10;
@@ -242,15 +263,6 @@
       ]
     };
 
-    let movingStaff = new MovingStaff();
-    for (let i = 0; i < SONG_DATA.measures.length; i++) {
-      movingStaff.addMeasure(SONG_DATA.measures[i].notes);
-    }
-    // add extra measures at the end so that we do not see empty spaces at the end
-    // for (let i = 0; i < 10; i++) {
-    //   movingStaff.addMeasure([]);
-    // }
-
     let animationId = null;
     let xOffset = 0;
 
@@ -272,10 +284,28 @@
       animationId = requestAnimationFrame(animate);
     };
 
+    function renderSong() {
+      const nc = document.getElementById("notes-container");
+      nc.innerHTML = '';
+
+      let movingStaff = new MovingStaff();
+      for (let i = 0; i < SONG_DATA.measures.length; i++) {
+        movingStaff.addMeasure(SONG_DATA.measures[i].notes);
+      }
+      // add extra measures at the end so that we do not see empty spaces at the end
+      // for (let i = 0; i < 10; i++) {
+      //   movingStaff.addMeasure([]);
+      // }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      // moving();
+      console.log(`rendering song...`);
+      renderSong();
     });
 
+    document.getElementById('renderButton').addEventListener('click', () => {
+      renderSong();
+    });
     document.getElementById('pauseButton').addEventListener('click', () => {
       cancelAnimationFrame(animationId);
       animationId = null;
