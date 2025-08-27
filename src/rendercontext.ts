@@ -52,7 +52,7 @@ export abstract class RenderContext {
   abstract save(): this;
   abstract restore(): this;
   // eslint-disable-next-line
-  abstract openGroup(cls?: string, id?: string): any;
+  abstract openGroup(classList?: string | string[], id?: string): any;
   abstract closeGroup(): void;
   abstract openRotation(angleDegrees: number, x: number, y: number): void;
   abstract closeRotation(): void;

@@ -13,6 +13,7 @@ import { StaveSection } from './stavesection';
 import { StaveTempo, StaveTempoOptions } from './stavetempo';
 import { StaveText } from './stavetext';
 import { Volta } from './stavevolta';
+import { SVGContext } from './svgcontext';
 import { Tables } from './tables';
 import { TimeSignature } from './timesignature';
 import { Category, isBarline } from './typeguard';
@@ -33,6 +34,7 @@ export interface StaveOptions {
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
+  stillCursor?: boolean,
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
@@ -107,6 +109,7 @@ export class Stave extends Element {
       topTextPosition: 1, // in staff lines
       bottomTextPosition: 4, // in staff lines
       lineConfig: [],
+      stillCursor: false,
       ...options,
     };
     this.bounds = { x: this.x, y: this.y, w: this.width, h: 0 };
@@ -704,6 +707,10 @@ export class Stave extends Element {
       }
     }
 
+    if (this.options.stillCursor) {
+      this.drawStillCursor();
+    }
+
     this.drawPointerRect();
     ctx.closeGroup();
 
@@ -722,6 +729,21 @@ export class Stave extends Element {
       y = this.getYForTopText(0) + 3;
       ctx.fillText('' + this.measure, this.x - textWidth / 2, y);
     }
+  }
+
+  drawStillCursor() {
+    const ctx = this.checkContext();
+    const offset = 50;
+    const width = 5;
+    const paddingTop = 5;
+    const paddingBottom = 5;
+    (<SVGContext> ctx).rect(this.x + offset, paddingTop, width, (<SVGContext>ctx).height - paddingBottom - paddingTop, {
+      stroke: 'none',
+      rx: width / 2,
+      ry: width / 2,
+      fill: '#cccccc',
+      opacity: 0.9
+    });
   }
 
   getVerticalBarWidth(): number {

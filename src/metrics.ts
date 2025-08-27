@@ -140,7 +140,7 @@ export const MetricsDefaults: Record<string, any> = {
 
   NoteHead: {
     minPadding: 0,
-    pointerRect: true,
+    pointerRect: false,
   },
 
   PedalMarking: {

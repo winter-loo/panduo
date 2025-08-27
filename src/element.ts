@@ -539,7 +539,6 @@ export class Element {
 
   set width(width: number) {
     if (!this.metricsValid) this.measureText();
-  console.trace('set width to ', width);
     this._width = width;
   }
 

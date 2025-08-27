@@ -153,12 +153,20 @@ export class SVGContext extends RenderContext {
   }
 
   // Allow grouping elements in containers for interactivity.
-  openGroup(cls?: string, id?: string): SVGGElement {
+  openGroup(classList?: string | string[], id?: string): SVGGElement {
     const group = this.create('g');
     this.groups.push(group);
     this.parent.appendChild(group);
     this.parent = group;
-    if (cls) group.setAttribute('class', prefix(cls));
+    if (classList) {
+      let classNames = '';
+      if (classList instanceof Array) {
+        classNames = classList.map(cls => prefix(cls)).join(" ");
+      } else {
+        classNames = classList;
+      }
+      group.setAttribute('class', classNames);
+    }
     if (id) group.setAttribute('id', prefix(id));
 
     this.applyAttributes(group, this.attributes);
@@ -367,14 +375,17 @@ export class SVGContext extends RenderContext {
   }
 
   fillRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { fill: this.attributes.fill, stroke: 'none' };
+    const attributes = { fill: 'currentColor', rx: height, ry: height, stroke: 'none' };
     this.rect(x, y, width, height, attributes);
     return this;
   }
 
   pointerRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { fill: 'none', 'stroke-width': 1.0, opacity: '0.8', 'stroke': 'green', 'pointer-events': 'auto' };
+    const attributes = { rx: height/2, ry: height/2, fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
+    this.openGroup('donut');
+    this.fillRect(x + 2, y + 2, width - 4, height - 4);
     this.rect(x, y, width, height, attributes);
+    this.closeGroup();
     return this;
   }
 
