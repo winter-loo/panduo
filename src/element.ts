@@ -339,8 +339,7 @@ export class Element {
     return new BoundingBox(
       this.x + this.xShift,
       this.y + this.yShift - this.textMetrics.actualBoundingBoxAscent,
-      50,
-      // this.width,
+      this.width,
       this.height
     );
   }

@@ -517,6 +517,7 @@ export class StaveNote extends StemmableNote {
       });
 
       notehead.fontInfo = this.fontInfo;
+      console.log(`notehead is built, line=${line}, width=${notehead.width}`);
 
       this.addChild(notehead);
       this._noteHeads[this.sortedKeyProps[i].index] = notehead;
@@ -853,6 +854,13 @@ export class StaveNote extends StemmableNote {
   /** Get the glyph width. */
   override getGlyphWidth(): number {
     return this.noteHeads[0].getWidth();
+  }
+
+  override setWidth(width: number): this {
+      this.noteHeads.forEach(notehead => {
+        notehead.setWidth(width);
+      });
+      return this;
   }
 
   // Sets the notehead at `index` to the provided coloring `style`.
