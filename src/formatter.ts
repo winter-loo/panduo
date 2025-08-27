@@ -240,7 +240,7 @@ export class Formatter {
     const beams = options.autoBeam ? Beam.applyAndGetBeams(voice) : [];
 
     // Instantiate a `Formatter` and format the notes.
-    new Formatter({softmaxFactor: 1})
+    new Formatter({ softmaxFactor: 1 })
       .joinVoices([voice]) // , { alignRests: options.alignRests })
       .formatToStave([voice], stave, { alignRests: options.alignRests, stave });
 
@@ -667,6 +667,30 @@ export class Formatter {
       voicesParam.forEach((voice: Voice): Voice => voice.setStave(stave).preFormat());
     }
 
+    console.log(`justifyWidth=${justifyWidth}`);
+
+    let xOffset = 0;
+    contextList.forEach((tick) => {
+      const context = contextMap[tick];
+
+      context.preFormat();
+
+      console.log(`tick=${tick} set x=${xOffset}`);
+      context.setX(xOffset);
+
+      let maxTickable = context.getMaxTickable();
+      if (maxTickable) {
+        let ticks = context.getMaxTicks().value();
+        let totalTicks = maxTickable.getVoice().getTotalTicks().value();
+        let width = (ticks / totalTicks) * justifyWidth;
+        console.log(`set tick=${tick} width to ${width}`);
+        maxTickable.setWidth(width);
+        xOffset += width;
+      }
+    });
+    return 0;
+
+
     // Now distribute the ticks to each tick context, and assign them their
     // own X positions.
     let x = 0;
@@ -823,7 +847,7 @@ export class Formatter {
             negativeShiftPx = Math.min(ideal.maxNegativeShiftPx, Math.abs(errorPx));
             spaceAccum += -negativeShiftPx;
           }
-          console.log(`update tick ${tick} X to ${contextX+ spaceAccum}`);
+          console.log(`update tick ${tick} X to ${contextX + spaceAccum}`);
           context.setX(contextX + spaceAccum);
         }
         // Move center aligned tickables to middle
@@ -911,8 +935,8 @@ export class Formatter {
 
     console.log(`Finally, here's the X position of each tick context:::`);
     contextList.forEach((tick, _index) => {
-        const context = contextMap[tick];
-        console.log(`tick=${tick} X=${context.getX()}`);
+      const context = contextMap[tick];
+      console.log(`tick=${tick} X=${context.getX()}`);
     });
     return this.evaluate();
   }
@@ -1110,6 +1134,7 @@ export class Formatter {
     this.alignRests(voices, opts.alignRests);
     console.log('tick contexts created: ', this.createTickContexts(voices));
     this.preFormat(justifyWidth, opts.context, voices, opts.stave);
+    console.log('DONE DONE DONE preFormat');
 
     // Only postFormat if a stave was supplied for y value formatting
     if (opts.stave) this.postFormat();

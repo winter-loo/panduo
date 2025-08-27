@@ -5,7 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title></title>
-  <link href="css/style.css" rel="stylesheet">
   <style>
     .css-animated-svg circle {
       fill: dodgerblue;
@@ -65,29 +64,52 @@
   </script>
 
   <button id="expandBtn">Expand Rectangle</button>
+  <button id="resetBtn">Reset Rectangle</button>
 
   <svg width="400" height="200">
-    <rect id="rect" x="50" y="80" width="10" height="40" fill="dodgerblue" />
+    <g id="donut">
+      <rect id="outter-rect"
+          x="50" y="80" width="316" height="56"
+          stroke="dodgerblue" stroke-width="4" fill="none"
+          rx="28" ry="28" />
+      <rect id="inner-rect"
+          x="58" y="88" width="20" height="40"
+          opacity="0" fill="dodgerblue" rx="20" ry="20" />
+    </g>
   </svg>
 
   <script>
-    const rect = document.getElementById("rect");
+    const rect = document.getElementById("inner-rect");
     const button = document.getElementById("expandBtn");
+    const resetBtn = document.getElementById("resetBtn");
 
-    button.addEventListener("click", () => {
+    let expandAnimationId = null;
+
+    button.addEventListener("mousedown", () => {
       let width = parseInt(rect.getAttribute("width"));
       let targetWidth = 300;
+      rect.setAttribute("opacity", 1);
+
 
       function animate() {
         if (width < targetWidth) {
           width += 5; // speed of expansion
           rect.setAttribute("width", width);
-          requestAnimationFrame(animate);
+          expandAnimationId = requestAnimationFrame(animate);
         }
       }
 
       animate();
     });
+
+    button.addEventListener("mouseup", () => {
+      cancelAnimationFrame(expandAnimationId);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      rect.setAttribute("opacity", 0);
+      rect.setAttribute("width", 20);
+    })
   </script>
 
 </body>

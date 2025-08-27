@@ -136,7 +136,7 @@ export class TickContext {
 
   getWidth(): number {
     return this.width;
-    return this.width + this.padding * 2;
+    // return this.width + this.padding * 2;
   }
 
   setPadding(padding: number): this {

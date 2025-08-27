@@ -339,7 +339,8 @@ export class Element {
     return new BoundingBox(
       this.x + this.xShift,
       this.y + this.yShift - this.textMetrics.actualBoundingBoxAscent,
-      this.width,
+      50,
+      // this.width,
       this.height
     );
   }
@@ -353,6 +354,7 @@ export class Element {
   drawPointerRect() {
     if (this.shouldDrawPointerRect) {
       const bb = this.getBoundingBox();
+      console.log('draw rect', bb);
       this.context?.pointerRect(bb.getX(), bb.getY(), bb.getW(), bb.getH());
     }
   }
@@ -538,6 +540,7 @@ export class Element {
 
   set width(width: number) {
     if (!this.metricsValid) this.measureText();
+  console.trace('set width to ', width);
     this._width = width;
   }
 
@@ -633,7 +636,7 @@ export class Element {
 
     if (this.text != "") {
       const unicodeEscapes = Array.from(this.text).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
-      console.log(`text ${unicodeEscapes} width: ${this._width}`);
+      console.log(`text ${unicodeEscapes} width=${this._width} height=${this._height}`);
     }
 
     return this._textMetrics;
