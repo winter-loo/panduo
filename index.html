@@ -44,10 +44,17 @@
       overflow: hidden;
       cursor: grab;
       user-select: none;
+      /* the distance being visible from the left of the still cursor line */
+      margin-left: -40px;
     }
 
     #notes-container-wrapper:active {
       cursor: grabbing;
+    }
+
+    #notes-container {
+      /* the distance we need offset to keep whole notes area visible */
+      padding-left: 40px;
     }
 
     #grid {
@@ -125,7 +132,7 @@
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
 
-  <script type="module">
+  <script type="module" lang="ts">
     import {VexFlow} from "./entry/vexflow-core.ts";
 
     console.log(VexFlow.BUILD);
@@ -227,21 +234,24 @@
       constructor() {
         // Create an SVG renderer and attach it to the DIV element with id="output".
         // const div = document.getElementById("moving-staff");
+        this.numPaddingSpaces = (MovingStaff.STAVE_HEIGHT - 40) / 2 / 10;
 
         // draw the treble clef on the staff independently
         const TREBLE_CLEF_STAVE_WIDTH = 90;
-        // const clef = document.getElementById("fixed-clef");
-        // const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
-        // renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
-        // this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
-        //   spaceAboveStaffLn: 0,
-        //   spaceBelowStaffLn: 0,
-        // });
-        // this.clefStave.addClef("treble");
-        // this.clefStave.setContext(renderer.getContext()).draw();
+        const clef = document.getElementById("fixed-clef");
+        clef.innerHTML = '';
+        const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
+        renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
+        this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
+          spaceAboveStaffLn: this.numPaddingSpaces,
+          spaceBelowStaffLn: this.numPaddingSpaces,
+          stillCursor: true,
+        });
+        this.clefStave.addClef("treble");
+        this.clefStave.setContext(renderer.getContext()).draw();
 
-        const nc = document.getElementById("notes-container");
-        this.renderer = new VexFlow.Renderer(nc, VexFlow.Renderer.Backends.SVG);
+        this.notesContainer = document.getElementById("notes-container");
+        this.renderer = new VexFlow.Renderer(this.notesContainer, VexFlow.Renderer.Backends.SVG);
 
         // Configure the rendering context.
         // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
@@ -250,6 +260,8 @@
         // do not count the treble clef width
         this.staveX = 0;
         this.notes = [];
+
+        this.movingOffset = 0;
       }
 
       addMeasure(notes) {
@@ -258,9 +270,8 @@
         // spacing between stave lines: 10
         let num = (MovingStaff.STAVE_HEIGHT - 40) / 2 / 10;
         const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
-          spaceAboveStaffLn: num,
-          spaceBelowStaffLn: num,
-          stillCursor: this.staveX == 0,
+          spaceAboveStaffLn: this.numPaddingSpaces,
+          spaceBelowStaffLn: this.numPaddingSpaces,
         });
         this.staveX += MovingStaff.MEASURE_WIDTH;
         // draw five staff lines and treble clef
@@ -280,6 +291,15 @@
         if (staveNotes.length > 0) {
           VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
         }
+      }
+
+      move(offset) {
+        this.notesContainer.style.transform = `translate3d(-${offset}px, 0, 0)`;
+      }
+
+      moveDelta(offset) {
+        this.movingOffset += offset;
+        this.move(this.movingOffset);
       }
     };
 
@@ -309,8 +329,7 @@
     const moving = () => {
       const animate = (timestamp) => {
         xOffset += 1;
-        let ncw = document.getElementById('notes-container');
-        ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+        window.movingStaff.move(xOffset);
 
         if (xOffset > SONG_DATA.measures.length * MovingStaff.MEASURE_WIDTH) {
           cancelAnimationFrame(animationId);
@@ -324,7 +343,7 @@
       animationId = requestAnimationFrame(animate);
     };
 
-    window.movingStaff = {};
+    window.movingStaff = null;
     function renderSong() {
       const nc = document.getElementById("notes-container");
       nc.innerHTML = '';
@@ -359,7 +378,7 @@
       cancelAnimationFrame(animationId);
       animationId = null;
       let ncw = document.getElementById('notes-container');
-      ncw.style.transform = `translate3d(-${xOffset}px, 0, 0)`;
+      window.movingStaff.move(0);
     });
 
     // Initialize grid
@@ -394,10 +413,9 @@
 
       if (isDragging) {
         const deltaX = e.clientX - dragStartX;
-        const newX = containerStartX + deltaX;
+        const newX = Math.min(containerStartX + deltaX, 0);
 
-        // Apply horizontal transform only
-        notesContainer.style.transform = `translate3d(${newX}px, 0, 0)`;
+        window.movingStaff.move(-newX);
         document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y}) | Container X: ${newX}`;
       } else {
         document.getElementById('info').textContent = `Grid: ${gridSize}px | Mouse: (${x}, ${y})`;
@@ -413,35 +431,53 @@
       drawGrid(gridSize);
     });
 
-    let keyJHolding = false;
-    let note = null;
+    const keysHoldingMap = new Map([
+      ['Space', {noteName: 'C', holding: false}],
+      ['KeyF', {noteName: 'D', holding: false}],
+      ['KeyG', {noteName: 'E', holding: false}],
+      ['KeyH', {noteName: 'F', holding: false}],
+      ['KeyJ', {noteName: 'G', holding: false}],
+      ['KeyK', {noteName: 'A', holding: false}],
+      ['KeyL', {noteName: 'B', holding: false}],
+    ]);
+
     let pressTick = null;
+    let note_idx = 0;
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'j' && !keyJHolding) {
-        keyJHolding = true;
-        let idx = Math.min(movingStaff.notes.length - 1, Math.round(Math.random() * movingStaff.notes.length));
-        note = movingStaff.notes[idx];
+      let validKeyDown = keysHoldingMap.get(event.code);
+      if (validKeyDown != undefined && !validKeyDown.holding) {
+        validKeyDown.holding = true;
       }
     });
 
     document.addEventListener('keyup', function (event) {
-      if (event.key === 'j') {
-        keyJHolding = false;
-        pressTick = null;
+      let state = keysHoldingMap.get(event.code);
+      if (state) {
+        state.holding = false;
       }
+      pressTick = null;
     });
 
     // one second should move 1000 pixels
     const speed = 100 / 1000;
     function update(timestamp) {
-      if (keyJHolding) {
-        if (!pressTick) {
-          pressTick = timestamp;
-          console.log('press tick ', pressTick);
+      keysHoldingMap.forEach(({noteName, holding}, key) => {
+        if (holding) {
+          let staveNote = movingStaff.notes[note_idx];
+          if (noteName == staveNote.getKeyProps()[0].key) {
+            if (!pressTick) {
+              pressTick = timestamp;
+              console.log(`key ${key} press tick ${pressTick}`);
+            }
+            let progress = (timestamp - pressTick) * speed;
+            pressTick = timestamp;
+
+            if (!staveNote.expandToDelta(progress, timestamp)) {
+              window.movingStaff.moveDelta(progress);
+            }
+          }
         }
-        let progress = (timestamp - pressTick) * speed;
-        note.expandTo(progress, timestamp);
-      }
+      });
       requestAnimationFrame(update);
     }
 

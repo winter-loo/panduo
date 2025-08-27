@@ -377,6 +377,7 @@ export class StaveNote extends StemmableNote {
   protected ledgerLineStyle: ElementStyle;
   private dom?: Element;
   private fullExpanded: boolean;
+  private donutWidth: number;
 
   private _noteHeads: NoteHead[];
 
@@ -387,6 +388,8 @@ export class StaveNote extends StemmableNote {
     super(noteStruct);
 
     this.fullExpanded = false;
+    this.donutWidth = 0;
+
     this.ledgerLineStyle = {};
 
     this.clef = noteStruct.clef ?? 'treble';
@@ -1258,9 +1261,9 @@ export class StaveNote extends StemmableNote {
   }
 
 
-  expandTo(x: number, timestamp?: DOMHighResTimeStamp) {
-    if (!this.dom) return;
-    if (this.fullExpanded) return;
+  expandTo(x: number, timestamp?: DOMHighResTimeStamp): boolean {
+    if (!this.dom) return true;
+    if (this.fullExpanded) return true;
     let { w: width, h: height } = this.getBoundingBox();
 
     const rect = this.dom.querySelector('.donut .inner');
@@ -1273,7 +1276,32 @@ export class StaveNote extends StemmableNote {
       // actual maximum width
       donutWidth = donutWidth - 4;
     }
+    donutWidth = Math.min(width - 4, donutWidth);
 
     rect?.setAttribute('width', `${donutWidth}`);
+    // when we first reached the desired width, we still return false
+    return false;
+  }
+
+  expandToDelta(x: number, timestamp?: DOMHighResTimeStamp): boolean {
+    if (!this.dom) return true;
+    if (this.fullExpanded) return true;
+    let { w: width, h: height } = this.getBoundingBox();
+
+    const rect = this.dom.querySelector('.donut .inner');
+
+    let donutWidth = this.donutWidth + x;
+    // outter rect has 2px border
+    // minimum width: height - 4
+    donutWidth = Math.min(width, Math.max(donutWidth, height - 4));
+    if (donutWidth == width && !this.fullExpanded) {
+      this.fullExpanded = true;
+      console.log('done full expanded, ', timestamp, donutWidth);
+    }
+    this.donutWidth = Math.min(width - 4, donutWidth);
+
+    rect?.setAttribute('width', `${this.donutWidth}`);
+    // when we first reached the desired width, we still return false
+    return false;
   }
 }

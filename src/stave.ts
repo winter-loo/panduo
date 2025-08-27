@@ -733,8 +733,8 @@ export class Stave extends Element {
 
   drawStillCursor() {
     const ctx = this.checkContext();
-    const offset = 50;
     const width = 5;
+    const offset = this.width - width;
     const paddingTop = 5;
     const paddingBottom = 5;
     (<SVGContext> ctx).rect(this.x + offset, paddingTop, width, (<SVGContext>ctx).height - paddingBottom - paddingTop, {
