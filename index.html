@@ -249,6 +249,7 @@
         this.context = this.renderer.getContext();
         // do not count the treble clef width
         this.staveX = 0;
+        this.notes = [];
       }
 
       addMeasure(notes) {
@@ -269,6 +270,7 @@
         notes.forEach((note) => {
           let sn = new VexFlow.StaveNote(note);
           staveNotes.push(sn);
+          this.notes.push(sn);
           // NOTE: why does VexFlow not draw a dotted quarter note for me?
           if (note.duration.indexOf("d") != -1) {
             const dot = new VexFlow.Dot();
@@ -295,7 +297,7 @@
         },
         {
           notes: [
-            {keys: ["g/4/S2"], duration: "1", fingering: 5},
+            {keys: ["b/4/S2"], duration: "1", fingering: 5},
           ]
         }
       ]
@@ -322,13 +324,14 @@
       animationId = requestAnimationFrame(animate);
     };
 
+    window.movingStaff = {};
     function renderSong() {
       const nc = document.getElementById("notes-container");
       nc.innerHTML = '';
 
-      let movingStaff = new MovingStaff();
+      window.movingStaff = new MovingStaff();
       for (let i = 0; i < SONG_DATA.measures.length; i++) {
-        movingStaff.addMeasure(SONG_DATA.measures[i].notes);
+        window.movingStaff.addMeasure(SONG_DATA.measures[i].notes);
       }
       // add extra measures at the end so that we do not see empty spaces at the end
       // for (let i = 0; i < 10; i++) {
@@ -410,6 +413,39 @@
       drawGrid(gridSize);
     });
 
+    let keyJHolding = false;
+    let note = null;
+    let pressTick = null;
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'j' && !keyJHolding) {
+        keyJHolding = true;
+        let idx = Math.min(movingStaff.notes.length - 1, Math.round(Math.random() * movingStaff.notes.length));
+        note = movingStaff.notes[idx];
+      }
+    });
+
+    document.addEventListener('keyup', function (event) {
+      if (event.key === 'j') {
+        keyJHolding = false;
+        pressTick = null;
+      }
+    });
+
+    // one second should move 1000 pixels
+    const speed = 100 / 1000;
+    function update(timestamp) {
+      if (keyJHolding) {
+        if (!pressTick) {
+          pressTick = timestamp;
+          console.log('press tick ', pressTick);
+        }
+        let progress = (timestamp - pressTick) * speed;
+        note.expandTo(progress, timestamp);
+      }
+      requestAnimationFrame(update);
+    }
+
+    requestAnimationFrame(update);
   </script>
 </body>
 

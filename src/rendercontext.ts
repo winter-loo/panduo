@@ -26,9 +26,9 @@ export abstract class RenderContext {
   abstract setLineCap(capType: CanvasLineCap): this;
   abstract setLineDash(dashPattern: number[]): this;
   abstract scale(x: number, y: number): this;
-  abstract rect(x: number, y: number, width: number, height: number): this;
+  abstract rect(x: number, y: number, width: number, height: number, attributes?: any): this;
   abstract resize(width: number, height: number): this;
-  abstract fillRect(x: number, y: number, width: number, height: number): this;
+  abstract fillRect(x: number, y: number, width: number, height: number, attributes?: any): this;
   abstract clearRect(x: number, y: number, width: number, height: number): this;
   abstract pointerRect(x: number, y: number, width: number, height: number): this;
   abstract beginPath(): this;

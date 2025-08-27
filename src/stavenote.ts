@@ -222,8 +222,8 @@ export class StaveNote extends StemmableNote {
               // If we have different dot values, shift
               noteU.note.getModifiers().filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
                 .length !==
-                noteL.note.getModifiers().filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
-                  .length ||
+              noteL.note.getModifiers().filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
+                .length ||
               // If the notes are quite close but not on the same line, shift
               (lineDiff < 1 && lineDiff > 0) ||
               // If styles are different, shift
@@ -375,6 +375,8 @@ export class StaveNote extends StemmableNote {
   protected dotShiftY: number;
   protected useDefaultHeadX: boolean;
   protected ledgerLineStyle: ElementStyle;
+  private dom?: Element;
+  private fullExpanded: boolean;
 
   private _noteHeads: NoteHead[];
 
@@ -384,6 +386,7 @@ export class StaveNote extends StemmableNote {
   constructor(noteStruct: StaveNoteStruct) {
     super(noteStruct);
 
+    this.fullExpanded = false;
     this.ledgerLineStyle = {};
 
     this.clef = noteStruct.clef ?? 'treble';
@@ -424,6 +427,10 @@ export class StaveNote extends StemmableNote {
     }
     this.reset();
     this.buildFlag();
+  }
+
+  getDom(): Element | undefined {
+    return this.dom;
   }
 
   override reset(): this {
@@ -857,10 +864,14 @@ export class StaveNote extends StemmableNote {
   }
 
   override setWidth(width: number): this {
-      this.noteHeads.forEach(notehead => {
-        notehead.setWidth(width);
-      });
-      return this;
+    this.noteHeads.forEach(notehead => {
+      notehead.setWidth(width);
+    });
+    return this;
+  }
+
+  override getX(): number {
+    return this.noteHeads[0].getAbsoluteX();
   }
 
   // Sets the notehead at `index` to the provided coloring `style`.
@@ -1119,9 +1130,9 @@ export class StaveNote extends StemmableNote {
       const flagY =
         this.getStemDirection() === Stem.DOWN
           ? // Down stems are below the note head and have flags on the right.
-            yTop - noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
+          yTop - noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
           : // Up stems are above the note head and have flags on the right.
-            yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
+          yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
 
       // Draw the Flag
       this.flag.setContext(ctx).setX(flagX).setY(flagY).drawWithStyle();
@@ -1223,13 +1234,46 @@ export class StaveNote extends StemmableNote {
 
     // Apply the overall style -- may be contradicted by local settings:
     const pitch = `pitch-${this.keyProps[0].key}`;
-    ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
+    this.dom = ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
     // this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
     this.drawFlag();
-    this.drawPointerRect();
+    // this.drawPointerRect();
+    this.drawDonut();
     ctx.closeGroup();
     this.setRendered();
+  }
+
+  drawDonut(): this {
+    const ctx = this.checkContext();
+    let { x, y, w: width, h: height } = this.getBoundingBox();
+
+    const attributes = { rx: height / 2, ry: height / 2, fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
+    ctx.openGroup('donut');
+    ctx.fillRect(x + 2, y + 2, height - 4, height - 4, { class: 'inner' });
+    ctx.rect(x, y, width, height, attributes);
+    ctx.closeGroup();
+    return this;
+  }
+
+
+  expandTo(x: number, timestamp?: DOMHighResTimeStamp) {
+    if (!this.dom) return;
+    if (this.fullExpanded) return;
+    let { w: width, h: height } = this.getBoundingBox();
+
+    const rect = this.dom.querySelector('.donut .inner');
+    // outter rect has 2px border
+    // minimum width: height - 4
+    let donutWidth = Math.min(width, Math.max(x, height - 4));
+    if (donutWidth == width && !this.fullExpanded) {
+      this.fullExpanded = true;
+      console.log('done full expanded, ', timestamp, donutWidth);
+      // actual maximum width
+      donutWidth = donutWidth - 4;
+    }
+
+    rect?.setAttribute('width', `${donutWidth}`);
   }
 }

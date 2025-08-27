@@ -1132,7 +1132,7 @@ export class Formatter {
     }
 
     this.alignRests(voices, opts.alignRests);
-    console.log('tick contexts created: ', this.createTickContexts(voices));
+    this.createTickContexts(voices);
     this.preFormat(justifyWidth, opts.context, voices, opts.stave);
     console.log('DONE DONE DONE preFormat');
 

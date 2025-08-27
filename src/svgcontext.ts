@@ -374,18 +374,15 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  fillRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { fill: 'currentColor', rx: height, ry: height, stroke: 'none' };
+  fillRect(x: number, y: number, width: number, height: number, optional_attributes?: Attributes): this {
+    const attributes = { fill: 'currentColor', rx: height, ry: height, stroke: 'none', ...optional_attributes };
     this.rect(x, y, width, height, attributes);
     return this;
   }
 
   pointerRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { rx: height/2, ry: height/2, fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
-    this.openGroup('donut');
-    this.fillRect(x + 2, y + 2, width - 4, height - 4);
+    const attributes = { fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
     this.rect(x, y, width, height, attributes);
-    this.closeGroup();
     return this;
   }
 
