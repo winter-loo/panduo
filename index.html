@@ -7,12 +7,14 @@
   <title>walk the moon</title>
 
   <!-- PRELOAD MUSIC FONT -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2" as="font"
-    type="font/woff2" crossorigin="anonymous">
+  <!-- <link rel="preload" href="https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2" as="font" -->
+  <!--   type="font/woff2" crossorigin="anonymous"> -->
+  <link rel="preload" href="/public/bravura.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   <style>
     @font-face {
       font-family: "Bravura";
-      src: url("https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2") format("woff2");
+      /* src: url("https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2") format("woff2"); */
+      src: url("/public/bravura.woff2") format("woff2");
       font-display: block;
     }
   </style>
@@ -185,9 +187,10 @@
     VexFlow.StaveNote.DEBUG = true;
     VexFlow.Formatter.DEBUG = true;
     VexFlow.EasyScore.DEBUG = true;
+    VexFlow.ModifierContext.DEBUG = true;
 
     class MovingStaff {
-      static MEASURE_WIDTH = 300;
+      static MEASURE_WIDTH = 400;
       static STAVE_HEIGHT = 120;
 
       constructor() {
@@ -249,15 +252,15 @@
       measures: [
         {
           notes: [
-            {keys: ["d/4"], duration: "4", fingering: 2},
-            {keys: ["f/4"], duration: "8", fingering: 4},
-            {keys: ["c/4"], duration: "8", fingering: 1},
-            {keys: ["g/4"], duration: "2", fingering: null}
+            {keys: ["d/4/S2"], duration: "4", fingering: 2},
+            {keys: ["f/4/S2"], duration: "8", fingering: 4},
+            {keys: ["c/4/S2"], duration: "8", fingering: 1},
+            {keys: ["g/4/S2"], duration: "2", fingering: null}
           ]
         },
         {
           notes: [
-            {keys: ["g/4"], duration: "1", fingering: 5},
+            {keys: ["g/4/S2"], duration: "1", fingering: 5},
           ]
         }
       ]
