@@ -1294,13 +1294,14 @@ export class StaveNote extends StemmableNote {
     // outter rect has 2px border
     // minimum width: height - 4
     donutWidth = Math.min(width, Math.max(donutWidth, height - 4));
+    this.donutWidth =donutWidth;
     if (donutWidth == width && !this.fullExpanded) {
       this.fullExpanded = true;
       console.log('done full expanded, ', timestamp, donutWidth);
     }
-    this.donutWidth = Math.min(width - 4, donutWidth);
+    donutWidth = Math.min(width - 4, donutWidth);
 
-    rect?.setAttribute('width', `${this.donutWidth}`);
+    rect?.setAttribute('width', `${donutWidth}`);
     // when we first reached the desired width, we still return false
     return false;
   }

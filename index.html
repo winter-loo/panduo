@@ -9,12 +9,13 @@
   <!-- PRELOAD MUSIC FONT -->
   <!-- <link rel="preload" href="https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2" as="font" -->
   <!--   type="font/woff2" crossorigin="anonymous"> -->
-  <link rel="preload" href="/public/bravura.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+  <!-- vite automatically loads this font file from the 'public' folder -->
+  <link rel="preload" href="/bravura.woff2" as="font" type="font/woff2" crossorigin="anonymous">
   <style>
     @font-face {
       font-family: "Bravura";
       /* src: url("https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2") format("woff2"); */
-      src: url("/public/bravura.woff2") format("woff2");
+      src: url("/bravura.woff2") format("woff2");
       font-display: block;
     }
   </style>
@@ -54,7 +55,8 @@
 
     #notes-container {
       /* the distance we need offset to keep whole notes area visible */
-      padding-left: 40px;
+      /* the above 40px - 5px(the width of the still cursor line) */
+      padding-left: 35px;
     }
 
     #grid {
@@ -127,7 +129,7 @@
     </div>
   </div>
 
-  <button type="button" id="renderButton">render</button>
+  <button type="button" id="renderButton">rerender</button>
   <button type="button" id="pauseButton">pause</button>
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
@@ -374,12 +376,21 @@
       moving();
     });
     document.getElementById('resetButton').addEventListener('click', () => {
+      reset();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key == 'r') {
+        reset();
+      }
+    });
+
+    function reset() {
       xOffset = 0;
       cancelAnimationFrame(animationId);
       animationId = null;
       let ncw = document.getElementById('notes-container');
       window.movingStaff.move(0);
-    });
+    }
 
     // Initialize grid
     drawGrid(gridSize);
@@ -463,17 +474,27 @@
     function update(timestamp) {
       keysHoldingMap.forEach(({noteName, holding}, key) => {
         if (holding) {
-          let staveNote = movingStaff.notes[note_idx];
-          if (noteName == staveNote.getKeyProps()[0].key) {
-            if (!pressTick) {
+          if (note_idx < movingStaff.notes.length) {
+            console.log(`note_idx: ${note_idx}`);
+            let staveNote = movingStaff.notes[note_idx];
+            if (noteName == staveNote.getKeyProps()[0].key) {
+              if (!pressTick) {
+                pressTick = timestamp;
+                console.log(`key ${key} press tick ${pressTick}`);
+              }
+              let progress = (timestamp - pressTick) * speed;
               pressTick = timestamp;
-              console.log(`key ${key} press tick ${pressTick}`);
-            }
-            let progress = (timestamp - pressTick) * speed;
-            pressTick = timestamp;
 
-            if (!staveNote.expandToDelta(progress, timestamp)) {
-              window.movingStaff.moveDelta(progress);
+              if (!staveNote.expandToDelta(progress, timestamp)) {
+                window.movingStaff.moveDelta(progress);
+              } else if (note_idx < movingStaff.notes.length) {
+                if (note_idx + 1 != movingStaff.notes.length) {
+                  // move extra 5px width of the still cursor
+                  // but do not do an extra move when we at the last note
+                  window.movingStaff.moveDelta(5);
+                }
+                note_idx += 1;
+              }
             }
           }
         }
