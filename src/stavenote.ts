@@ -667,13 +667,11 @@ export class StaveNote extends StemmableNote {
 
   // Determine if the `StaveNote` has a stem
   override hasStem(): boolean {
-    return false;
-    // return this.glyphProps.stem;
+    return this.glyphProps.stem;
   }
 
   override hasFlag(): boolean {
-    return false;
-    // return super.hasFlag() && !this.isRest();
+    return super.hasFlag() && !this.isRest();
   }
 
   override getStemX(): number {
@@ -866,12 +864,12 @@ export class StaveNote extends StemmableNote {
     return this.noteHeads[0].getWidth();
   }
 
-  override setWidth(width: number): this {
-    this.noteHeads.forEach(notehead => {
-      notehead.setWidth(width);
-    });
-    return this;
-  }
+  // override setWidth(width: number): this {
+  //   this.noteHeads.forEach(notehead => {
+  //     notehead.setWidth(width);
+  //   });
+  //   return this;
+  // }
 
   override getX(): number {
     return this.noteHeads[0].getAbsoluteX();
@@ -1242,7 +1240,7 @@ export class StaveNote extends StemmableNote {
     this.drawNoteHeads();
     this.drawFlag();
     // this.drawPointerRect();
-    this.drawDonut();
+    // this.drawDonut();
     ctx.closeGroup();
     this.setRendered();
   }

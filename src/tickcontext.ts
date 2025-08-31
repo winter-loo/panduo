@@ -273,6 +273,7 @@ export class TickContext {
 
       // Recalculate the tick context total width
       this.width = this.notePx + this.totalLeftPx + this.totalRightPx;
+      console.log(`in preformat, tick ${this.currentTick}, width: ${this.width}`);
     }
 
     return this;
