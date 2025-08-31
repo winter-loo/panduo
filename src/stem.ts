@@ -204,7 +204,7 @@ export class Stem extends Element {
 
     const stemHeight = this.getHeight();
 
-    L('Rendering stem - ', 'Top Y: ', this.yTop, 'Bottom Y: ', this.yBottom);
+    L('Rendering stem - ', 'Top Y: ', this.yTop, 'Bottom Y: ', this.yBottom, 'stem height: ', stemHeight);
 
     // The offset from the stem's base which is required fo satisfy the stemlet height
     const stemletYOffset = this.isStemlet ? stemHeight - this.stemletHeight * this.stemDirection : 0;

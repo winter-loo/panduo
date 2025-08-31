@@ -375,7 +375,7 @@ export class SVGContext extends RenderContext {
   }
 
   fillRect(x: number, y: number, width: number, height: number, optional_attributes?: Attributes): this {
-    const attributes = { fill: 'currentColor', rx: height, ry: height, stroke: 'none', ...optional_attributes };
+    const attributes = { fill: 'currentColor', stroke: 'none', ...optional_attributes };
     this.rect(x, y, width, height, attributes);
     return this;
   }
@@ -530,11 +530,11 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  stroke(): this {
+  stroke(props?: any): this {
     const path = this.create('path');
     const attributes: Attributes = {
       ...this.attributes,
-      fill: 'none',
+      ...props,
       d: this.path,
     };
     if ((this.attributes.shadowBlur as number) > 0) {
@@ -559,7 +559,7 @@ export class SVGContext extends RenderContext {
     return { x: bb.x, y: bb.y, width: bb.w, height: bb.h };
   }
 
-  fillText(text: string, x: number, y: number): this {
+  fillText(text: string, x: number, y: number, props?: Attributes): this {
     if (!text || text.length <= 0) {
       return this;
     }
@@ -567,6 +567,7 @@ export class SVGContext extends RenderContext {
     y = this.round(y);
     const attributes: Attributes = {
       ...this.attributes,
+      ...props,
       stroke: 'none',
       x,
       y,

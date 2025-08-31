@@ -46,9 +46,9 @@ export abstract class RenderContext {
   ): this;
   // eslint-disable-next-line
   abstract fill(attributes?: any): this;
-  abstract stroke(): this;
+  abstract stroke(props?: any): this;
   abstract closePath(): this;
-  abstract fillText(text: string, x: number, y: number): this;
+  abstract fillText(text: string, x: number, y: number, props?: any): this;
   abstract save(): this;
   abstract restore(): this;
   // eslint-disable-next-line

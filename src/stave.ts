@@ -703,7 +703,10 @@ export class Stave extends Element {
         ctx.beginPath();
         ctx.moveTo(x, y + lineWidthCorrection);
         ctx.lineTo(x + width, y + lineWidthCorrection);
-        ctx.stroke();
+        ctx.stroke({
+          stroke: '#dadada',
+          'stroke-width': 3,
+        });
       }
     }
 

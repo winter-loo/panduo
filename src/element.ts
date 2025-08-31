@@ -606,9 +606,9 @@ export class Element {
   }
 
   /** Render the element text. */
-  renderText(ctx: RenderContext, xPos: number, yPos: number): void {
+  renderText(ctx: RenderContext, xPos: number, yPos: number, props?: any): void {
     ctx.setFont(this._fontInfo);
-    ctx.fillText(this._text, xPos + this.x + this.xShift, yPos + this.y + this.yShift);
+    ctx.fillText(this._text, xPos + this.x + this.xShift, yPos + this.y + this.yShift, props);
     this.children.forEach((child) => {
       // changed -- do not look at private attributes of children.
       ctx.setFont(child.fontInfo);

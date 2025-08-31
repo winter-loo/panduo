@@ -88,7 +88,7 @@ export class Metrics {
 export const MetricsDefaults: Record<string, any> = {
   pointerRect: false,
   fontFamily: 'Bravura,Academico',
-  fontSize: 30,
+  fontSize: 60,
   fontScale: 1.0,
   fontWeight: 'normal',
   fontStyle: 'normal',

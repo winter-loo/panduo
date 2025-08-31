@@ -155,7 +155,7 @@ export class NoteHead extends Note {
 
     L("Drawing note head '", this.noteType, this.duration, "' at", this.x, this.y);
     this.x = this.getAbsoluteX();
-    // this.renderText(ctx, 0, 0);
+    this.renderText(ctx, 0, 0);
     (this.parent as StaveNote)?.drawModifiers(this);
     console.log('current notehead width: ', this.width);
     this.drawPointerRect();

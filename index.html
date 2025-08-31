@@ -81,31 +81,31 @@
   <!-- stave style -->
   <style>
     .vf-pitch-C {
-      color: crimson;
+      color: #CE82FF;
     }
 
     .vf-pitch-D {
-      color: darkmagenta;
+      color: #FF9600;
     }
 
     .vf-pitch-E {
-      color: sienna;
+      color: #58CC02;
     }
 
     .vf-pitch-F {
-      color: fuchsia;
+      color: #CC348D;
     }
 
     .vf-pitch-G {
-      color: gold;
+      color: #708FFF;
     }
 
     .vf-pitch-A {
-      color: aqua;
+      color: #FF86D0;
     }
 
     .vf-pitch-B {
-      color: blueviolet;
+      color: #00CE9F;
     }
   </style>
 </head>
@@ -231,12 +231,21 @@
 
     class MovingStaff {
       static MEASURE_WIDTH = 400;
-      static STAVE_HEIGHT = 120;
+      static STAVE_HEIGHT = 180;
+      static spacingBetweenLinesPx = 20;
+      static numPaddingSpaces = Math.floor((MovingStaff.STAVE_HEIGHT - 4 * MovingStaff.spacingBetweenLinesPx) / 2 / MovingStaff.spacingBetweenLinesPx);
+      static staveStyle = {
+          spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
+          spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
+          spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
+      };
 
       constructor() {
         // Create an SVG renderer and attach it to the DIV element with id="output".
         // const div = document.getElementById("moving-staff");
-        this.numPaddingSpaces = (MovingStaff.STAVE_HEIGHT - 40) / 2 / 10;
+        // svg rendered five-stave-line height: 40
+        // spacing between stave lines: 10
+        this.numPaddingSpaces = 0;
 
         // draw the treble clef on the staff independently
         const TREBLE_CLEF_STAVE_WIDTH = 90;
@@ -245,8 +254,7 @@
         const renderer = new VexFlow.Renderer(clef, VexFlow.Renderer.Backends.SVG);
         renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
         this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
-          spaceAboveStaffLn: this.numPaddingSpaces,
-          spaceBelowStaffLn: this.numPaddingSpaces,
+          ...MovingStaff.staveStyle,
           stillCursor: true,
         });
         this.clefStave.addClef("treble");
@@ -268,12 +276,8 @@
 
       addMeasure(notes) {
         // add stave
-        // svg rendered five-stave-line height: 40
-        // spacing between stave lines: 10
-        let num = (MovingStaff.STAVE_HEIGHT - 40) / 2 / 10;
         const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
-          spaceAboveStaffLn: this.numPaddingSpaces,
-          spaceBelowStaffLn: this.numPaddingSpaces,
+          ...MovingStaff.staveStyle,
         });
         this.staveX += MovingStaff.MEASURE_WIDTH;
         // draw five staff lines and treble clef
@@ -311,15 +315,15 @@
       measures: [
         {
           notes: [
-            {keys: ["d/4/S2"], duration: "4", fingering: 2},
-            {keys: ["f/4/S2"], duration: "8", fingering: 4},
-            {keys: ["c/4/S2"], duration: "8", fingering: 1},
-            {keys: ["g/4/S2"], duration: "2", fingering: null}
+            {keys: ["d/4"], duration: "4", fingering: 2},
+            {keys: ["f/4"], duration: "8", fingering: 4},
+            {keys: ["c/4"], duration: "8", fingering: 1},
+            {keys: ["g/4"], duration: "2", fingering: null}
           ]
         },
         {
           notes: [
-            {keys: ["b/4/S2"], duration: "1", fingering: 5},
+            {keys: ["b/4"], duration: "1", fingering: 5},
           ]
         }
       ]

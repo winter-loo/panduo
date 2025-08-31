@@ -1111,11 +1111,10 @@ export class StaveNote extends StemmableNote {
   }
 
   shouldDrawFlag(): boolean {
-    return false;
-    // const hasStem = this.stem !== undefined;
-    // const hasFlag = this.glyphProps.codeFlagUp !== undefined;
-    // const hasNoBeam = this.beam === undefined;
-    // return hasStem && hasFlag && hasNoBeam && !this.isRest();
+    const hasStem = this.stem !== undefined;
+    const hasFlag = this.glyphProps.codeFlagUp !== undefined;
+    const hasNoBeam = this.beam === undefined;
+    return hasStem && hasFlag && hasNoBeam && !this.isRest();
   }
 
   // Draw the flag for the note
@@ -1251,11 +1250,25 @@ export class StaveNote extends StemmableNote {
   drawDonut(): this {
     const ctx = this.checkContext();
     let { x, y, w: width, h: height } = this.getBoundingBox();
+    const staffLineWidth = 3;
 
-    const attributes = { rx: height / 2, ry: height / 2, fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
     ctx.openGroup('donut');
-    ctx.fillRect(x + 2, y + 2, height - 4, height - 4, { class: 'inner' });
-    ctx.rect(x, y, width, height, attributes);
+    ctx.fillRect(x + staffLineWidth * 2, y, 0, height,
+      {
+        class: 'inner',
+        rx: height / 2, ry: height / 2,
+        opacity: 0.5,
+      });
+    const outWidth = width;
+    const outHeight = height + staffLineWidth * 4;
+    ctx.rect(x, y - staffLineWidth * 2, outWidth, outHeight, {
+      rx: outHeight / 2, ry: outHeight / 2,
+      fill: 'none',
+      'stroke-width': staffLineWidth,
+      stroke: 'currentColor',
+      'pointer-events': 'auto',
+      opacity: 0.5,
+    });
     ctx.closeGroup();
     return this;
   }
@@ -1265,6 +1278,7 @@ export class StaveNote extends StemmableNote {
     if (!this.dom) return true;
     if (this.fullExpanded) return true;
     let { w: width, h: height } = this.getBoundingBox();
+    const staffLineWidth = 3;
 
     const rect = this.dom.querySelector('.donut .inner');
     // outter rect has 2px border
@@ -1274,9 +1288,9 @@ export class StaveNote extends StemmableNote {
       this.fullExpanded = true;
       console.log('done full expanded, ', timestamp, donutWidth);
       // actual maximum width
-      donutWidth = donutWidth - 4;
+      donutWidth = donutWidth - staffLineWidth * 4;
     }
-    donutWidth = Math.min(width - 4, donutWidth);
+    donutWidth = Math.min(width - staffLineWidth * 4, donutWidth);
 
     rect?.setAttribute('width', `${donutWidth}`);
     // when we first reached the desired width, we still return false
@@ -1287,6 +1301,7 @@ export class StaveNote extends StemmableNote {
     if (!this.dom) return true;
     if (this.fullExpanded) return true;
     let { w: width, h: height } = this.getBoundingBox();
+    const staffLineWidth = 3;
 
     const rect = this.dom.querySelector('.donut .inner');
 
@@ -1294,12 +1309,12 @@ export class StaveNote extends StemmableNote {
     // outter rect has 2px border
     // minimum width: height - 4
     donutWidth = Math.min(width, Math.max(donutWidth, height - 4));
-    this.donutWidth =donutWidth;
+    this.donutWidth = donutWidth;
     if (donutWidth == width && !this.fullExpanded) {
       this.fullExpanded = true;
       console.log('done full expanded, ', timestamp, donutWidth);
     }
-    donutWidth = Math.min(width - 4, donutWidth);
+    donutWidth = Math.min(width - 4 * staffLineWidth, donutWidth);
 
     rect?.setAttribute('width', `${donutWidth}`);
     // when we first reached the desired width, we still return false

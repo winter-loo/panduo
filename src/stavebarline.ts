@@ -174,9 +174,11 @@ export class Barline extends StaveModifier {
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, 1, botY - topY);
+      staveCtx.fillRect(x - 3, topY, 3, botY - topY,
+      { rx: 0, ry: 0, fill: '#DADADA', stroke: 'none' });
     }
-    staveCtx.fillRect(x, topY, 1, botY - topY);
+    staveCtx.fillRect(x, topY, 3, botY - topY,
+      { rx: 0, ry: 0, fill: '#DADADA', stroke: 'none' });
   }
 
   drawVerticalEndBar(stave: Stave, x: number): void {
