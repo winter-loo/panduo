@@ -418,7 +418,7 @@ export abstract class Note extends Tickable {
 
   /** Get the stave line number for the note. */
   // eslint-disable-next-line
-  getLineNumber(isTopNote?: boolean): number {
+  getLineNumber(_isTopNote?: boolean): number {
     return 0;
   }
 
@@ -565,7 +565,7 @@ export abstract class Note extends Tickable {
 
   /** Get the coordinates for where modifiers begin. */
   // eslint-disable-next-line
-  getModifierStartXY(position?: number, index?: number, options?: any): { x: number; y: number } {
+  getModifierStartXY(_position?: number, _index?: number, _options?: any): { x: number; y: number } {
     if (!this.preFormatted) {
       throw new RuntimeError('UnformattedNote', "Can't call GetModifierStartXY on an unformatted note");
     }

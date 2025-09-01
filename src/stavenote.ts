@@ -16,13 +16,16 @@ import { Metrics } from './metrics';
 import { Modifier } from './modifier';
 import { ModifierContextState } from './modifiercontext';
 import { KeyProps, Note, NoteStruct } from './note';
+import { NoteDonut } from './notedonut';
 import { NoteHead } from './notehead';
 import { Stave } from './stave';
 import { Stem, StemOptions } from './stem';
 import { StemmableNote } from './stemmablenote';
 import { Tables } from './tables';
+import { TickContext } from './tickcontext';
 import { Category } from './typeguard';
 import { defined, log, midLine, RuntimeError } from './util';
+import { Voice } from './voice';
 
 export interface StaveNoteHeadBounds {
   yTop: number;
@@ -69,7 +72,7 @@ const isInnerNoteIndex = (note: StaveNote, index: number) =>
   index === (note.getStemDirection() === Stem.UP ? note.keyProps.length - 1 : 0);
 
 // Helper methods for rest positioning in ModifierContext.
-function shiftRestVertical(rest: StaveNoteFormatSettings, note: StaveNoteFormatSettings, dir: number) {
+function shiftRestVertical(rest: StaveNoteFormatSettings, _note: StaveNoteFormatSettings, dir: number) {
   const delta = dir;
 
   rest.line += delta;
@@ -375,20 +378,15 @@ export class StaveNote extends StemmableNote {
   protected dotShiftY: number;
   protected useDefaultHeadX: boolean;
   protected ledgerLineStyle: ElementStyle;
-  private dom?: Element;
-  private fullExpanded: boolean;
-  private donutWidth: number;
 
   private _noteHeads: NoteHead[];
+  private _noteDonuts: NoteDonut[];
 
   // Sorted variant of keyProps used internally.
   private sortedKeyProps: { keyProps: KeyProps; index: number }[] = [];
 
   constructor(noteStruct: StaveNoteStruct) {
     super(noteStruct);
-
-    this.fullExpanded = false;
-    this.donutWidth = 0;
 
     this.ledgerLineStyle = {};
 
@@ -411,6 +409,7 @@ export class StaveNote extends StemmableNote {
 
     // Drawing
     this._noteHeads = [];
+    this._noteDonuts = [];
     this.modifiers = [];
 
     this.renderOptions = {
@@ -430,10 +429,6 @@ export class StaveNote extends StemmableNote {
     }
     this.reset();
     this.buildFlag();
-  }
-
-  getDom(): Element | undefined {
-    return this.dom;
   }
 
   override reset(): this {
@@ -468,6 +463,21 @@ export class StaveNote extends StemmableNote {
   // Builds a `Stem` for the note
   override buildStem(): this {
     this.setStem(new Stem({ hide: this.isRest() }));
+    return this;
+  }
+
+  override setVoice(voice: Voice): this {
+    this.voice = voice;
+
+    this._noteDonuts.forEach((donut) => donut.setVoice(voice));
+    this.preFormatted = false;
+    return this;
+  }
+
+  override setTickContext(tc: TickContext): this {
+    this.tickContext = tc;
+    this._noteDonuts.forEach((donut) => donut.setTickContext(tc));
+    this.preFormatted = false;
     return this;
   }
 
@@ -531,6 +541,18 @@ export class StaveNote extends StemmableNote {
 
       this.addChild(notehead);
       this._noteHeads[this.sortedKeyProps[i].index] = notehead;
+
+      /* build NoteDonut */
+      const notedonut = new NoteDonut({
+        duration: this.duration,
+        noteType: this.noteType,
+        line: noteProps.line,
+      });
+
+      notedonut.fontInfo = this.fontInfo;
+      console.log(`notedonut is built, line=${line}, width=${notedonut.width}`);
+
+      this._noteDonuts[this.sortedKeyProps[i].index] = notedonut;
     }
     return this._noteHeads;
   }
@@ -711,6 +733,10 @@ export class StaveNote extends StemmableNote {
       return notehead.getY();
     });
 
+    this._noteDonuts.forEach((notedonut) => {
+      notedonut.setStave(stave);
+    });
+
     this.setYs(ys);
 
     if (this.stem) {
@@ -864,13 +890,6 @@ export class StaveNote extends StemmableNote {
     return this.noteHeads[0].getWidth();
   }
 
-  // override setWidth(width: number): this {
-  //   this.noteHeads.forEach(notehead => {
-  //     notehead.setWidth(width);
-  //   });
-  //   return this;
-  // }
-
   override getX(): number {
     return this.noteHeads[0].getAbsoluteX();
   }
@@ -936,24 +955,10 @@ export class StaveNote extends StemmableNote {
     }
 
     this.setWidth(width);
+
+    this._noteDonuts.forEach((donut) => donut.preFormat());
     this.preFormatted = true;
   }
-
-  /**
-   * @typedef {Object} noteHeadBounds
-   * @property {number} yTop the highest notehead bound
-   * @property {number} yBottom the lowest notehead bound
-   * @property {number|Null} displacedX the starting x for displaced noteheads
-   * @property {number|Null} nonDisplacedX the starting x for non-displaced noteheads
-   * @property {number} highestLine the highest notehead line in traditional music line
-   *  numbering (bottom line = 1, top line = 5)
-   * @property {number} lowestLine the lowest notehead line
-   * @property {number|false} highestDisplacedLine the highest staff line number
-   *   for a displaced notehead
-   * @property {number|false} lowestDisplacedLine
-   * @property {number} highestNonDisplacedLine
-   * @property {number} lowestNonDisplacedLine
-   */
 
   /**
    * Get the staff line and y value for the highest & lowest noteheads
@@ -1027,6 +1032,10 @@ export class StaveNote extends StemmableNote {
 
   get noteHeads(): NoteHead[] {
     return this._noteHeads.slice();
+  }
+
+  get noteDonus(): NoteDonut[] {
+    return this._noteDonuts.slice();
   }
 
   // Draw the ledger lines between the stave and the highest/lowest keys
@@ -1147,6 +1156,15 @@ export class StaveNote extends StemmableNote {
     });
   }
 
+  // Draw the NoteHeads
+  drawNoteDonuts(): void {
+    const ctx = this.checkContext();
+    this._noteDonuts.forEach((notedonut) => {
+      notedonut.setContext(ctx).drawWithStyle();
+    });
+  }
+
+
   override drawStem(stemOptions?: StemOptions): void {
     // GCR TODO: I can't find any context in which this is called with the stemStruct
     // argument in the codebase or tests. Nor can I find a case where super.drawStem
@@ -1223,6 +1241,7 @@ export class StaveNote extends StemmableNote {
 
     // Format note head x positions
     this._noteHeads.forEach((notehead) => notehead.setX(xBegin));
+    this._noteDonuts.forEach((notedonut) => notedonut.setX(xBegin));
 
     if (this.stem) {
       // Format stem x positions
@@ -1234,88 +1253,20 @@ export class StaveNote extends StemmableNote {
 
     // Apply the overall style -- may be contradicted by local settings:
     const pitch = `pitch-${this.keyProps[0].key}`;
-    this.dom = ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
+    ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
     // this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
     this.drawFlag();
-    // this.drawPointerRect();
-    // this.drawDonut();
+    this.drawNoteDonuts();
+    this.drawPointerRect();
     ctx.closeGroup();
     this.setRendered();
   }
 
-  drawDonut(): this {
-    const ctx = this.checkContext();
-    let { x, y, w: width, h: height } = this.getBoundingBox();
-    const staffLineWidth = 3;
-
-    ctx.openGroup('donut');
-    ctx.fillRect(x + staffLineWidth * 2, y, 0, height,
-      {
-        class: 'inner',
-        rx: height / 2, ry: height / 2,
-        opacity: 0.5,
-      });
-    const outWidth = width;
-    const outHeight = height + staffLineWidth * 4;
-    ctx.rect(x, y - staffLineWidth * 2, outWidth, outHeight, {
-      rx: outHeight / 2, ry: outHeight / 2,
-      fill: 'none',
-      'stroke-width': staffLineWidth,
-      stroke: 'currentColor',
-      'pointer-events': 'auto',
-      opacity: 0.5,
-    });
-    ctx.closeGroup();
-    return this;
-  }
-
-
-  expandTo(x: number, timestamp?: DOMHighResTimeStamp): boolean {
-    if (!this.dom) return true;
-    if (this.fullExpanded) return true;
-    let { w: width, h: height } = this.getBoundingBox();
-    const staffLineWidth = 3;
-
-    const rect = this.dom.querySelector('.donut .inner');
-    // outter rect has 2px border
-    // minimum width: height - 4
-    let donutWidth = Math.min(width, Math.max(x, height - 4));
-    if (donutWidth == width && !this.fullExpanded) {
-      this.fullExpanded = true;
-      console.log('done full expanded, ', timestamp, donutWidth);
-      // actual maximum width
-      donutWidth = donutWidth - staffLineWidth * 4;
-    }
-    donutWidth = Math.min(width - staffLineWidth * 4, donutWidth);
-
-    rect?.setAttribute('width', `${donutWidth}`);
-    // when we first reached the desired width, we still return false
-    return false;
-  }
-
   expandToDelta(x: number, timestamp?: DOMHighResTimeStamp): boolean {
-    if (!this.dom) return true;
-    if (this.fullExpanded) return true;
-    let { w: width, h: height } = this.getBoundingBox();
-    const staffLineWidth = 3;
-
-    const rect = this.dom.querySelector('.donut .inner');
-
-    let donutWidth = this.donutWidth + x;
-    // outter rect has 2px border
-    // minimum width: height - 4
-    donutWidth = Math.min(width, Math.max(donutWidth, height - 4));
-    this.donutWidth = donutWidth;
-    if (donutWidth == width && !this.fullExpanded) {
-      this.fullExpanded = true;
-      console.log('done full expanded, ', timestamp, donutWidth);
-    }
-    donutWidth = Math.min(width - 4 * staffLineWidth, donutWidth);
-
-    rect?.setAttribute('width', `${donutWidth}`);
-    // when we first reached the desired width, we still return false
-    return false;
+    let allExpanded = true;
+    this._noteDonuts.forEach((donut) => allExpanded &&= donut.expandToDelta(x, timestamp))
+    return allExpanded;
   }
 }

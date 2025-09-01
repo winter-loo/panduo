@@ -186,7 +186,7 @@ export const MetricsDefaults: Record<string, any> = {
   },
 
   StaveNote: {
-    pointerRect: true,
+    pointerRect: false,
   },
 
   StaveSection: {

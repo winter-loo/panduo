@@ -13,7 +13,7 @@ import { log, RuntimeError } from './util';
 
 // eslint-disable-next-line
 function L(...args: any[]) {
-  if (Stem.DEBUG) console.trace('VexFlow.Stem', args);
+  if (Stem.DEBUG) log('VexFlow.Stem', args);
 }
 
 export interface StemOptions {

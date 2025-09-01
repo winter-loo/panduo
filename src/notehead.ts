@@ -133,7 +133,9 @@ export class NoteHead extends Note {
 
     this.stave = stave;
     if (this.stave) {
-      this.setY(this.stave.getYForNote(line));
+      let y = this.stave.getYForNote(line);
+      console.log(`[notehead] set y=${y}`);
+      this.setY(y);
       this.setContext(this.stave.getContext());
     }
     return this;
@@ -152,6 +154,9 @@ export class NoteHead extends Note {
     const ctx = this.checkContext();
     this.setRendered();
     ctx.openGroup('notehead', this.getAttribute('id'));
+
+    let { x, y, w: width, h: height } = this.getBoundingBox();
+    console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);
 
     L("Drawing note head '", this.noteType, this.duration, "' at", this.x, this.y);
     this.x = this.getAbsoluteX();

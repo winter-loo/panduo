@@ -669,26 +669,25 @@ export class Formatter {
 
     console.log(`justifyWidth=${justifyWidth}`);
 
-    // let xOffset = 0;
-    // contextList.forEach((tick) => {
-    //   const context = contextMap[tick];
-    //
-    //   context.preFormat();
-    //
-    //   console.log(`tick=${tick} set x=${xOffset}`);
-    //   context.setX(xOffset);
-    //
-    //   let maxTickable = context.getMaxTickable();
-    //   if (maxTickable) {
-    //     let ticks = context.getMaxTicks().value();
-    //     let totalTicks = maxTickable.getVoice().getTotalTicks().value();
-    //     let width = (ticks / totalTicks) * justifyWidth;
-    //     console.log(`set tick=${tick} width to ${width}`);
-    //     maxTickable.setWidth(width);
-    //     xOffset += width;
-    //   }
-    // });
-    // return 0;
+    let xOffset = 0;
+    contextList.forEach((tick) => {
+      const context = contextMap[tick];
+
+      context.preFormat();
+
+      console.log(`tick=${tick} set x=${xOffset}`);
+      context.setX(xOffset);
+
+      let maxTickable = context.getMaxTickable();
+      if (maxTickable) {
+        // proportionally positioning
+        let ticks = context.getMaxTicks().value();
+        let totalTicks = maxTickable.getVoice().getTotalTicks().value();
+        let width = (ticks / totalTicks) * justifyWidth;
+        xOffset += width;
+      }
+    });
+    return 0;
 
 
     // Now distribute the ticks to each tick context, and assign them their
