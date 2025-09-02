@@ -145,10 +145,10 @@
     keyboard.connect();
 
     keyboard.on('noteOn', (e) => {
-      console.log('noteOn ', e);
+      console.log(`noteOn ${e.note}${e.octave}`);
     });
     keyboard.on('noteOff', (e) => {
-      console.log('noteOff', e);
+      console.log(`noteOff ${e.note}${e.octave}`);
     });
 
     let pianoSound = null;
