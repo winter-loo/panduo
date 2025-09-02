@@ -133,9 +133,38 @@
   <button type="button" id="pauseButton">pause</button>
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
+  <button type="button" id="loadPianoSound">load piano sound</button>
+  <button type="button" id="playPianoSound">play piano sound</button>
 
   <script type="module" lang="ts">
     import {VexFlow} from "./entry/vexflow-core.ts";
+    import {Piano as PianoSound} from '@tonejs/piano'
+
+    let pianoSound = null;
+    let pianoSoundLoaded = false;
+    document.getElementById("loadPianoSound").addEventListener("click", () => {
+      pianoSoundLoaded = false;
+      pianoSound = new PianoSound({
+        velocities: 5
+      });
+      pianoSound.toDestination();
+
+      pianoSound.load().then(() => {
+        console.log('loaded!')
+        pianoSoundLoaded = true;
+      });
+    });
+    document.getElementById("playPianoSound").addEventListener("mousedown", () => {
+      if (pianoSoundLoaded) {
+        pianoSound.keyDown({note: 'C4'});
+      }
+    });
+    document.getElementById("playPianoSound").addEventListener("mouseup", () => {
+      if (pianoSoundLoaded) {
+        //release the pressed 'C4' immediately
+        pianoSound.keyUp({note: 'C4'});
+      }
+    });
 
     console.log(VexFlow.BUILD);
 
@@ -235,9 +264,9 @@
       static spacingBetweenLinesPx = 20;
       static numPaddingSpaces = Math.floor((MovingStaff.STAVE_HEIGHT - 4 * MovingStaff.spacingBetweenLinesPx) / 2 / MovingStaff.spacingBetweenLinesPx);
       static staveStyle = {
-          spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
-          spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
-          spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
+        spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
+        spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
+        spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
       };
 
       constructor() {

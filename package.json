@@ -141,5 +141,8 @@
     "piano",
     "guitar",
     "tablature"
-  ]
+  ],
+  "dependencies": {
+    "@tonejs/piano": "^0.2.1"
+  }
 }

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <!-- 
+    <!--
       Summary: Draws music glyphs with opentype.js.
         Provide a comma separated list of SMuFL glyph names in DEFAULT_GLYPH_NAMES.
         See: https://w3c.github.io/smufl/latest/tables/
@@ -13,7 +13,7 @@
         We will draw the glyphs on a canvas in three different fonts (Bravura, Gonville, Petaluma).
         Use the keyboard's arrow keys to cycle through the glyphs.
         This tool was used to debug & fix the origins of various Gonville glyphs.
-        
+
       Run: Open canvas.html in a browser.
     -->
     <script src="https://cdn.jsdelivr.net/npm/wawoff2@2.0.1/build/decompress_binding.js"></script>
@@ -454,7 +454,7 @@
       }
 
       function loadGlyphNames() {
-        const names = localStorage.getItem('glyphNames');
+        let names = localStorage.getItem('glyphNames');
         if (names !== null && names.length > 0) {
           names = names.replace(/\s/g, '');
           glyphNames = names.split(',');
