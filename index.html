@@ -139,6 +139,17 @@
   <script type="module" lang="ts">
     import {VexFlow} from "./entry/vexflow-core.ts";
     import {Piano as PianoSound} from '@tonejs/piano'
+    import {VirtualMidiKeyboard} from "./src/VirtualMidiKeyboard.ts";
+
+    let keyboard = new VirtualMidiKeyboard();
+    keyboard.connect();
+
+    keyboard.on('noteOn', (e) => {
+      console.log('noteOn ', e);
+    });
+    keyboard.on('noteOff', (e) => {
+      console.log('noteOff', e);
+    });
 
     let pianoSound = null;
     let pianoSoundLoaded = false;
@@ -487,20 +498,20 @@
 
     let pressTick = null;
     let note_idx = 0;
-    document.addEventListener('keydown', function (event) {
-      let validKeyDown = keysHoldingMap.get(event.code);
-      if (validKeyDown != undefined && !validKeyDown.holding) {
-        validKeyDown.holding = true;
-      }
-    });
-
-    document.addEventListener('keyup', function (event) {
-      let state = keysHoldingMap.get(event.code);
-      if (state) {
-        state.holding = false;
-      }
-      pressTick = null;
-    });
+    // document.addEventListener('keydown', function (event) {
+    //   let validKeyDown = keysHoldingMap.get(event.code);
+    //   if (validKeyDown != undefined && !validKeyDown.holding) {
+    //     validKeyDown.holding = true;
+    //   }
+    // });
+    //
+    // document.addEventListener('keyup', function (event) {
+    //   let state = keysHoldingMap.get(event.code);
+    //   if (state) {
+    //     state.holding = false;
+    //   }
+    //   pressTick = null;
+    // });
 
     // one second should move 1000 pixels
     const speed = 100 / 1000;
