@@ -4,7 +4,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>walk the moon</title>
+  <title>paigo</title>
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="paigo" />
+  <link rel="manifest" href="/site.webmanifest" />
 
   <!-- PRELOAD MUSIC FONT -->
   <!-- <link rel="preload" href="https://cdn.jsdelivr.net/npm/@vexflow-fonts/bravura/bravura.woff2" as="font" -->
@@ -133,48 +139,23 @@
   <button type="button" id="pauseButton">pause</button>
   <button type="button" id="resumeButton">resume</button>
   <button type="button" id="resetButton">reset</button>
-  <button type="button" id="loadPianoSound">load piano sound</button>
-  <button type="button" id="playPianoSound">play piano sound</button>
 
   <script type="module" lang="ts">
     import {VexFlow} from "./entry/vexflow-core.ts";
-    import {Piano as PianoSound} from '@tonejs/piano'
     import {VirtualMidiKeyboard} from "./src/VirtualMidiKeyboard.ts";
 
-    let keyboard = new VirtualMidiKeyboard();
-    keyboard.connect();
+    let keyboard = new VirtualMidiKeyboard({audioSamplesUri: "/audio/"});
+    keyboard.connect().then(() => {
+      console.log('[VirtualMidiKeyboard] connected');
+    }).catch(() => {
+      console.error("[VirtualMidiKeyboard] failed to connect");
+    });
 
     keyboard.on('noteOn', (e) => {
       console.log(`noteOn ${e.note}${e.octave}`);
     });
     keyboard.on('noteOff', (e) => {
       console.log(`noteOff ${e.note}${e.octave}`);
-    });
-
-    let pianoSound = null;
-    let pianoSoundLoaded = false;
-    document.getElementById("loadPianoSound").addEventListener("click", () => {
-      pianoSoundLoaded = false;
-      pianoSound = new PianoSound({
-        velocities: 5
-      });
-      pianoSound.toDestination();
-
-      pianoSound.load().then(() => {
-        console.log('loaded!')
-        pianoSoundLoaded = true;
-      });
-    });
-    document.getElementById("playPianoSound").addEventListener("mousedown", () => {
-      if (pianoSoundLoaded) {
-        pianoSound.keyDown({note: 'C4'});
-      }
-    });
-    document.getElementById("playPianoSound").addEventListener("mouseup", () => {
-      if (pianoSoundLoaded) {
-        //release the pressed 'C4' immediately
-        pianoSound.keyUp({note: 'C4'});
-      }
     });
 
     console.log(VexFlow.BUILD);

@@ -1,22 +1,32 @@
 import { EventEmitter } from 'events'
+import { Piano as PianoSound } from '@tonejs/piano'
+
+export interface VirtualMidiKeyboardOption {
+  audioSamplesUri?: string,
+}
 
 export class VirtualMidiKeyboard extends EventEmitter {
 
   private NoteNameMap = new Map([
     ['Space', { noteName: 'C', holding: false }],
-    ['KeyF', { noteName: 'D', holding: false }],
-    ['KeyG', { noteName: 'E', holding: false }],
-    ['KeyH', { noteName: 'F', holding: false }],
-    ['KeyJ', { noteName: 'G', holding: false }],
-    ['KeyK', { noteName: 'A', holding: false }],
-    ['KeyL', { noteName: 'B', holding: false }],
+    ['KeyJ', { noteName: 'D', holding: false }],
+    ['KeyK', { noteName: 'E', holding: false }],
+    ['KeyL', { noteName: 'F', holding: false }],
+    ['Semicolon', { noteName: 'G', holding: false }],
+    ['Quote', { noteName: 'A', holding: false }],
+    ['Enter', { noteName: 'B', holding: false }],
+    ['KeyN', { noteName: 'C#', holding: false }],
+    ['KeyI', { noteName: 'D#', holding: false }],
+    ['KeyO', { noteName: 'F#', holding: false }],
+    ['KeyP', { noteName: 'G#', holding: false }],
+    ['BracketLeft', { noteName: 'A#', holding: false }],
   ]);
 
   // 'A', 'S', 'D' for increment octaves
   // A: C5, S: C6, D: C7
   // 'Z', 'X', 'C' for decrement octaves
   // Z: C3, X: C2, C: C1
-  // Q for C8, W for C0
+  // Q for C8, W for C4, E for C0
   private OctaveNumberMap = new Map([
     ['KeyA', { octave: 5, holding: false }],
     ['KeyS', { octave: 6, holding: false }],
@@ -31,12 +41,16 @@ export class VirtualMidiKeyboard extends EventEmitter {
 
   private keydownListener: any;
   private keyupListener: any;
+  private pianoSound: any;
+  private audioSamplesUri?: any;
 
-  constructor() {
+  constructor(options?: VirtualMidiKeyboardOption) {
     super();
 
     this.keydownListener = null;
     this.keyupListener = null;
+    this.pianoSound = null;
+    this.audioSamplesUri = options?.audioSamplesUri;
   }
 
   _addListeners() {
@@ -50,10 +64,12 @@ export class VirtualMidiKeyboard extends EventEmitter {
         self.OctaveNumberMap.forEach(({ octave, holding }, _key) => {
           if (holding) {
             octaveNumberHolding = true;
+            if (self.pianoSound) self.pianoSound.keyDown({ note: `${validKeyDown.noteName}${octave}` });
             self.emit('noteOn', { note: validKeyDown.noteName, octave: octave });
           }
         });
         if (!octaveNumberHolding) {
+          if (self.pianoSound) self.pianoSound.keyDown({ note: `${validKeyDown.noteName}4` });
           self.emit('noteOn', { note: validKeyDown.noteName, octave: 4 });
         }
       } else if (validKeyDown == undefined) {
@@ -62,6 +78,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
           validKeyDown.holding = true;
           self.NoteNameMap.forEach(({ noteName, holding }, _key) => {
             if (holding) {
+              if (self.pianoSound) self.pianoSound.keyDown({ note: `${noteName}${validKeyDown.octave}` });
               self.emit('noteOn', { note: noteName, octave: validKeyDown.octave });
             }
           });
@@ -73,17 +90,25 @@ export class VirtualMidiKeyboard extends EventEmitter {
       let state = self.NoteNameMap.get(event.code);
       if (state) {
         state.holding = false;
+        let hasOctaveNumberHolding = false;
         self.OctaveNumberMap.forEach(({ octave, holding }, _key) => {
           if (holding) {
+            hasOctaveNumberHolding = true;
+            if (self.pianoSound) self.pianoSound.keyUp({ note: `${state.noteName}${octave}` });
             self.emit('noteOff', { note: state.noteName, octave });
           }
-        })
+        });
+        if (!hasOctaveNumberHolding) {
+          if (self.pianoSound) self.pianoSound.keyUp({ note: `${state.noteName}4` });
+          self.emit('noteOff', { note: state.noteName, octave: 4 });
+        }
       } else {
         let state = self.OctaveNumberMap.get(event.code);
         if (state) {
           state.holding = false;
           self.NoteNameMap.forEach(({ noteName, holding }, _key) => {
             if (holding) {
+              if (self.pianoSound) self.pianoSound.keyUp({ note: `${noteName}${state.octave}` });
               self.emit('noteOff', { note: noteName, octave: state.octave });
             }
           });
@@ -100,8 +125,20 @@ export class VirtualMidiKeyboard extends EventEmitter {
     document.removeEventListener('keyup', this.keyupListener);
   }
 
-  connect() {
+  connect(): Promise<void> {
     this._addListeners();
+
+    if (this.audioSamplesUri) {
+      this.pianoSound = new PianoSound({
+        url: this.audioSamplesUri,
+        velocities: 5
+      });
+      this.pianoSound.toDestination();
+
+      console.log('[VirtualMidiKeyboard] loading audio samples...');
+      return this.pianoSound.load();
+    }
+    return Promise.resolve();
   }
 
   disconnect() {
