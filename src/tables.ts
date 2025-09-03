@@ -327,8 +327,7 @@ export class Tables {
   static UNISON = true;
   static SOFTMAX_FACTOR = 10;
   static STEM_WIDTH = 1.5;
-  // TODO(@ldd): should scacle by configuration
-  static STEM_HEIGHT = 70;
+  static STEM_HEIGHT = 35;
   static STAVE_LINE_THICKNESS = 1;
   static RENDER_PRECISION_PLACES = 3;
   static RESOLUTION = RESOLUTION;
