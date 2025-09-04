@@ -116,6 +116,23 @@
 	});
 </script>
 
+<nav>
+	<a href="/" class="nav-item">home</a>
+	<a href="/keyboard" class="nav-item">keyboard</a>
+
+	<style>
+		nav {
+			display: flex;
+			flex-flow: row wrap;
+      justify-content: flex-start;
+			margin-bottom: 8px;
+		}
+		.nav-item {
+			padding: 2px 4px;
+		}
+	</style>
+</nav>
+
 <div class="controls">
 	<button onclick={toggleGrid}>Toggle Grid</button>
 	<button onclick={() => changeGridSize(5)}>5px Grid</button>

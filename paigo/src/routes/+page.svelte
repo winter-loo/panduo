@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { StemmableNote, VexFlow } from '$lib/vexflow/vexflow-core';
+	import { StemmableNote, VexFlow, type StaveNoteStruct } from '$lib/vexflow/vexflow-core';
 
-	let notesContainer: HTMLDivElement;
-	let fixedClef: HTMLDivElement;
-	let vexflowLoaded = false;
-	let vexflowError = '';
+	let BindingDom: {
+		fixedClef?: HTMLDivElement;
+		notesContainer?: HTMLDivElement;
+	} = {};
+	let vexflowError = $state('');
 
 	try {
 		// Initialize VexFlow safely
@@ -25,7 +26,84 @@
 	VexFlow.STEM_WIDTH = 3;
 	VexFlow.STEM_HEIGHT = 70;
 
-	class MovingStaff {
+	class MovableElement {
+		elementOffsetX: number;
+		animationId?: number;
+    maxOffsetX: number;
+
+		constructor(maxOffsetX: number) {
+			this.elementOffsetX = $state(0);
+      this.maxOffsetX = maxOffsetX;
+		}
+
+		// see https://svelte.dev/docs/svelte/$state#Classes for the reason for
+		// the style of this function definition.
+		move = () => {
+			const animate = () => {
+				this.elementOffsetX += 1;
+				if (this.elementOffsetX > this.maxOffsetX) {
+					cancelAnimationFrame(this.animationId!);
+					return;
+				}
+				this.animationId = requestAnimationFrame(animate);
+			};
+
+			this.animationId = requestAnimationFrame(animate);
+		};
+
+		// see https://svelte.dev/docs/svelte/$state#Classes for the reason for
+		// the style of this function definition.
+		stop = () => {
+			if (this.animationId) cancelAnimationFrame(this.animationId);
+		};
+
+		// see https://svelte.dev/docs/svelte/$state#Classes for the reason for
+		// the style of this function definition.
+		reset = () => {
+			this.elementOffsetX = 0;
+			if (this.animationId) cancelAnimationFrame(this.animationId);
+		};
+
+		attachment = (element: HTMLElement) => {
+			let isDragging = false;
+			let dragStartX = 0;
+			let containerStartX = 0;
+
+			const onDragStart = (e: MouseEvent) => {
+				isDragging = true;
+				dragStartX = e.clientX;
+				containerStartX = this.elementOffsetX;
+			};
+
+			const onDragging = (e: MouseEvent) => {
+				if (isDragging) {
+					// > 0 => moving right
+					// < 0 => moving left
+					let deltaX = e.clientX - dragStartX;
+					if (Math.abs(deltaX) > 2) {
+						const newX = Math.max(containerStartX - deltaX, 0);
+						this.elementOffsetX = newX;
+					}
+				}
+			};
+
+			const onDragStop = (_e: MouseEvent) => {
+				isDragging = false;
+			};
+
+			element.addEventListener('mousedown', onDragStart);
+			element.addEventListener('mouseup', onDragStop);
+			element.addEventListener('mousemove', onDragging);
+
+			return () => {
+				element.removeEventListener('mousedown', onDragStart);
+				element.removeEventListener('mouseup', onDragStop);
+				element.removeEventListener('mousemove', onDragging);
+			};
+		};
+	}
+
+	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
 		static STAVE_HEIGHT = 180;
 		static spacingBetweenLinesPx = 20;
@@ -41,16 +119,21 @@
 		};
 
 		clefStave: any;
-		notesContainer: HTMLDivElement;
+		notesContainer?: HTMLDivElement;
 		renderer: any;
 		context: any;
 		staveX: number;
-		notes: any[];
-		movingOffset: number;
+		notes: StemmableNote[];
 
-		constructor(clefElement: HTMLDivElement, notesElement: HTMLDivElement) {
+		constructor(maxOffsetX: number) {
+			super(maxOffsetX);
+			this.staveX = 0;
+			this.notes = [];
+		}
+
+		init(clefElement: HTMLDivElement, notesElement: HTMLDivElement) {
 			// draw the treble clef on the staff independently
-			const TREBLE_CLEF_STAVE_WIDTH = 90;
+			const TREBLE_CLEF_STAVE_WIDTH = 120;
 			clefElement.innerHTML = '';
 			const renderer = new VexFlow.Renderer(clefElement, VexFlow.Renderer.Backends.SVG);
 			renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
@@ -61,8 +144,7 @@
 			this.clefStave.addClef('treble');
 			this.clefStave.setContext(renderer.getContext()).draw();
 
-			this.notesContainer = notesElement;
-			this.renderer = new VexFlow.Renderer(this.notesContainer, VexFlow.Renderer.Backends.SVG);
+			this.renderer = new VexFlow.Renderer(notesElement, VexFlow.Renderer.Backends.SVG);
 
 			// Configure the rendering context.
 			// 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
@@ -71,11 +153,9 @@
 			// do not count the treble clef width
 			this.staveX = 0;
 			this.notes = [];
-
-			this.movingOffset = 0;
 		}
 
-		addMeasure(notes: any[]) {
+		addMeasure(notes: StaveNoteStruct[]) {
 			// add stave
 			const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
 				...MovingStaff.staveStyle
@@ -99,15 +179,6 @@
 				VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
 			}
 		}
-
-		move(offset: number) {
-			this.notesContainer.style.transform = `translate3d(-${offset}px, 0, 0)`;
-		}
-
-		moveDelta(offset: number) {
-			this.movingOffset += offset;
-			this.move(this.movingOffset);
-		}
 	}
 
 	const SONG_DATA = {
@@ -128,66 +199,79 @@
 		]
 	};
 
-	onMount(async () => {
-		vexflowLoaded = true;
-		// Initialize MovingStaff with bound DOM elements
-		const movingStaff = new MovingStaff(fixedClef, notesContainer);
+	// this object must be initialized before `onMount` as we need get attachment
+	// from this object.
+	let movingStaff = new MovingStaff(SONG_DATA.measures.length * MovingStaff.MEASURE_WIDTH);
 
-		// Example usage with SONG_DATA
+	function renderSong() {
+    BindingDom.notesContainer!.innerHTML = '';
+
+		movingStaff.init(BindingDom.fixedClef!, BindingDom.notesContainer!);
 		SONG_DATA.measures.forEach((measure) => {
 			movingStaff.addMeasure(measure.notes);
 		});
+	}
+
+	onMount(async () => {
+		renderSong();
 	});
 </script>
 
-<svelte:head>
-	<title>paigo</title>
-	<link rel="preload" href="/bravura.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
-</svelte:head>
+<svelte:document
+	onkeydown={(e) => {
+		if (e.key == 'r') movingStaff.reset();
+	}}
+/>
 
-<div class="page">
-	{#if vexflowError}
-		<div class="error">
-			<p>VexFlow Error: {vexflowError}</p>
-		</div>
-	{/if}
-
-	<div id="moving-staff">
-		<div bind:this={fixedClef}></div>
-		<div id="notes-container-wrapper">
-			<div id="notes-container" bind:this={notesContainer}></div>
-		</div>
+{#if vexflowError}
+	<div class="error">
+		<p>VexFlow Error: {vexflowError}</p>
 	</div>
+{/if}
 
-	<button type="button" id="renderButton">rerender</button>
-	<button type="button" id="pauseButton">pause</button>
-	<button type="button" id="resumeButton">resume</button>
-	<button type="button" id="resetButton">reset</button>
+<div id="moving-staff">
+	<div bind:this={BindingDom.fixedClef}></div>
+	<div id="notes-container-wrapper">
+		<div
+			id="notes-container"
+			bind:this={BindingDom.notesContainer}
+			{@attach movingStaff.attachment}
+			style:transform="translate3d(-{movingStaff.elementOffsetX}px, 0, 0)"
+		></div>
+	</div>
+</div>
 
-	<style>
-		#moving-staff {
-			display: flex;
-			align-items: flex-start;
-			flex-direction: row;
-			position: relative;
-			z-index: 2;
-		}
+<button type="button" id="renderButton" onclick={renderSong}>rerender</button>
+<button type="button" id="pauseButton" onclick={movingStaff.stop}>pause</button>
+<button type="button" id="resumeButton" onclick={movingStaff.move}>resume</button>
+<button type="button" id="resetButton" onclick={movingStaff.reset}>reset</button>
 
-		#notes-container-wrapper {
-			width: 100%;
-			overflow: hidden;
-			cursor: grab;
-			user-select: none;
-			/* the distance being visible from the left of the still cursor line */
-			margin-left: -40px;
-		}
+<style>
+	#moving-staff {
+		display: flex;
+		align-items: flex-start;
+		flex-direction: row;
+		position: relative;
+		z-index: 2;
+	}
 
-		#notes-container {
-			/* the distance we need offset to keep whole notes area visible */
-			/* the above 40px - 5px(the width of the still cursor line) */
-			padding-left: 35px;
-		}
+	#notes-container-wrapper {
+		width: 100%;
+		overflow: hidden;
+		cursor: grab;
+		user-select: none;
+		/* the distance being visible from the left of the still cursor line */
+		margin-left: -40px;
+	}
 
+	#notes-container {
+		/* the distance we need offset to keep whole notes area visible */
+		/* the above 40px - 5px(the width of the still cursor line) */
+		padding-left: 35px;
+	}
+
+	/* apply css styles to vexflow generated elements */
+	:global {
 		.vf-pitch-C {
 			color: #ce82ff;
 			stroke: #ce82ff;
@@ -229,5 +313,5 @@
 			stroke: #00ce9f;
 			fill: #00ce9f;
 		}
-	</style>
-</div>
+	}
+</style>
