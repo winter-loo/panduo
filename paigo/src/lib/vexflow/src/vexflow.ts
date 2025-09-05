@@ -34,6 +34,7 @@ import { ModifierContext } from './modifiercontext';
 import { MultiMeasureRest } from './multimeasurerest';
 import { Music } from './music';
 import { Note } from './note';
+import { NoteDonut } from './notedonut';
 import { NoteHead } from './notehead';
 import { NoteSubGroup } from './notesubgroup';
 import { Ornament } from './ornament';
@@ -130,6 +131,7 @@ export class VexFlow {
   static MultiMeasureRest = MultiMeasureRest;
   static Music = Music;
   static Note = Note;
+  static NoteDonut = NoteDonut;
   static NoteHead = NoteHead;
   static NoteSubGroup = NoteSubGroup;
   static Ornament = Ornament;

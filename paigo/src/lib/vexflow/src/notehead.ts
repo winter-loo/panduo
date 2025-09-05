@@ -25,6 +25,7 @@ export interface NoteHeadStruct extends NoteStruct {
   x?: number;
   y?: number;
   index?: number;
+  pitch: string;
 }
 
 /**
@@ -46,6 +47,7 @@ export class NoteHead extends Note {
   protected stemDirection: number;
 
   protected line: number;
+  protected pitch: string;
   protected index?: number;
   protected slashed: boolean;
 
@@ -65,6 +67,11 @@ export class NoteHead extends Note {
     this.displaced = noteStruct.displaced || false;
     this.stemDirection = noteStruct.stemDirection || Stem.UP;
     this.line = noteStruct.line || 0;
+    this.pitch = noteStruct.pitch;
+    let i = this.pitch.indexOf('/');
+    if (i != -1) {
+      this.pitch = this.pitch.substring(0, i) + this.pitch.substring(i+1, i+2);
+    }
 
     // Get glyph code based on duration and note type. This could be
     // regular notes, rests, or other custom codes.
@@ -153,7 +160,9 @@ export class NoteHead extends Note {
   override draw(): void {
     const ctx = this.checkContext();
     this.setRendered();
-    ctx.openGroup('notehead', this.getAttribute('id'));
+
+    const classList = ['notehead', `pitch-${this.pitch}`];
+    ctx.openGroup(classList, this.getAttribute('id'));
 
     let { x, y, w: width, h: height } = this.getBoundingBox();
     console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);

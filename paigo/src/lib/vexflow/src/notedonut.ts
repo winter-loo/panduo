@@ -147,7 +147,7 @@ export class NoteDonut extends Note {
     this.setRendered();
    this.dom = ctx.openGroup('notedonut', this.getAttribute('id'));
 
-    L("Drawing note donut '", this.noteType, this.duration, "' at", this.x, this.y);
+    L("Drawing note donut ", this.noteType, this.duration, " at ", this.x, this.y);
     this.x = this.getAbsoluteX();
     this.drawDonut();
     ctx.closeGroup();

@@ -14,6 +14,8 @@
 		}
 	});
 
+	console.log('layout page loading...');
+
 	let containerElement: HTMLDivElement;
 	const gridHeight = 300;
 
@@ -124,7 +126,7 @@
 		nav {
 			display: flex;
 			flex-flow: row wrap;
-      justify-content: flex-start;
+			justify-content: flex-start;
 			margin-bottom: 8px;
 		}
 		.nav-item {
@@ -187,6 +189,7 @@
 	<style>
 		#container {
 			position: relative;
+			min-height: 300px;
 		}
 
 		#grid {

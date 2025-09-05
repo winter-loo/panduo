@@ -29,11 +29,11 @@
 	class MovableElement {
 		elementOffsetX: number;
 		animationId?: number;
-    maxOffsetX: number;
+		maxOffsetX: number;
 
 		constructor(maxOffsetX: number) {
 			this.elementOffsetX = $state(0);
-      this.maxOffsetX = maxOffsetX;
+			this.maxOffsetX = maxOffsetX;
 		}
 
 		// see https://svelte.dev/docs/svelte/$state#Classes for the reason for
@@ -204,7 +204,7 @@
 	let movingStaff = new MovingStaff(SONG_DATA.measures.length * MovingStaff.MEASURE_WIDTH);
 
 	function renderSong() {
-    BindingDom.notesContainer!.innerHTML = '';
+		BindingDom.notesContainer!.innerHTML = '';
 
 		movingStaff.init(BindingDom.fixedClef!, BindingDom.notesContainer!);
 		SONG_DATA.measures.forEach((measure) => {
@@ -268,50 +268,5 @@
 		/* the distance we need offset to keep whole notes area visible */
 		/* the above 40px - 5px(the width of the still cursor line) */
 		padding-left: 35px;
-	}
-
-	/* apply css styles to vexflow generated elements */
-	:global {
-		.vf-pitch-C {
-			color: #ce82ff;
-			stroke: #ce82ff;
-			fill: #ce82ff;
-		}
-
-		.vf-pitch-D {
-			color: #ff9600;
-			stroke: #ff9600;
-			fill: #ff9600;
-		}
-
-		.vf-pitch-E {
-			color: #58cc02;
-			stroke: #58cc02;
-			fill: #58cc02;
-		}
-
-		.vf-pitch-F {
-			color: #cc348d;
-			stroke: #cc348d;
-			fill: #cc348d;
-		}
-
-		.vf-pitch-G {
-			color: #708fff;
-			stroke: #708fff;
-			fill: #708fff;
-		}
-
-		.vf-pitch-A {
-			color: #ff86d0;
-			stroke: #ff86d0;
-			fill: #ff86d0;
-		}
-
-		.vf-pitch-B {
-			color: #00ce9f;
-			stroke: #00ce9f;
-			fill: #00ce9f;
-		}
 	}
 </style>

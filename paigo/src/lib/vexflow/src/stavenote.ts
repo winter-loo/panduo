@@ -528,6 +528,7 @@ export class StaveNote extends StemmableNote {
       lastLine = line;
 
       const notehead = new NoteHead({
+        pitch: keys[i],
         duration: this.duration,
         noteType: this.noteType,
         displaced,

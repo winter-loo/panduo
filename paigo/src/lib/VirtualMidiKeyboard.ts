@@ -145,3 +145,16 @@ export class VirtualMidiKeyboard extends EventEmitter {
     this._removeListeners();
   }
 }
+
+let virtualMidiKeyboard: VirtualMidiKeyboard;
+
+export function getVirtualMidiKeyboard(): VirtualMidiKeyboard {
+  if (!virtualMidiKeyboard) {
+    virtualMidiKeyboard = new VirtualMidiKeyboard({ audioSamplesUri: "/audio/" });
+
+    virtualMidiKeyboard.connect().then(() => {
+      console.log('midi keyboard connected');
+    });
+  }
+  return virtualMidiKeyboard;
+}

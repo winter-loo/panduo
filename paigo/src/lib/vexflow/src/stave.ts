@@ -623,6 +623,7 @@ export class Stave extends Element {
     }
 
     this.startX = x;
+    console.log('xxx startx ', this.startX);
     x = this.x + this.width;
 
     const widths = {
