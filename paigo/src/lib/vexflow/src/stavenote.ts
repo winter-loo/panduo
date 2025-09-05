@@ -1080,7 +1080,10 @@ export class StaveNote extends StemmableNote {
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x + ledgerWidth, y);
-      ctx.stroke();
+      ctx.stroke({
+        stroke: '#dadada',
+        'stroke-width': 3,
+      });
     };
 
     const style = { ...stave.getDefaultLedgerLineStyle(), ...this.getLedgerLineStyle() };
@@ -1255,7 +1258,7 @@ export class StaveNote extends StemmableNote {
     // Apply the overall style -- may be contradicted by local settings:
     const pitch = `pitch-${this.keyProps[0].key}`;
     ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
-    // this.drawLedgerLines();
+    this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
     this.drawFlag();

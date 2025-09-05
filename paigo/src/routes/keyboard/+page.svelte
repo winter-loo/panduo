@@ -33,7 +33,7 @@
 
 		if (noteNames.length > 0) {
 			// see note type in validNoteTypes in tables.ts
-			let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: '4', type: 'ci' });
+			let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: 'q', type: 'ci' });
 			VexFlow.Formatter.FormatAndDraw(context, stave, [staveNote]);
 		}
 	}
