@@ -121,6 +121,8 @@
 <nav>
 	<a href="/" class="nav-item">home</a>
 	<a href="/keyboard" class="nav-item">keyboard</a>
+	<a href="/easy" class="nav-item">easy</a>
+	<a href="/svglab" class="nav-item">svglab</a>
 
 	<style>
 		nav {

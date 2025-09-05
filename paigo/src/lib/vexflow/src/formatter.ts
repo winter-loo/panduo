@@ -6,10 +6,10 @@ import { BoundingBox } from './boundingbox';
 import { Fraction } from './fraction';
 import { Metrics } from './metrics';
 import { ModifierContext } from './modifiercontext';
+import { Note } from './note';
 import { RenderContext } from './rendercontext';
 import { Stave } from './stave';
 import { StaveConnector } from './staveconnector';
-import { StemmableNote } from './stemmablenote';
 import { Tables } from './tables';
 import { TabNote } from './tabnote';
 import { TabStave } from './tabstave';
@@ -219,7 +219,7 @@ export class Formatter {
   static FormatAndDraw(
     ctx: RenderContext,
     stave: Stave,
-    notes: StemmableNote[],
+    notes: Note[],
     params?: FormatParams | boolean
   ): BoundingBox | undefined {
     let options = {

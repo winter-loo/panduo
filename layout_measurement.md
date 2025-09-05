@@ -51,6 +51,13 @@ Hence,
   => 2w + 12 = 32
   => w = 10
 
+2 * HW + 2 * S - b = W   => HW = (W + b) / 2 - S = (349 + 3) / 2 - 12 = 352 / 2 - 12 = 176 - 12 = 164
+HW = 2 * QW + S  => QW = (HW - S) / 2 = (((W + b) / 2 - S) - S) / 2 = (((W + b) / 2 - 2S)) / 2 = (W + b) / 4 - S = (352 / 4) - 12 = 88 - 12 = 76
+QW = 2 * EW + S  => EW = (QW - S) / 2 = (((W + b) / 4 - S) - S) / 2 = (W + b) / 8 - S = 352 / 8 - 12 = 44 - 12 = 32
+EW = 2 * SW + S  => SW = (EW - S) / 2 = (((W + b) / 8 - S) - S) / 2 = (W + b) / 16 - S = 352 / 16 - 12 = 22 - 12 = 10
+
+n-th note with: `w = (W + b) / n - S`, an interesting formula `n * (w + S) = W + b`
+
 # test
 
 Assuming W=1047, S=36, b=9, c=24

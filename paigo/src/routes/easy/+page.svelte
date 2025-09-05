@@ -1,15 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { StemmableNote, VexFlow, type StaveNoteStruct } from '$lib/vexflow/vexflow-core';
-	import type { PageProps } from './$types';
-  import { MovableElement } from '$lib/movable';
+	import type { PageProps } from '../$types';
+	import { Tickable, VexFlow, BlockNote, type NoteStruct } from '$lib/vexflow/vexflow-core';
+	import { MovableElement } from '$lib/movable';
 
-  const { data }: PageProps = $props();
-
-	let BindingDom: {
-		fixedClef?: HTMLDivElement;
-		notesContainer?: HTMLDivElement;
-	} = {};
+	const { data }: PageProps = $props();
 
 	let vexflowError = $state('');
 	try {
@@ -21,14 +16,32 @@
 		vexflowError = error instanceof Error ? error.message : 'Unknown error';
 	}
 
-	VexFlow.NoteHead.DEBUG = true;
-	VexFlow.Stem.DEBUG = true;
-	VexFlow.StaveNote.DEBUG = true;
-	VexFlow.Formatter.DEBUG = true;
-	VexFlow.EasyScore.DEBUG = true;
-	VexFlow.ModifierContext.DEBUG = true;
-	VexFlow.STEM_WIDTH = 3;
-	VexFlow.STEM_HEIGHT = 70;
+	BlockNote.DEBUG = true;
+
+	//
+	// see [layout_measurement.md] for calculation in detail
+	//
+	// In summary, it's better to choose a number, say N, which is a multiple of 2, 4, 8, 16, 32.
+	// and (measureWidth + barLineWidth) = N
+	const layoutBase = $state({
+		measureWidth: 349,
+		barLineWidth: 3,
+		notesPadding: 12,
+		cursorLineWidth: 8
+	});
+
+	const layoutDerived = $derived({
+		measureLeftPadding: Math.ceil((layoutBase.notesPadding - layoutBase.barLineWidth) / 2),
+		measureRightPadding: Math.floor((layoutBase.notesPadding - layoutBase.barLineWidth) / 2),
+		halfNoteWidth:
+			(layoutBase.measureWidth + layoutBase.barLineWidth) / 2 - layoutBase.notesPadding,
+		quarterNoteWidth:
+			(layoutBase.measureWidth + layoutBase.barLineWidth) / 4 - layoutBase.notesPadding,
+		eighthNoteWidth:
+			(layoutBase.measureWidth + layoutBase.barLineWidth) / 8 - layoutBase.notesPadding,
+		sixteenthNoteWidth:
+			(layoutBase.measureWidth + layoutBase.barLineWidth) / 16 - layoutBase.notesPadding
+	});
 
 	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
@@ -42,7 +55,10 @@
 		static staveStyle = {
 			spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
 			spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
-			spaceBelowStaffLn: MovingStaff.numPaddingSpaces
+			spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
+			style: {
+				lineWidth: 3
+			}
 		};
 
 		clefStave: any;
@@ -50,7 +66,7 @@
 		renderer: any;
 		context: any;
 		staveX: number;
-		notes: StemmableNote[];
+		notes: Tickable[];
 
 		constructor(maxOffsetX: number) {
 			super(maxOffsetX);
@@ -82,7 +98,7 @@
 			this.notes = [];
 		}
 
-		addMeasure(notes: StaveNoteStruct[]) {
+		addMeasure(notes: NoteStruct[]) {
 			// add stave
 			const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
 				...MovingStaff.staveStyle
@@ -91,10 +107,10 @@
 			// draw five staff lines and treble clef
 			measureStave.setContext(this.context).draw();
 
-			let staveNotes: StemmableNote[] = [];
+			let blockNotes: BlockNote[] = [];
 			notes.forEach((note) => {
-				let sn = new VexFlow.StaveNote(note);
-				staveNotes.push(sn);
+				let sn = new BlockNote(note);
+				blockNotes.push(sn);
 				this.notes.push(sn);
 				// NOTE: why does VexFlow not draw a dotted quarter note for me?
 				if (note.duration.indexOf('d') != -1) {
@@ -102,15 +118,20 @@
 					sn.addModifier(dot, 0);
 				}
 			});
-			if (staveNotes.length > 0) {
-				VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
+			if (blockNotes.length > 0) {
+				VexFlow.Formatter.FormatAndDraw(this.context, measureStave, blockNotes);
 			}
 		}
 	}
 
+	let BindingDom: {
+		fixedClef?: HTMLDivElement;
+		notesContainer?: HTMLDivElement;
+	} = {};
+
 	// this object must be initialized before `onMount` as we need get attachment
 	// from this object.
-	let movingStaff = new MovingStaff(data.song.measures.length * MovingStaff.MEASURE_WIDTH);
+	let movingStaff = $state(new MovingStaff(data.song.measures.length * MovingStaff.MEASURE_WIDTH));
 
 	function renderSong() {
 		BindingDom.notesContainer!.innerHTML = '';
@@ -121,9 +142,11 @@
 		});
 	}
 
-	onMount(async () => {
+	onMount(() => {
 		renderSong();
 	});
+
+	$inspect(layoutDerived).with(console.trace);
 </script>
 
 <svelte:document
@@ -154,6 +177,33 @@
 <button type="button" id="pauseButton" onclick={movingStaff.stop}>pause</button>
 <button type="button" id="resumeButton" onclick={movingStaff.move}>resume</button>
 <button type="button" id="resetButton" onclick={movingStaff.reset}>reset</button>
+
+<div>
+	<label for="measureWidth">measure width</label>
+	<input
+		id="measureWidth"
+		type="number"
+		bind:value={layoutBase.measureWidth}
+		placeholder="select your number"
+	/>
+	<label for="barLineWidth">barline width</label>
+	<input
+		id="barLineWidth"
+		type="number"
+		bind:value={layoutBase.barLineWidth}
+		placeholder="select your number"
+	/>
+	<label for="notesPadding">padding between notes</label>
+	<input
+		id="notesPadding"
+		type="number"
+		bind:value={layoutBase.notesPadding}
+		placeholder="select your number"
+	/>
+
+</div>
+
+<!-- {@debug layoutDerived} -->
 
 <style>
 	#moving-staff {

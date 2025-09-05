@@ -35,6 +35,7 @@ export interface StaveOptions {
   topTextPosition?: number;
   numLines?: number;
   stillCursor?: boolean,
+  style?: ElementStyle,
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
@@ -110,10 +111,13 @@ export class Stave extends Element {
       bottomTextPosition: 4, // in staff lines
       lineConfig: [],
       stillCursor: false,
+      style: {},
       ...options,
     };
     this.bounds = { x: this.x, y: this.y, w: this.width, h: 0 };
-    this.defaultLedgerLineStyle = { strokeStyle: '#444', lineWidth: 2 };
+    this.defaultLedgerLineStyle = { strokeStyle: '#444', lineWidth: 3 };
+
+    this.setStyle(this.options.style);
 
     this.resetLines();
 
@@ -706,7 +710,7 @@ export class Stave extends Element {
         ctx.lineTo(x + width, y + lineWidthCorrection);
         ctx.stroke({
           stroke: '#dadada',
-          'stroke-width': 3,
+          'stroke-width': lineWidth,
         });
       }
     }
@@ -893,5 +897,9 @@ export class Stave extends Element {
         if ((modifier as Barline).getType() === BarlineType.REPEAT_BEGIN) modifier.setX(maxX);
       });
     });
+  }
+
+  getJustifyWidth(): number {
+    return this.getNoteEndX() - this.getNoteStartX() - Stave.defaultPadding;
   }
 }

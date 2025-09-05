@@ -7,6 +7,7 @@ export * from './articulation';
 export * from './barnote';
 export * from './beam';
 export * from './bend';
+export * from './blocknote';
 export * from './boundingbox';
 export * from './canvascontext';
 export * from './chordsymbol';
