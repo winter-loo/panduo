@@ -3,6 +3,9 @@
 	import type { PageProps } from '../$types';
 	import { Tickable, VexFlow, BlockNote, type NoteStruct } from '$lib/vexflow/vexflow-core';
 	import { MovableElement } from '$lib/movable';
+	import { page } from '$app/state';
+
+	const PagePath = page.url.pathname;
 
 	const { data }: PageProps = $props();
 
@@ -129,9 +132,8 @@
 		notesContainer?: HTMLDivElement;
 	} = {};
 
-	// this object must be initialized before `onMount` as we need get attachment
-	// from this object.
-	let movingStaff = $state(new MovingStaff(data.song.measures.length * MovingStaff.MEASURE_WIDTH));
+	const maxOffsetX = data.song.measures.length * MovingStaff.MEASURE_WIDTH;
+	let movingStaff = new MovingStaff(maxOffsetX);
 
 	function renderSong() {
 		BindingDom.notesContainer!.innerHTML = '';
@@ -161,14 +163,17 @@
 	</div>
 {/if}
 
+<nav>
+	<a href={`${PagePath}/layout_lab`}>layout experiments</a>
+</nav>
+
 <div id="moving-staff">
 	<div bind:this={BindingDom.fixedClef}></div>
 	<div id="notes-container-wrapper">
 		<div
 			id="notes-container"
 			bind:this={BindingDom.notesContainer}
-			{@attach movingStaff.attachment}
-			style:transform="translate3d(-{movingStaff.elementOffsetX}px, 0, 0)"
+			{@attach movingStaff.draggable()}
 		></div>
 	</div>
 </div>
@@ -177,33 +182,6 @@
 <button type="button" id="pauseButton" onclick={movingStaff.stop}>pause</button>
 <button type="button" id="resumeButton" onclick={movingStaff.move}>resume</button>
 <button type="button" id="resetButton" onclick={movingStaff.reset}>reset</button>
-
-<div>
-	<label for="measureWidth">measure width</label>
-	<input
-		id="measureWidth"
-		type="number"
-		bind:value={layoutBase.measureWidth}
-		placeholder="select your number"
-	/>
-	<label for="barLineWidth">barline width</label>
-	<input
-		id="barLineWidth"
-		type="number"
-		bind:value={layoutBase.barLineWidth}
-		placeholder="select your number"
-	/>
-	<label for="notesPadding">padding between notes</label>
-	<input
-		id="notesPadding"
-		type="number"
-		bind:value={layoutBase.notesPadding}
-		placeholder="select your number"
-	/>
-
-</div>
-
-<!-- {@debug layoutDerived} -->
 
 <style>
 	#moving-staff {
