@@ -4,11 +4,11 @@
 	import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
 
-  const { data }: PageProps = $props();
+	const { data }: PageProps = $props();
 
 	let BindingDom: {
-		fixedClef?: HTMLDivElement;
-		notesContainer?: HTMLDivElement;
+		fixedClef?: HTMLElement;
+		notesContainer?: HTMLElement;
 	} = {};
 
 	let vexflowError = $state('');
@@ -42,7 +42,10 @@
 		static staveStyle = {
 			spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
 			spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
-			spaceBelowStaffLn: MovingStaff.numPaddingSpaces
+			spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
+			style: {
+				lineWidth: 3
+			}
 		};
 
 		clefStave: any;
@@ -58,11 +61,14 @@
 			this.notes = [];
 		}
 
-		init(clefElement: HTMLDivElement, notesElement: HTMLDivElement) {
+		init(clefElement: HTMLElement, notesElement: HTMLElement) {
 			// draw the treble clef on the staff independently
 			const TREBLE_CLEF_STAVE_WIDTH = 120;
 			clefElement.innerHTML = '';
-			const renderer = new VexFlow.Renderer(clefElement, VexFlow.Renderer.Backends.SVG);
+			const renderer = new VexFlow.Renderer(
+				clefElement as HTMLDivElement,
+				VexFlow.Renderer.Backends.SVG
+			);
 			renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
 			this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
 				...MovingStaff.staveStyle,
@@ -71,7 +77,10 @@
 			this.clefStave.addClef('treble');
 			this.clefStave.setContext(renderer.getContext()).draw();
 
-			this.renderer = new VexFlow.Renderer(notesElement, VexFlow.Renderer.Backends.SVG);
+			this.renderer = new VexFlow.Renderer(
+				notesElement as HTMLDivElement,
+				VexFlow.Renderer.Backends.SVG
+			);
 
 			// Configure the rendering context.
 			// 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
@@ -108,9 +117,8 @@
 		}
 	}
 
-	// this object must be initialized before `onMount` as we need get attachment
-	// from this object.
-	let movingStaff = new MovingStaff(data.song.measures.length * MovingStaff.MEASURE_WIDTH);
+  const maxOffsetX = data.song.measures.length * MovingStaff.MEASURE_WIDTH;
+  let movingStaff = new MovingStaff(maxOffsetX);
 
 	function renderSong() {
 		BindingDom.notesContainer!.innerHTML = '';
@@ -144,8 +152,7 @@
 		<div
 			id="notes-container"
 			bind:this={BindingDom.notesContainer}
-			{@attach movingStaff.attachment}
-			style:transform="translate3d(-{movingStaff.elementOffsetX}px, 0, 0)"
+			{@attach movingStaff.draggable()}
 		></div>
 	</div>
 </div>

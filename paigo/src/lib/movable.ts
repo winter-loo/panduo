@@ -1,77 +1,59 @@
+import { draggable, bounds, BoundsFrom, events, Compartment, position } from '@neodrag/svelte';
+import type { Attachment } from 'svelte/attachments';
+
 export class MovableElement {
-  elementOffsetX: number;
-  animationId?: number;
   maxOffsetX: number;
+  // the distance of leftward move, positive value
+  currentOffsetX: number;
+  moveAnimationId: number | null;
+  currentPosComp: any;
 
   constructor(maxOffsetX: number) {
-    this.elementOffsetX = 0;
     this.maxOffsetX = maxOffsetX;
+    this.currentOffsetX = 0;
+    this.moveAnimationId = 0;
+    this.currentPosComp = Compartment.of(() => position({ current: { x: this.currentOffsetX, y: 0 } }));
   }
 
-  // see https://svelte.dev/docs/svelte/$state#Classes for the reason for
-  // the style of this function definition.
+  draggable = (): Attachment<HTMLElement> => {
+    // Reactive compartments for changing values
+    const eventHandlers = events({
+      onDrag: (e) => {
+        this.currentOffsetX = -e.offset.x;
+      },
+    });
+    return draggable(() => [
+      bounds(BoundsFrom.parent({ left: -this.maxOffsetX, right: 0 })),
+      this.currentPosComp,
+      eventHandlers,
+    ]);
+  }
+
   move = () => {
-    const animate = () => {
-      this.elementOffsetX += 1;
-      if (this.elementOffsetX > this.maxOffsetX) {
-        cancelAnimationFrame(this.animationId!);
-        return;
+    const moveLeft = () => {
+      this.currentOffsetX = Math.min(this.currentOffsetX + 1, this.maxOffsetX);
+      this.currentPosComp.current = position({
+        current: { x: -this.currentOffsetX, y: 0 }
+      });
+      if (this.currentOffsetX != this.maxOffsetX) {
+        this.moveAnimationId = requestAnimationFrame(moveLeft);
       }
-      this.animationId = requestAnimationFrame(animate);
-    };
+    }
+    if (!this.moveAnimationId) moveLeft();
+  }
 
-    this.animationId = requestAnimationFrame(animate);
-  };
-
-  // see https://svelte.dev/docs/svelte/$state#Classes for the reason for
-  // the style of this function definition.
   stop = () => {
-    if (this.animationId) cancelAnimationFrame(this.animationId);
-  };
+    if (this.moveAnimationId) {
+      cancelAnimationFrame(this.moveAnimationId);
+      this.moveAnimationId = null;
+    }
+  }
 
-  // see https://svelte.dev/docs/svelte/$state#Classes for the reason for
-  // the style of this function definition.
   reset = () => {
-    this.elementOffsetX = 0;
-    if (this.animationId) cancelAnimationFrame(this.animationId);
-  };
-
-  attachment = (element: HTMLElement) => {
-    let isDragging = false;
-    let dragStartX = 0;
-    let containerStartX = 0;
-
-    const onDragStart = (e: MouseEvent) => {
-      isDragging = true;
-      dragStartX = e.clientX;
-      containerStartX = this.elementOffsetX;
-    };
-
-    const onDragging = (e: MouseEvent) => {
-      if (isDragging) {
-        // > 0 => moving right
-        // < 0 => moving left
-        let deltaX = e.clientX - dragStartX;
-        if (Math.abs(deltaX) > 2) {
-          const newX = Math.max(containerStartX - deltaX, 0);
-          this.elementOffsetX = newX;
-        }
-      }
-    };
-
-    const onDragStop = (_e: MouseEvent) => {
-      isDragging = false;
-    };
-
-    element.addEventListener('mousedown', onDragStart);
-    element.addEventListener('mouseup', onDragStop);
-    element.addEventListener('mousemove', onDragging);
-
-    return () => {
-      element.removeEventListener('mousedown', onDragStart);
-      element.removeEventListener('mouseup', onDragStop);
-      element.removeEventListener('mousemove', onDragging);
-    };
-  };
+    this.stop();
+    this.currentOffsetX = 0;
+    this.currentPosComp.current = position({
+      current: { x: this.currentOffsetX, y: 0 }
+    });
+  }
 }
-

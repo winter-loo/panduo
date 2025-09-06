@@ -6,7 +6,7 @@
 		grid: {
 			unit: 10,
 			width: 800,
-			visible: true
+			visible: false
 		},
 		mouse: {
 			x: 0,
