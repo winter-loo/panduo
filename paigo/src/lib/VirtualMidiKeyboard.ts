@@ -125,9 +125,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
     document.removeEventListener('keyup', this.keyupListener);
   }
 
-  connect(): Promise<void> {
-    this._addListeners();
-
+  charge(): Promise<void> {
     if (this.audioSamplesUri) {
       this.pianoSound = new PianoSound({
         url: this.audioSamplesUri,
@@ -141,8 +139,23 @@ export class VirtualMidiKeyboard extends EventEmitter {
     return Promise.resolve();
   }
 
-  disconnect() {
+  turnOn() {
+    this._addListeners();
+  }
+
+  turnOff() {
     this._removeListeners();
+  }
+
+  keyboardMap(): Map<string, string> {
+    let km = new Map<string, string>();
+    this.NoteNameMap.forEach(({noteName}, key) => {
+      km.set(key, noteName);
+    });
+    this.OctaveNumberMap.forEach(({octave}, key) => {
+      km.set(key, "octave " + octave.toString());
+    });
+    return km;
   }
 }
 
@@ -152,7 +165,7 @@ export function getVirtualMidiKeyboard(): VirtualMidiKeyboard {
   if (!virtualMidiKeyboard) {
     virtualMidiKeyboard = new VirtualMidiKeyboard({ audioSamplesUri: "/audio/" });
 
-    virtualMidiKeyboard.connect().then(() => {
+    virtualMidiKeyboard.charge().then(() => {
       console.log('midi keyboard connected');
     });
   }

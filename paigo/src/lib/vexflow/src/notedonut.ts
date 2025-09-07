@@ -130,12 +130,15 @@ export class NoteDonut extends Note {
   override preFormat(): this {
     if (this.preFormatted) return this;
 
-    const stave = this.getVoice().getStave();
-    if (stave) {
-      const justifyWidth = stave.getNoteEndX() - stave.getNoteStartX() - Stave.defaultPadding;
-      const totalTicks = this.getVoice().getTotalTicks().value();
-      const noteTicks = this.getTicks().value();
-      this.setWidth(noteTicks / totalTicks * justifyWidth);
+    let voice = this.getVoice();
+    if (voice) {
+      const stave = voice.getStave();
+      if (stave) {
+        const justifyWidth = stave.getJustifyWidth();
+        const totalTicks = voice.getTotalTicks().value();
+        const noteTicks = this.getTicks().value();
+        this.setWidth(noteTicks / totalTicks * justifyWidth);
+      }
     }
     this.preFormatted = true;
     return this;
@@ -145,7 +148,7 @@ export class NoteDonut extends Note {
   override draw(): void {
     const ctx = this.checkContext();
     this.setRendered();
-   this.dom = ctx.openGroup('notedonut', this.getAttribute('id'));
+    this.dom = ctx.openGroup('notedonut', this.getAttribute('id'));
 
     L("Drawing note donut ", this.noteType, this.duration, " at ", this.x, this.y);
     this.x = this.getAbsoluteX();

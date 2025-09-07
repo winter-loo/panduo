@@ -1,8 +1,14 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { StemmableNote, VexFlow, type StaveNoteStruct } from '$lib/vexflow/vexflow-core';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		MetricsDefaults,
+		Stave,
+		StemmableNote,
+		VexFlow,
+		type StaveNoteStruct
+	} from '$lib/vexflow/vexflow-core';
 	import type { PageProps } from './$types';
-  import { MovableElement } from '$lib/movable';
+	import { MovableElement } from '$lib/movable';
 
 	const { data }: PageProps = $props();
 
@@ -27,8 +33,25 @@
 	VexFlow.Formatter.DEBUG = true;
 	VexFlow.EasyScore.DEBUG = true;
 	VexFlow.ModifierContext.DEBUG = true;
-	VexFlow.STEM_WIDTH = 3;
-	VexFlow.STEM_HEIGHT = 70;
+
+	const OldStaffProps = {
+		stemWidth: VexFlow.STEM_WIDTH,
+		stemHeight: VexFlow.STEM_HEIGHT,
+		fontSize: MetricsDefaults.fontSize
+	};
+
+	onMount(() => {
+		VexFlow.STEM_WIDTH = 3;
+		VexFlow.STEM_HEIGHT = 70;
+		MetricsDefaults.fontSize = 60;
+	});
+
+	onDestroy(() => {
+		console.log('restoring staff properties 1');
+		VexFlow.STEM_WIDTH = OldStaffProps.stemWidth;
+		VexFlow.STEM_HEIGHT = OldStaffProps.stemHeight;
+		MetricsDefaults.fontSize = OldStaffProps.fontSize;
+	});
 
 	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
@@ -44,11 +67,17 @@
 			spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
 			spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
 			style: {
-				lineWidth: 3
+				lineWidth: 3,
+				strokeStyle: '#dadada'
+			},
+			leftBar: {
+				width: 3,
+				style: {
+					fillStyle: '#dadada'
+				}
 			}
 		};
 
-		clefStave: any;
 		notesContainer?: HTMLDivElement;
 		renderer: any;
 		context: any;
@@ -70,12 +99,16 @@
 				VexFlow.Renderer.Backends.SVG
 			);
 			renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
-			this.clefStave = new VexFlow.Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
+			let clefStave = new Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
 				...MovingStaff.staveStyle,
 				stillCursor: true
 			});
-			this.clefStave.addClef('treble');
-			this.clefStave.setContext(renderer.getContext()).draw();
+			clefStave.addClef('treble', {
+				style: {
+					fillStyle: '#afafaf'
+				}
+			});
+			clefStave.setContext(renderer.getContext()).draw();
 
 			this.renderer = new VexFlow.Renderer(
 				notesElement as HTMLDivElement,
@@ -117,8 +150,8 @@
 		}
 	}
 
-  const maxOffsetX = data.song.measures.length * MovingStaff.MEASURE_WIDTH;
-  let movingStaff = new MovingStaff(maxOffsetX);
+	const maxOffsetX = data.song.measures.length * MovingStaff.MEASURE_WIDTH;
+	let movingStaff = new MovingStaff(maxOffsetX);
 
 	function renderSong() {
 		BindingDom.notesContainer!.innerHTML = '';

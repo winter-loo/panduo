@@ -6,7 +6,7 @@ import { Clef } from './clef';
 import { Element, ElementStyle } from './element';
 import { KeySignature } from './keysignature';
 import { Metrics } from './metrics';
-import { Barline, BarlineType } from './stavebarline';
+import { Barline, BarlineOptions, BarlineType } from './stavebarline';
 import { StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Repetition } from './staverepetition';
 import { StaveSection } from './stavesection';
@@ -29,7 +29,7 @@ export interface StaveOptions {
   spaceBelowStaffLn?: number;
   spaceAboveStaffLn?: number;
   verticalBarWidth?: number;
-  leftBar?: boolean;
+  leftBar?: BarlineOptions;
   rightBar?: boolean;
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
@@ -102,7 +102,7 @@ export class Stave extends Element {
     this.options = {
       verticalBarWidth: 10, // Width around vertical bar end-marker
       numLines: 5,
-      leftBar: true, // draw vertical bar on left
+      leftBar: {}, // draw vertical bar on left
       rightBar: true, // draw vertical bar on right
       spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE, // in pixels
       spaceAboveStaffLn: 4, // in staff lines
@@ -122,7 +122,7 @@ export class Stave extends Element {
     this.resetLines();
 
     // beg bar
-    this.addModifier(new Barline(this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE));
+    this.addModifier(new Barline(this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE, this.options.leftBar));
     // end bar
     this.addEndModifier(new Barline(this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE));
   }
@@ -418,7 +418,7 @@ export class Stave extends Element {
 
     const clefs = this.getModifiers(position, Clef.CATEGORY) as Clef[];
     if (clefs.length === 0) {
-      this.addClef(clefSpec, size, annotation, position);
+      this.addClef(clefSpec, { size, annotation, position });
     } else {
       clefs[0].setType(clefSpec, size, annotation);
     }
@@ -509,19 +509,29 @@ export class Stave extends Element {
    * @param position
    * @returns
    */
-  addClef(clef: string, size?: string, annotation?: string, position?: number): this {
-    if (position === undefined || position === StaveModifierPosition.BEGIN) {
+  addClef(clef: string, options?:
+    {
+      style?: ElementStyle,
+      size?: string,
+      annotation?: string,
+      position?: number
+    }): this {
+    if (options?.position === undefined || options?.position === StaveModifierPosition.BEGIN) {
       this.clef = clef;
-    } else if (position === StaveModifierPosition.END) {
+    } else if (options?.position === StaveModifierPosition.END) {
       this.endClef = clef;
     }
 
-    this.addModifier(new Clef(clef, size, annotation), position);
+    this.addModifier(new Clef(clef, {
+      style: options?.style,
+      size: options?.size,
+      annotation: options?.annotation
+    }), options?.position);
     return this;
   }
 
   addEndClef(clef: string, size?: string, annotation?: string): this {
-    this.addClef(clef, size, annotation, StaveModifierPosition.END);
+    this.addClef(clef, { size, annotation, position: StaveModifierPosition.END });
     return this;
   }
 
@@ -709,7 +719,7 @@ export class Stave extends Element {
         ctx.moveTo(x, y + lineWidthCorrection);
         ctx.lineTo(x + width, y + lineWidthCorrection);
         ctx.stroke({
-          stroke: '#dadada',
+          stroke: this.getStyle().strokeStyle ?? 'currentColor',
           'stroke-width': lineWidth,
         });
       }
@@ -745,7 +755,7 @@ export class Stave extends Element {
     const offset = this.width - width;
     const paddingTop = 5;
     const paddingBottom = 5;
-    (<SVGContext> ctx).rect(this.x + offset, paddingTop, width, (<SVGContext>ctx).height - paddingBottom - paddingTop, {
+    (<SVGContext>ctx).rect(this.x + offset, paddingTop, width, (<SVGContext>ctx).height - paddingBottom - paddingTop, {
       stroke: 'none',
       rx: width / 2,
       ry: width / 2,

@@ -168,8 +168,8 @@ export abstract class Tickable extends Element {
    * Return the associated voice. Every tickable must be associated with a voice.
    * This allows formatters and preFormatter to associate them with the right modifierContexts.
    */
-  getVoice(): Voice {
-    return defined(this.voice, 'NoVoice', 'Tickable has no voice.');
+  getVoice(): Voice | undefined {
+    return this.voice;
   }
 
   /** Set the associated voice. */

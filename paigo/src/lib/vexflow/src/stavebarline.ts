@@ -2,6 +2,7 @@
 //
 // @author: Larry Kuhns 2011
 
+import { ElementStyle } from './element';
 import { Stave } from './stave';
 import { LayoutMetrics, StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Tables } from './tables';
@@ -17,6 +18,11 @@ export enum BarlineType {
   NONE = 7,
 }
 
+export interface BarlineOptions {
+  width?: number,
+  style?: ElementStyle,
+}
+
 export class Barline extends StaveModifier {
   static override get CATEGORY(): string {
     return Category.Barline;
@@ -28,6 +34,8 @@ export class Barline extends StaveModifier {
 
   protected thickness: number;
   protected type!: BarlineType;
+
+  options?: BarlineOptions;
 
   static get type(): typeof BarlineType {
     return BarlineType;
@@ -45,9 +53,10 @@ export class Barline extends StaveModifier {
     };
   }
 
-  constructor(type: BarlineType | string) {
+  constructor(type: BarlineType | string, options?: BarlineOptions) {
     super();
     this.thickness = Tables.STAVE_LINE_THICKNESS;
+    this.options = options;
 
     const TYPE = BarlineType;
     this.widths = {};
@@ -173,12 +182,16 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
+
+    const width = this.options?.width ?? 1;
+    const fillStyle = this.options?.style?.fillStyle ?? 'currentColor';
+
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, 3, botY - topY,
-      { rx: 0, ry: 0, fill: '#DADADA', stroke: 'none' });
+      staveCtx.fillRect(x - 3, topY, width, botY - topY,
+      { rx: 0, ry: 0, fill: fillStyle, stroke: 'none' });
     }
-    staveCtx.fillRect(x, topY, 3, botY - topY,
-      { rx: 0, ry: 0, fill: '#DADADA', stroke: 'none' });
+    staveCtx.fillRect(x, topY, width, botY - topY,
+      { rx: 0, ry: 0, fill: fillStyle, stroke: 'none' });
   }
 
   drawVerticalEndBar(stave: Stave, x: number): void {

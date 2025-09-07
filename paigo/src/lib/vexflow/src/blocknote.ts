@@ -1039,7 +1039,7 @@ export class BlockNote extends Note {
 
     // Apply the overall style -- may be contradicted by local settings:
     const pitch = `pitch-${this.keyProps[0].key}`;
-    ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
+    ctx.openGroup(['blocknote', pitch], this.getAttribute('id'));
     this.drawLedgerLines();
     this.drawNoteHeads();
     this.drawPointerRect();

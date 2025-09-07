@@ -2,6 +2,7 @@
 // MIT License
 // Co-author: Benjamin W. Bohl
 
+import { ElementStyle } from './element';
 import { Glyphs } from './glyphs';
 import { Metrics } from './metrics';
 import { Stave } from './stave';
@@ -13,6 +14,8 @@ import { log } from './util';
 function L(...args: any[]) {
   if (Clef.DEBUG) log('VexFlow.Clef', args);
 }
+
+export interface ClefOptions { size?: string, annotation?: string, style?: ElementStyle };
 
 /**
  * Clef implements various types of clefs that can be rendered on a stave.
@@ -97,11 +100,12 @@ export class Clef extends StaveModifier {
   }
 
   /** Create a new clef. */
-  constructor(type: string, size?: string, annotation?: string) {
+  constructor(type: string, options?: ClefOptions) {
     super();
 
     this.setPosition(StaveModifierPosition.BEGIN);
-    this.setType(type, size, annotation);
+    this.setType(type, options?.size, options?.annotation);
+    if (options?.style) this.setStyle(options.style);
     L('Creating clef:', type);
   }
 
@@ -156,8 +160,9 @@ export class Clef extends StaveModifier {
     ctx.openGroup('clef', this.getAttribute('id'));
 
     this.y = stave.getYForLine(this.line);
+    let fillStyle = this.getStyle().fillStyle ?? 'currentColor';
     this.renderText(ctx, this.padding, 0, {
-      "fill": "#AFAFAF"
+      "fill": fillStyle,
     });
     this.drawPointerRect();
     ctx.closeGroup();

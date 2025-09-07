@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import type { PageProps } from '../$types';
-	import { Tickable, VexFlow, BlockNote, type NoteStruct } from '$lib/vexflow/vexflow-core';
+	import {
+		Tickable,
+		VexFlow,
+		BlockNote,
+		type NoteStruct,
+		MetricsDefaults
+	} from '$lib/vexflow/vexflow-core';
 	import { MovableElement } from '$lib/movable';
 	import { page } from '$app/state';
+	import { Tables } from '$lib/vexflow/src/tables';
 
 	const PagePath = page.url.pathname;
 
@@ -46,6 +53,26 @@
 			(layoutBase.measureWidth + layoutBase.barLineWidth) / 16 - layoutBase.notesPadding
 	});
 
+	const OldStaffProps = {
+		STEM_HEIEGHT: Tables.STEM_HEIGHT,
+		STEM_WIDTH: Tables.STEM_WIDTH,
+		FOTN_SIZE: MetricsDefaults.fontSize
+	};
+
+	onMount(() => {
+		console.log('set staff properties 3');
+		Tables.STEM_HEIGHT = 70;
+		Tables.STEM_WIDTH = 3;
+		MetricsDefaults.fontSize = 60;
+	});
+
+	onDestroy(() => {
+		console.log('restoring staff properties 3');
+		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
+		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
+		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
+	});
+
 	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
 		static STAVE_HEIGHT = 180;
@@ -60,7 +87,14 @@
 			spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
 			spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
 			style: {
-				lineWidth: 3
+				lineWidth: 3,
+        strokeStyle: '#dadada',
+			},
+			leftBar: {
+				width: 3,
+				style: {
+					fillStyle: '#dadada'
+				}
 			}
 		};
 
@@ -87,7 +121,11 @@
 				...MovingStaff.staveStyle,
 				stillCursor: true
 			});
-			this.clefStave.addClef('treble');
+			this.clefStave.addClef('treble', {
+        style: {
+          fillStyle: '#afafaf',
+        }
+      });
 			this.clefStave.setContext(renderer.getContext()).draw();
 
 			this.renderer = new VexFlow.Renderer(notesElement, VexFlow.Renderer.Backends.SVG);
@@ -140,6 +178,7 @@
 
 		movingStaff.init(BindingDom.fixedClef!, BindingDom.notesContainer!);
 		data.song.measures.forEach((measure) => {
+			console.log('add new measure');
 			movingStaff.addMeasure(measure.notes);
 		});
 	}
@@ -147,8 +186,6 @@
 	onMount(() => {
 		renderSong();
 	});
-
-	$inspect(layoutDerived).with(console.trace);
 </script>
 
 <svelte:document

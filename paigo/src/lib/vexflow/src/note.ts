@@ -466,12 +466,6 @@ export abstract class Note extends Tickable {
     return this.checkStave().getYForTopText(textLine);
   }
 
-  /** Return the voice that this note belongs in. */
-  override getVoice(): Voice {
-    if (!this.voice) throw new RuntimeError('NoVoice', 'Note has no voice.');
-    return this.voice;
-  }
-
   /** Attach this note to `voice`. */
   override setVoice(voice: Voice): this {
     this.voice = voice;
