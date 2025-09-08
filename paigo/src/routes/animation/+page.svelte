@@ -9,28 +9,12 @@
 		StaveNote,
 		Accidental,
 		RenderContext,
-		MetricsDefaults
+		MetricsDefaults,
+
+		Metrics
+
 	} from '$lib/vexflow/vexflow-core';
 	import { onDestroy, onMount } from 'svelte';
-
-	const OldStaffProps = {
-		STEM_HEIEGHT: Tables.STEM_HEIGHT,
-		STEM_WIDTH: Tables.STEM_WIDTH,
-		FOTN_SIZE: MetricsDefaults.fontSize
-	};
-	onMount(() => {
-		console.log('set staff properties 4');
-		Tables.STEM_HEIGHT = 70;
-		Tables.STEM_WIDTH = 3;
-		MetricsDefaults.fontSize = 60;
-	});
-
-	onDestroy(() => {
-		console.log('restoring staff properties 4');
-		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
-		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
-		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
-	});
 
 	class SightReading {
 		context?: RenderContext;
@@ -195,7 +179,27 @@
 	let outputContainer: HTMLElement;
 	let app = new SightReading();
 
+	const OldStaffProps = {
+		STEM_HEIEGHT: Tables.STEM_HEIGHT,
+		STEM_WIDTH: Tables.STEM_WIDTH,
+		FOTN_SIZE: MetricsDefaults.fontSize
+	};
+
+	onDestroy(() => {
+		console.log('restoring staff properties 4');
+		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
+		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
+		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
+	});
+
 	onMount(() => {
+		console.log('set staff properties 4');
+    // clear the internal cache of VexFlow
+    Metrics.clear();
+
+		Tables.STEM_HEIGHT = 70;
+		Tables.STEM_WIDTH = 3;
+		MetricsDefaults.fontSize = 60;
 		app.init(outputContainer);
 	});
 </script>
@@ -253,5 +257,9 @@
 		.too-slow {
 			transform: translate(-400px, 2000px);
 		}
+	}
+
+  #ani-container :global(.notedonut) {
+		display: none;
 	}
 </style>

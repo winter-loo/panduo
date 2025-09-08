@@ -1,26 +1,10 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { MetricsDefaults, VexFlow } from '$lib/vexflow/vexflow-core';
+	import { Metrics, MetricsDefaults, VexFlow } from '$lib/vexflow/vexflow-core';
 	import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
-	import { Tables } from '$lib/vexflow/src/tables';
 
 	let outputContainer: HTMLDivElement;
 	let currentNotes = $state<string[]>([]);
-
-	const OldStaffProps = {
-		Stave: {
-			padding: MetricsDefaults.Stave.padding
-		}
-	};
-
-	onMount(() => {
-		MetricsDefaults.Stave.padding = 30;
-	});
-
-	onDestroy(() => {
-		console.log('restoring staff properties 2');
-		MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
-	});
 
 	function showNote(noteNames: string[]) {
 		VexFlow.Clef.DEBUG = true;
@@ -55,7 +39,23 @@
 
 	let midiKeyboard = getVirtualMidiKeyboard();
 
+	const OldStaffProps = {
+		Stave: {
+			padding: MetricsDefaults.Stave.padding
+		}
+	};
+
+	onDestroy(() => {
+		console.log('restoring staff properties 2');
+		MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
+	});
+
 	onMount(() => {
+    // clear the internal cache of VexFlow
+    Metrics.clear();
+		MetricsDefaults.Stave.padding = 30;
+    console.log('font size: ', MetricsDefaults.fontSize);
+
 		midiKeyboard.turnOn();
 
 		midiKeyboard.on('noteOn', (e) => {

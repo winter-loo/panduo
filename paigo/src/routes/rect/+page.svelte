@@ -6,7 +6,8 @@
 		VexFlow,
 		BlockNote,
 		type NoteStruct,
-		MetricsDefaults
+		MetricsDefaults,
+		Metrics
 	} from '$lib/vexflow/vexflow-core';
 	import { MovableElement } from '$lib/movable';
 	import { page } from '$app/state';
@@ -53,26 +54,6 @@
 			(layoutBase.measureWidth + layoutBase.barLineWidth) / 16 - layoutBase.notesPadding
 	});
 
-	const OldStaffProps = {
-		STEM_HEIEGHT: Tables.STEM_HEIGHT,
-		STEM_WIDTH: Tables.STEM_WIDTH,
-		FOTN_SIZE: MetricsDefaults.fontSize
-	};
-
-	onMount(() => {
-		console.log('set staff properties 3');
-		Tables.STEM_HEIGHT = 70;
-		Tables.STEM_WIDTH = 3;
-		MetricsDefaults.fontSize = 60;
-	});
-
-	onDestroy(() => {
-		console.log('restoring staff properties 3');
-		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
-		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
-		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
-	});
-
 	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
 		static STAVE_HEIGHT = 180;
@@ -88,7 +69,7 @@
 			spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
 			style: {
 				lineWidth: 3,
-        strokeStyle: '#dadada',
+				strokeStyle: '#dadada'
 			},
 			leftBar: {
 				width: 3,
@@ -122,10 +103,10 @@
 				stillCursor: true
 			});
 			this.clefStave.addClef('treble', {
-        style: {
-          fillStyle: '#afafaf',
-        }
-      });
+				style: {
+					fillStyle: '#afafaf'
+				}
+			});
 			this.clefStave.setContext(renderer.getContext()).draw();
 
 			this.renderer = new VexFlow.Renderer(notesElement, VexFlow.Renderer.Backends.SVG);
@@ -183,7 +164,26 @@
 		});
 	}
 
+	const OldStaffProps = {
+		STEM_HEIEGHT: Tables.STEM_HEIGHT,
+		STEM_WIDTH: Tables.STEM_WIDTH,
+		FOTN_SIZE: MetricsDefaults.fontSize
+	};
+
+	onDestroy(() => {
+		console.log('restoring staff properties 3');
+		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
+		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
+		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
+	});
+
 	onMount(() => {
+		// clear the internal cache of VexFlow
+		Metrics.clear();
+		Tables.STEM_HEIGHT = 70;
+		Tables.STEM_WIDTH = 3;
+		MetricsDefaults.fontSize = 60;
+
 		renderSong();
 	});
 </script>
