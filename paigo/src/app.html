@@ -20,43 +20,45 @@
 
 
     /* apply css styles to vexflow generated elements */
-    .vf-pitch-C {
+    /* Use *= (contains) instead of ^= (starts with) */
+    /* will match '.vf-pitch-C/.vf-pitch-C#/.vf-pitch-CB' */
+    [class*='vf-pitch-C'] {
       color: #ce82ff;
       stroke: #ce82ff;
       fill: #ce82ff;
     }
 
-    .vf-pitch-D {
+    [class*='vf-pitch-D'] {
       color: #ff9600;
       stroke: #ff9600;
       fill: #ff9600;
     }
 
-    .vf-pitch-E {
+    [class*='vf-pitch-E'] {
       color: #58cc02;
       stroke: #58cc02;
       fill: #58cc02;
     }
 
-    .vf-pitch-F {
+    [class*='vf-pitch-F'] {
       color: #cc348d;
       stroke: #cc348d;
       fill: #cc348d;
     }
 
-    .vf-pitch-G {
+    [class*='vf-pitch-G'] {
       color: #708fff;
       stroke: #708fff;
       fill: #708fff;
     }
 
-    .vf-pitch-A {
+    [class*='vf-pitch-A'] {
       color: #ff86d0;
       stroke: #ff86d0;
       fill: #ff86d0;
     }
 
-    .vf-pitch-B {
+    [class*='vf-pitch-B'] {
       color: #00ce9f;
       stroke: #00ce9f;
       fill: #00ce9f;
