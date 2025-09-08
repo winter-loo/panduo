@@ -30,7 +30,7 @@ export interface StaveOptions {
   spaceAboveStaffLn?: number;
   verticalBarWidth?: number;
   leftBar?: BarlineOptions;
-  rightBar?: boolean;
+  rightBar?: BarlineOptions;
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
@@ -103,7 +103,7 @@ export class Stave extends Element {
       verticalBarWidth: 10, // Width around vertical bar end-marker
       numLines: 5,
       leftBar: {}, // draw vertical bar on left
-      rightBar: true, // draw vertical bar on right
+      rightBar: {}, // draw vertical bar on right
       spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE, // in pixels
       spaceAboveStaffLn: 4, // in staff lines
       spaceBelowStaffLn: 4, // in staff lines
@@ -124,7 +124,7 @@ export class Stave extends Element {
     // beg bar
     this.addModifier(new Barline(this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE, this.options.leftBar));
     // end bar
-    this.addEndModifier(new Barline(this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE));
+    this.addEndModifier(new Barline(this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE, this.options.rightBar));
   }
 
   /** Set default style for ledger lines. */

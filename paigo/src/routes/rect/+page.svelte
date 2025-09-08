@@ -76,6 +76,12 @@
 				style: {
 					fillStyle: '#dadada'
 				}
+			},
+			rightBar: {
+				width: 3,
+				style: {
+					fillStyle: '#dadada'
+				}
 			}
 		};
 
@@ -164,22 +170,22 @@
 		});
 	}
 
-	const OldStaffProps = {
-		STEM_HEIEGHT: Tables.STEM_HEIGHT,
-		STEM_WIDTH: Tables.STEM_WIDTH,
-		FOTN_SIZE: MetricsDefaults.fontSize
-	};
-
+	let OldStaffProps: any;
 	onDestroy(() => {
-		console.log('restoring staff properties 3');
-		Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
-		Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
-		MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
+		if (OldStaffProps) Tables.STEM_HEIGHT = OldStaffProps.STEM_HEIEGHT;
+		if (OldStaffProps) Tables.STEM_WIDTH = OldStaffProps.STEM_WIDTH;
+		if (OldStaffProps) MetricsDefaults.fontSize = OldStaffProps.FOTN_SIZE;
 	});
 
 	onMount(() => {
 		// clear the internal cache of VexFlow
 		Metrics.clear();
+		OldStaffProps = {
+			STEM_HEIEGHT: Tables.STEM_HEIGHT,
+			STEM_WIDTH: Tables.STEM_WIDTH,
+			FOTN_SIZE: MetricsDefaults.fontSize
+		};
+
 		Tables.STEM_HEIGHT = 70;
 		Tables.STEM_WIDTH = 3;
 		MetricsDefaults.fontSize = 60;

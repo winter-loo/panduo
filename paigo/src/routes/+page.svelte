@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import {
+		Metrics,
 		MetricsDefaults,
 		Stave,
 		StemmableNote,
@@ -34,25 +35,6 @@
 	VexFlow.EasyScore.DEBUG = true;
 	VexFlow.ModifierContext.DEBUG = true;
 
-	const OldStaffProps = {
-		stemWidth: VexFlow.STEM_WIDTH,
-		stemHeight: VexFlow.STEM_HEIGHT,
-		fontSize: MetricsDefaults.fontSize
-	};
-
-	onMount(() => {
-		VexFlow.STEM_WIDTH = 3;
-		VexFlow.STEM_HEIGHT = 70;
-		MetricsDefaults.fontSize = 60;
-	});
-
-	onDestroy(() => {
-		console.log('restoring staff properties 1');
-		VexFlow.STEM_WIDTH = OldStaffProps.stemWidth;
-		VexFlow.STEM_HEIGHT = OldStaffProps.stemHeight;
-		MetricsDefaults.fontSize = OldStaffProps.fontSize;
-	});
-
 	class MovingStaff extends MovableElement {
 		static MEASURE_WIDTH = 400;
 		static STAVE_HEIGHT = 180;
@@ -71,6 +53,12 @@
 				strokeStyle: '#dadada'
 			},
 			leftBar: {
+				width: 3,
+				style: {
+					fillStyle: '#dadada'
+				}
+			},
+			rightBar: {
 				width: 3,
 				style: {
 					fillStyle: '#dadada'
@@ -162,7 +150,23 @@
 		});
 	}
 
+	let OldStaffProps: any;
+	onDestroy(() => {
+		if (OldStaffProps) VexFlow.STEM_WIDTH = OldStaffProps.stemWidth;
+		if (OldStaffProps) VexFlow.STEM_HEIGHT = OldStaffProps.stemHeight;
+		if (OldStaffProps) MetricsDefaults.fontSize = OldStaffProps.fontSize;
+	});
 	onMount(async () => {
+		Metrics.clear();
+		OldStaffProps = {
+			stemWidth: VexFlow.STEM_WIDTH,
+			stemHeight: VexFlow.STEM_HEIGHT,
+			fontSize: MetricsDefaults.fontSize
+		};
+
+		VexFlow.STEM_WIDTH = 3;
+		VexFlow.STEM_HEIGHT = 70;
+		MetricsDefaults.fontSize = 60;
 		renderSong();
 	});
 </script>

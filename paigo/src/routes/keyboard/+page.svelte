@@ -27,7 +27,7 @@
 
 		if (noteNames.length > 0) {
 			// see note type in validNoteTypes in tables.ts
-			let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: 'q'});
+			let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: 'q' });
 			VexFlow.Formatter.FormatAndDraw(context, stave, [staveNote]);
 		}
 	}
@@ -39,22 +39,20 @@
 
 	let midiKeyboard = getVirtualMidiKeyboard();
 
-	const OldStaffProps = {
-		Stave: {
-			padding: MetricsDefaults.Stave.padding
-		}
-	};
-
+	let OldStaffProps: any;
 	onDestroy(() => {
-		console.log('restoring staff properties 2');
-		MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
+		if (OldStaffProps) MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
 	});
 
 	onMount(() => {
-    // clear the internal cache of VexFlow
-    Metrics.clear();
+		// clear the internal cache of VexFlow
+		Metrics.clear();
+		OldStaffProps = {
+			Stave: {
+				padding: MetricsDefaults.Stave.padding
+			}
+		};
 		MetricsDefaults.Stave.padding = 30;
-    console.log('font size: ', MetricsDefaults.fontSize);
 
 		midiKeyboard.turnOn();
 
@@ -86,9 +84,9 @@
 		top: 40px;
 		left: 580px;
 		transform: translate(-50%, 0);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
 
 	@media (max-width: 768px) {
