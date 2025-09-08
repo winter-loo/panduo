@@ -81,6 +81,8 @@ export class NoteHead extends Note {
       'BadArguments',
       `No glyph found for duration '${this.duration}' and type '${this.noteType}'`
     );
+    const unicodeEscapes = Array.from(this.glyphProps.codeHead).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+    console.log(`[glyph] pitch=${this.pitch} code=${unicodeEscapes}`);
 
     // Swap out the glyph with ledger lines
     if ((this.line > 5 || this.line < 0) && this.ledger[this.glyphProps.codeHead]) {
