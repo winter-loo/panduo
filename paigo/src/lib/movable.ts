@@ -77,4 +77,49 @@ export class MovableElement {
       current: { x: this.currentOffsetX, y: 0 }
     });
   }
+
+  // Nudge left by a positive pixel distance (immediate), respecting bounds.
+  nudgeBy = (distancePx: number) => {
+    if (!Number.isFinite(distancePx)) return;
+    const next = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
+    this.currentOffsetX = next;
+    this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
+  }
+
+  // Animate to a target offset (absolute, 0..maxOffsetX)
+  private animateTo = (targetOffsetX: number, durationMs = 220) => {
+    const end = Math.min(this.maxOffsetX, Math.max(0, targetOffsetX));
+    const start = this.currentOffsetX;
+    const delta = end - start;
+    if (Math.abs(delta) < 0.5) {
+      this.nudgeBy(end - start);
+      return;
+    }
+    // cancel any existing animation
+    this.stop();
+    const t0 = performance.now();
+    const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+    const step = () => {
+      const now = performance.now();
+      const p = Math.min(1, (now - t0) / durationMs);
+      const e = easeInOutQuad(p);
+      this.currentOffsetX = start + delta * e;
+      this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
+      if (p < 1) {
+        this.moveAnimationId = requestAnimationFrame(step);
+      } else {
+        this.moveAnimationId = null;
+        this.currentOffsetX = end;
+        this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
+      }
+    };
+    this.moveAnimationId = requestAnimationFrame(step);
+  }
+
+  // Animate a leftward nudge by the given distance (positive), respecting bounds.
+  nudgeByAnimated = (distancePx: number, durationMs = 220) => {
+    if (!Number.isFinite(distancePx)) return;
+    const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
+    this.animateTo(target, durationMs);
+  }
 }
