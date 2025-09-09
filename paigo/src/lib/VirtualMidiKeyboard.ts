@@ -56,6 +56,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
   _addListeners() {
     let self = this;
     this.keydownListener = function (event: any) {
+      event.preventDefault();
       let validKeyDown = self.NoteNameMap.get(event.code);
 
       if (validKeyDown != undefined && !validKeyDown.holding) {
