@@ -37,21 +37,13 @@
 	const layoutBase = $state({
 		measureWidth: 349,
 		barLineWidth: 3,
-		notesPadding: 12,
+		notesSpacing: 12,
 		cursorLineWidth: 8
 	});
 
 	const layoutDerived = $derived({
-		measureLeftPadding: Math.ceil((layoutBase.notesPadding - layoutBase.barLineWidth) / 2),
-		measureRightPadding: Math.floor((layoutBase.notesPadding - layoutBase.barLineWidth) / 2),
-		halfNoteWidth:
-			(layoutBase.measureWidth + layoutBase.barLineWidth) / 2 - layoutBase.notesPadding,
-		quarterNoteWidth:
-			(layoutBase.measureWidth + layoutBase.barLineWidth) / 4 - layoutBase.notesPadding,
-		eighthNoteWidth:
-			(layoutBase.measureWidth + layoutBase.barLineWidth) / 8 - layoutBase.notesPadding,
-		sixteenthNoteWidth:
-			(layoutBase.measureWidth + layoutBase.barLineWidth) / 16 - layoutBase.notesPadding
+		measureLeftPadding: Math.ceil((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2),
+		measureRightPadding: Math.floor((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2)
 	});
 
 	class MovingStaff extends MovableElement {
@@ -207,7 +199,20 @@
 {/if}
 
 <nav>
-	<a href={`${PagePath}/layout_lab`}>layout experiments</a>
+	<a class="nav-item" href={`${PagePath}/layout_lab`}>layout experiments</a>
+	<a class="nav-item" href={`${PagePath}/rhythm_master`}>rhythm master</a>
+
+	<style>
+		nav {
+			display: flex;
+			flex-flow: row wrap;
+			justify-content: flex-start;
+			margin-bottom: 8px;
+		}
+		.nav-item {
+			padding: 2px 6px;
+		}
+	</style>
 </nav>
 
 <div id="moving-staff">

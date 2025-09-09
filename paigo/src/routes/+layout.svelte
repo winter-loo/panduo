@@ -122,7 +122,7 @@
 	<a href="/" class="nav-item">home</a>
 	<a href="/keyboard" class="nav-item">keyboard</a>
 	<a href="/rect" class="nav-item">rect</a>
-	<a href="/svglab" class="nav-item">svglab</a>
+	<a href="/lab" class="nav-item">lab</a>
 	<a href="/sight-reading" class="nav-item">sight reading</a>
 
 	<style>
