@@ -40,22 +40,51 @@ export class VirtualMidiKeyboard extends EventEmitter {
 
   private keydownListener: any;
   private keyupListener: any;
+  private unlockHandler: any;
   private pianoSound: any;
   private audioSamplesUri?: any;
+  private tone: any;
 
   constructor(options?: VirtualMidiKeyboardOption) {
     super();
 
     this.keydownListener = null;
     this.keyupListener = null;
+    this.unlockHandler = null;
     this.pianoSound = null;
     this.audioSamplesUri = options?.audioSamplesUri;
+    this.tone = null;
+  }
+
+  private async ensureToneReady() {
+    if (typeof window === 'undefined') return;
+    if (!this.tone) {
+      try {
+        const Tone = await import('tone');
+        // Create a low-latency context and set as global Tone context
+        const ctx = new Tone.Context({ latencyHint: 'interactive', lookAhead: 0 });
+        Tone.setContext(ctx);
+        this.tone = Tone;
+      } catch (e) {
+        // no-op if Tone couldn't be loaded; piano will still emit events without sound
+      }
+    }
+    try {
+      // Attempt to start/resume the audio context (requires user gesture on some browsers)
+      if (this.tone && this.tone.getContext().state !== 'running') {
+        await this.tone.start();
+      }
+    } catch (_e) {
+      // ignore if start is blocked; we'll try again on next gesture
+    }
   }
 
   _addListeners() {
     let self = this;
-    this.keydownListener = function (event: any) {
+    this.keydownListener = async function (event: any) {
       event.preventDefault();
+      // Make sure audio context is ready ASAP on first interaction
+      void self.ensureToneReady();
       let validKeyDown = self.NoteNameMap.get(event.code);
 
       if (validKeyDown != undefined && !validKeyDown.holding) {
@@ -118,17 +147,31 @@ export class VirtualMidiKeyboard extends EventEmitter {
 
     document.addEventListener('keydown', this.keydownListener);
     document.addEventListener('keyup', this.keyupListener);
+
+    // Proactively unlock/resume audio on the first pointer interaction to reduce initial latency
+    this.unlockHandler = () => {
+      void self.ensureToneReady();
+      document.removeEventListener('pointerdown', self.unlockHandler);
+      self.unlockHandler = null;
+    };
+    document.addEventListener('pointerdown', this.unlockHandler, { once: true });
   }
 
   _removeListeners() {
     document.removeEventListener('keydown', this.keydownListener);
     document.removeEventListener('keyup', this.keyupListener);
+    if (this.unlockHandler) {
+      document.removeEventListener('pointerdown', this.unlockHandler);
+      this.unlockHandler = null;
+    }
   }
 
   async charge(): Promise<void> {
     // Avoid loading audio libraries during SSR
     if (typeof window === 'undefined') return;
     if (this.audioSamplesUri) {
+      // Prepare Tone with low-latency settings before creating the piano
+      await this.ensureToneReady();
       // Dynamically import the piano library only in the browser to avoid SSR errors.
       const mod = await import('@tonejs/piano');
       const PianoSound = mod.Piano as any;
