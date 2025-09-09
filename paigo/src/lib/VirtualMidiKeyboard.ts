@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import { Piano as PianoSound } from '@tonejs/piano'
 
 export interface VirtualMidiKeyboardOption {
   audioSamplesUri?: string,
@@ -126,18 +125,21 @@ export class VirtualMidiKeyboard extends EventEmitter {
     document.removeEventListener('keyup', this.keyupListener);
   }
 
-  charge(): Promise<void> {
+  async charge(): Promise<void> {
+    // Avoid loading audio libraries during SSR
+    if (typeof window === 'undefined') return;
     if (this.audioSamplesUri) {
+      // Dynamically import the piano library only in the browser to avoid SSR errors.
+      const mod = await import('@tonejs/piano');
+      const PianoSound = mod.Piano as any;
       this.pianoSound = new PianoSound({
         url: this.audioSamplesUri,
-        velocities: 5
+        velocities: 5,
       });
       this.pianoSound.toDestination();
-
       console.log('[VirtualMidiKeyboard] loading audio samples...');
-      return this.pianoSound.load();
+      await this.pianoSound.load();
     }
-    return Promise.resolve();
   }
 
   turnOn() {
@@ -150,10 +152,10 @@ export class VirtualMidiKeyboard extends EventEmitter {
 
   keyboardMap(): Map<string, string> {
     let km = new Map<string, string>();
-    this.NoteNameMap.forEach(({noteName}, key) => {
+    this.NoteNameMap.forEach(({ noteName }, key) => {
       km.set(key, noteName);
     });
-    this.OctaveNumberMap.forEach(({octave}, key) => {
+    this.OctaveNumberMap.forEach(({ octave }, key) => {
       km.set(key, "octave " + octave.toString());
     });
     return km;

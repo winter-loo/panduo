@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { notu, noteWidth, rest, RestDuration, NoteDuration } from '../notu';
 	import { MovableElement } from '$lib/movable';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
 
 	//
@@ -203,13 +203,15 @@
 	});
 
 	let midiKeyboard = getVirtualMidiKeyboard();
-	midiKeyboard.turnOn();
-	midiKeyboard.on('noteOn', () => beginHold('note'));
-	midiKeyboard.on('noteOff', () => endHold('note'));
 
-	onDestroy(() => {
-		midiKeyboard.turnOff();
+	onMount(() => {
+		midiKeyboard.turnOn();
+		midiKeyboard.on('noteOn', () => beginHold('note'));
+		midiKeyboard.on('noteOff', () => endHold('note'));
+		return () => midiKeyboard.turnOff();
 	});
+
+	// turnOff is handled in onMount cleanup above
 </script>
 
 <h3>rhythm master</h3>
