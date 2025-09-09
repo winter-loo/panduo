@@ -62,7 +62,7 @@
 	// --- Rhythm checking (metronome-only) ---
 	const BPM = 60; // fixed
 	const WHOLE_MS = 4 * (60_000 / BPM); // 4 beats in 4/4 at 60 BPM = 4000ms
-	const TOL_MS = 40; // acceptance tolerance
+	const TOL_MS = 30; // acceptance tolerance
 
 	function durationFraction(d: NoteDuration) {
 		return d.repeat / d.baseNoteValue;
@@ -173,6 +173,12 @@
 		return !player.finished && player.current.m === m && player.current.i === i;
 	}
 
+	// Progress animation lives in $effect so it automatically starts and stops
+	// with the reactive state (player.holding, player.expectedMs). This ensures:
+	// - The requestAnimationFrame loop only runs while a note/rest is being held.
+	// - Cleanup happens reliably on dependency changes and on unmount, avoiding leaks.
+	// - Progress is derived directly from timestamps each frame, staying in sync
+	//   with paused/resumed holds and any scheduling jitter.
 	let rafId: number | null = null;
 	$effect(() => {
 		if (player.holding && player.expectedMs > 0) {
@@ -228,13 +234,22 @@
 						data-i={i}
 					>
 						{#if isCurrent(m, i) && player.holding}
-							<div class="progress" style:width={`${Math.min(player.progress, 1) * 100}%`}></div>
+							<div
+								class="progress"
+								style:width={`${Math.min(player.progress, 1) * (noteWidth({ ...layoutBase }, dura) + layoutBase.notesSpacing)}px`}
+							></div>
 						{/if}
 					</div>
 				{/each}
 			</div>
 		{/each}
 		<div class="barline" style:width="{layoutBase.barLineWidth}px"></div>
+		<div
+			class="measure"
+			style:width="{layoutBase.measureWidth}px"
+			style:padding-left="{layoutDerived.measureLeftPadding}px"
+			style:padding-right="{layoutDerived.measureRightPadding}px"
+		></div>
 	</div>
 </div>
 
@@ -245,15 +260,15 @@
 			resetUI();
 			return;
 		}
-    if (!keyIsKeyH(e)) return;
-    e.preventDefault();
-    if (e.repeat) return; // ignore key repeat
-    beginHold('rest');
+		if (!keyIsKeyH(e)) return;
+		e.preventDefault();
+		if (e.repeat) return; // ignore key repeat
+		beginHold('rest');
 	}}
 	onkeyup={(e) => {
-    if (!keyIsKeyH(e)) return;
-    e.preventDefault();
-    endHold('rest');
+		if (!keyIsKeyH(e)) return;
+		e.preventDefault();
+		endHold('rest');
 	}}
 />
 
@@ -296,7 +311,7 @@
 	.note {
 		background: #708fff;
 		position: relative;
-		overflow: hidden;
+		overflow: visible;
 	}
 
 	.rest {
@@ -316,9 +331,9 @@
 	:global(.note.rest.success) {
 		background: #b9e3a8;
 	}
-  :global(.note) {
-    transition: background 0.5s ease-in;
-  }
+	:global(.note) {
+		transition: background 0.5s ease-in;
+	}
 
 	/* Active hold progress overlay */
 	.progress {
