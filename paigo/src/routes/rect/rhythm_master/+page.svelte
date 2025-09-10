@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { notu, noteWidth, rest, RestDuration, NoteDuration } from '../notu';
+	import { notu, noteWidth, rest, RestDuration, NoteDuration } from '$lib/notu';
 	import { MovableElement } from '$lib/movable';
 	import { onMount } from 'svelte';
 	import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+	import { page } from '$app/state';
+
+	const PagePath = page.url.pathname;
 
 	//
 	// see [layout_measurement.md] for calculation in detail
@@ -215,6 +218,7 @@
 </script>
 
 <h3>rhythm master</h3>
+<a href="{PagePath}/v2">v2</a>
 
 <div class="card" bind:this={cardEl}>
 	<div class="staff-line" bind:this={staffEl} {@attach movable.draggable()}>
