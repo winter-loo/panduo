@@ -6,6 +6,7 @@
 <nav>
 	<a class="nav-item" href={`${PagePath}/svg`}>svg</a>
 	<a class="nav-item" href={`${PagePath}/neodrag`}>neodrag</a>
+	<a class="nav-item" href={`${PagePath}/key-rollover`}>key-rollover</a>
 
 	<style>
 		nav {
