@@ -292,11 +292,12 @@
 		player.startTs = 0;
 		player.progress = 0;
 		player.expectedMs = 0;
-		// clear dim overlays
+		// First reset pan position (this triggers onMove -> updateDimsAll)
+		// Then clear dim overlays so they stay cleared after reset.
+		movable.reset();
 		staffEl
 			?.querySelectorAll('.note .dim')
 			.forEach((el) => ((el as HTMLElement).style.width = '0px'));
-		movable.reset();
 	}
 
 	// Progress animation lives in $effect so it automatically starts and stops
