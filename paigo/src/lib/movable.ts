@@ -38,7 +38,11 @@ export class MovableElement {
         const delta = clamped - ctx.offset.x;
         ctx.propose(ctx.proposed.x !== null ? delta : null, null);
         const nextOffsetX = -(ctx.offset.x + delta);
-        if (Number.isFinite(nextOffsetX)) this.onMove?.(nextOffsetX);
+        // Keep internal offset in sync with drag so consumers can read it immediately.
+        if (Number.isFinite(nextOffsetX)) {
+          this.currentOffsetX = nextOffsetX;
+          this.onMove?.(nextOffsetX);
+        }
       }
     }));
     this.clampPlugin = clampX();

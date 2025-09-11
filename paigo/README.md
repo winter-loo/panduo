@@ -1,3 +1,8 @@
+# TODO
+
+- [ ] hand movement practice
+- [ ] speed transcribing notes in an image with keyboard
+
 # sv
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { notu, noteWidth } from "../notu"
+import { notu, noteWidth } from "$lib/notu"
 	//
 	// see [layout_measurement.md] for calculation in detail
 	//

@@ -3774,7 +3774,8 @@ export enum Glyphs {
   // U+E1D2  Whole note (semibreve)
   noteWhole = '\ue1d2',
   // U+E0A4  Black notehead
-  noteheadBlack = '\ue0a4',
+  // noteheadBlack = '\ue0a4',
+  noteheadBlack = '\ue10b',
   // U+E0F7  Circle slash notehead
   noteheadCircleSlash = '\ue0f7',
   // U+E0B3  Circle X notehead
