@@ -99,7 +99,7 @@ export class MovableElement {
   }
 
   // Animate to a target offset (absolute, 0..maxOffsetX)
-  private animateTo = (targetOffsetX: number, durationMs = 220) => {
+  moveTo = (targetOffsetX: number, durationMs = 220) => {
     const end = Math.min(this.maxOffsetX, Math.max(0, targetOffsetX));
     const start = this.currentOffsetX;
     const delta = end - start;
@@ -117,7 +117,7 @@ export class MovableElement {
       const e = easeInOutQuad(p);
       this.currentOffsetX = start + delta * e;
       this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
-      console.log('nudgeByAnimated onMovej');
+      console.log('nudgeByAnimated onMove');
       this.onMove?.(this.currentOffsetX);
       if (p < 1) {
         this.moveAnimationId = requestAnimationFrame(step);
@@ -135,7 +135,7 @@ export class MovableElement {
   nudgeByAnimated = (distancePx: number, durationMs = 220) => {
     if (!Number.isFinite(distancePx)) return;
     const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
-    this.animateTo(target, durationMs);
+    this.moveTo(target, durationMs);
   }
 
   // Adjust by a signed distance: positive moves left, negative moves right.
@@ -150,6 +150,6 @@ export class MovableElement {
   adjustByAnimated = (distancePx: number, durationMs = 220) => {
     if (!Number.isFinite(distancePx)) return;
     const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + distancePx));
-    this.animateTo(target, durationMs);
+    this.moveTo(target, durationMs);
   }
 }

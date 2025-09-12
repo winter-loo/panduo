@@ -3,6 +3,7 @@
 - [ ] hand movement practice
 - [ ] speed transcribing notes in an image with keyboard
 - [ ] roadmap to piano master
+- [ ] use [canvas-confetti](https://github.com/catdad/canvas-confetti) for congraturations!
 
 # sv
 
