@@ -26,7 +26,7 @@
   // quarter: 76 + 12 = 88
   // eighth: 32 + 12 = 44
   const rhythms: any = [
-    [notu(1)],
+    [notu(2), rest(2)],
     // [notu(4), rest(4), rest(2)],
     // [rest(2), rest(4), notu(8), notu(8)],
     [notu(4), notu(4), notu(8), notu(8), rest(4)],
@@ -143,32 +143,32 @@
 
   let lastIdx: number | null = null;
 
-	  function updateDimsSelective() {
-	    const contentPosAtPlayheadPx =
-	      movable.currentOffsetX + (layoutBase.barLineWidth + layoutDerived.measureLeftPadding);
-	    console.log('contentPosAtPlayheadPx=', contentPosAtPlayheadPx);
-	    if (noteGeoms.length === 0) return;
-	    // Find note under playhead or nearest by x
-	    let idx = -1;
-	    for (let i = 0; i < noteGeoms.length; i++) {
-	      const g = noteGeoms[i];
-	      if (contentPosAtPlayheadPx >= g.x && contentPosAtPlayheadPx <= g.x + g.w) {
-	        idx = i;
-	        break;
-	      }
-	    }
-	    if (idx === -1) {
-	      let best = Infinity;
-	      let bestI = 0;
-	      for (let i = 0; i < noteGeoms.length; i++) {
-	        const d = Math.abs(contentPosAtPlayheadPx - noteGeoms[i].x);
-	        if (d < best) {
-	          best = d;
-	          bestI = i;
-	        }
-	      }
-	      idx = bestI;
-	    }
+  function updateDimsSelective() {
+    const startOffsetToNote = layoutBase.barLineWidth + layoutDerived.measureLeftPadding;
+    const staffXToPlayhead = movable.currentOffsetX + startOffsetToNote;
+    console.log('staffXToPlayhead=', staffXToPlayhead);
+    if (noteGeoms.length === 0) return;
+    // Find note under playhead or nearest by x
+    let idx = -1;
+    for (let i = 0; i < noteGeoms.length; i++) {
+      const g = noteGeoms[i];
+      if (staffXToPlayhead >= g.x && staffXToPlayhead <= g.x + g.w) {
+        idx = i;
+        break;
+      }
+    }
+    if (idx === -1) {
+      let best = Infinity;
+      let bestI = 0;
+      for (let i = 0; i < noteGeoms.length; i++) {
+        const d = Math.abs(staffXToPlayhead - noteGeoms[i].x);
+        if (d < best) {
+          best = d;
+          bestI = i;
+        }
+      }
+      idx = bestI;
+    }
 
     // If playhead jumped across multiple notes, finalize dims for skipped notes
     if (lastIdx !== null && idx !== lastIdx) {
@@ -189,14 +189,14 @@
       }
     }
 
-	    // Update current note and its neighbors precisely
-	    for (const j of [idx - 1, idx, idx + 1]) {
-	      if (j < 0 || j >= noteGeoms.length) continue;
-	      const g = noteGeoms[j];
-	      const passed = Math.min(g.w, Math.max(0, contentPosAtPlayheadPx - g.x));
-	      const dim = g.el?.querySelector('.dim') as HTMLElement | null;
-	      if (dim) dim.style.width = `${passed}px`;
-	    }
+    // Update current note and its neighbors precisely
+    for (const j of [idx - 1, idx, idx + 1]) {
+      if (j < 0 || j >= noteGeoms.length) continue;
+      const g = noteGeoms[j];
+      const passed = Math.min(g.w, Math.max(0, staffXToPlayhead - g.x));
+      const dim = g.el?.querySelector('.dim') as HTMLElement | null;
+      if (dim) dim.style.width = `${passed}px`;
+    }
 
     lastIdx = idx;
   }
@@ -211,9 +211,10 @@
       playheadEl?.getBoundingClientRect().left ?? viewportEl.getBoundingClientRect().left;
     const nextRect = nextEl.getBoundingClientRect();
     const delta = nextRect.left - targetLeft;
-    if (Number.isFinite(delta) && delta > 0.5) {
-      movable.nudgeByAnimated(delta, 150);
-    }
+    // if (Number.isFinite(delta) && delta > 0.5) {
+      // movable.nudgeByAnimated(delta, 150);
+    // }
+    movable.nudgeBy(delta);
   }
 
   function advanceAfterSuccess() {
@@ -231,32 +232,12 @@
 
   type TargetKind = 'note' | 'rest';
 
-  function beginHold(kind: TargetKind) {
+  function beginHold() {
     if (player.finished) return;
     if (player.holding) return;
 
-    // If starting a piano note, skip over any consecutive rests first.
-    if (kind === 'note') {
-      let moved = 0;
-      while (true) {
-        const t = currentTarget();
-        if (!t) break;
-        if (t instanceof RestDuration) {
-          moved += widthFor(t);
-          advanceAfterSuccess();
-          if (player.finished) break;
-          continue;
-        }
-        break;
-      }
-      if (moved > 0) movable.nudgeBy(moved);
-    }
-
     const next = currentTarget();
     if (!next) return;
-    const isRest = next instanceof RestDuration;
-    const isNote = !isRest;
-    if ((kind === 'note' && !isNote) || (kind === 'rest' && !isRest)) return;
     // Precompute consecutive rests after this note for smooth auto-pan while holding
     let restMs = 0;
     let restOffset = 0;
@@ -305,36 +286,16 @@
       advanceAfterSuccess();
       if (player.finished) return;
 
-      // skip rest notes
-      let moved = 0;
-      while (true) {
-        const t = currentTarget();
-        if (!t) break;
-        if (t instanceof RestDuration) {
-          moved += widthFor(t);
-          // fully dim skipped rests as they pass the playhead instantly
-          const restEl = getCurrentEl();
-          if (restEl) {
-            const d = restEl.querySelector('.dim') as HTMLElement | null;
-            if (d) d.style.width = '100%';
-          }
-          advanceAfterSuccess();
-          if (player.finished) break;
-          continue;
-        }
-        break;
-      }
-      if (moved > 0) {
+      if (player.restMsAfter > 0) {
         // Avoid double-moving rests already panned during the hold
         const extraHeld = Math.max(0, held - expected);
-        const restProgressAtRelease =
-          player.restMsAfter > 0 ? Math.min(extraHeld / player.restMsAfter, 1) : 0;
+        const restProgressAtRelease = Math.min(extraHeld / player.restMsAfter, 1);
         const alreadyMovedPx = restProgressAtRelease * player.restOffsetAfter;
-        const remainingPx = Math.max(0, moved - alreadyMovedPx);
+        const remainingPx = player.restOffsetAfter - alreadyMovedPx;
         if (remainingPx > 0) {
           // Smoothly continue to the next non-rest note after release
-          movable.nudgeByAnimated(remainingPx, 180);
-          setTimeout(() => alignNextToPlayhead(), 190);
+          movable.nudgeByAnimated(remainingPx, player.restMsAfter - extraHeld);
+          // setTimeout(() => alignNextToPlayhead(), 190);
         } else {
           alignNextToPlayhead();
         }
@@ -347,7 +308,6 @@
       const rollbackPx = fraction * player.expectedOffset;
       if (rollbackPx > 0) {
         // the .dim width will change in onMove callback
-        // movable.adjustByAnimated(-rollbackPx, 150);
         movable.adjustBy(-rollbackPx);
       }
     }
@@ -361,12 +321,8 @@
     player.startTs = 0;
     player.progress = 0;
     player.expectedMs = 0;
-    // First reset pan position (this triggers onMove -> updateDimsAll)
-    // Then clear dim overlays so they stay cleared after reset.
+    // .dim width will be reset in onMove callback
     movable.reset();
-    staffEl
-      ?.querySelectorAll('.note .dim')
-      .forEach((el) => ((el as HTMLElement).style.width = '0px'));
   }
 
   // Progress animation lives in $effect so it automatically starts and stops
@@ -381,6 +337,12 @@
       let prevProgress = 0;
       let prevRestProgress = 0;
       const tick = () => {
+        if (prevProgress == 1) {
+          console.log('frame cancelled 2');
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = null;
+          return;
+        }
         const now = performance.now();
         const elapsed = now - player.startTs;
         player.progress = Math.min(elapsed / player.expectedMs, 1);
@@ -390,21 +352,21 @@
           prevProgress = player.progress;
         }
         // Continue sliding across consecutive rests while still holding
-        if (player.restMsAfter > 0) {
-          const extraElapsed = Math.max(0, elapsed - player.expectedMs);
-          const restProgress = Math.min(extraElapsed / player.restMsAfter, 1);
-          const deltaRest = Math.max(0, restProgress - prevRestProgress);
-          if (deltaRest > 0) {
-            movable.nudgeBy(deltaRest * player.restOffsetAfter);
-            prevRestProgress = restProgress;
-          }
-        }
+        // if (player.restMsAfter > 0) {
+        //   const extraElapsed = Math.max(0, elapsed - player.expectedMs);
+        //   const restProgress = Math.min(extraElapsed / player.restMsAfter, 1);
+        //   const deltaRest = Math.max(0, restProgress - prevRestProgress);
+        //   if (deltaRest > 0) {
+        //     movable.nudgeBy(deltaRest * player.restOffsetAfter);
+        //     prevRestProgress = restProgress;
+        //   }
+        // }
         // Update dim overlays for just the nearest notes
-        updateDimsSelective();
         rafId = requestAnimationFrame(tick);
       };
       rafId = requestAnimationFrame(tick);
       return () => {
+        console.log('frame canceled');
         if (rafId) cancelAnimationFrame(rafId);
         rafId = null;
       };
@@ -431,7 +393,7 @@
         heldPianoKeys = new Set(heldPianoKeys);
       }
       if (wasEmpty) {
-        beginHold('note');
+        beginHold();
         // Movement is driven per-frame in the $effect while holding
       }
     });

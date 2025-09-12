@@ -2,6 +2,7 @@
 
 - [ ] hand movement practice
 - [ ] speed transcribing notes in an image with keyboard
+- [ ] roadmap to piano master
 
 # sv
 
