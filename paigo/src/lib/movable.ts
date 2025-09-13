@@ -41,7 +41,6 @@ export class MovableElement {
         // Keep internal offset in sync with drag so consumers can read it immediately.
         if (Number.isFinite(nextOffsetX)) {
           this.currentOffsetX = nextOffsetX;
-          console.log('onDrag onMove');
           this.onMove?.(nextOffsetX);
         }
       }
@@ -94,7 +93,6 @@ export class MovableElement {
     const next = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
     this.currentOffsetX = next;
     this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
-    console.log('nudgeBy onMove');
     this.onMove?.(this.currentOffsetX);
   }
 
@@ -117,7 +115,6 @@ export class MovableElement {
       const e = easeInOutQuad(p);
       this.currentOffsetX = start + delta * e;
       this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
-      console.log('nudgeByAnimated onMove');
       this.onMove?.(this.currentOffsetX);
       if (p < 1) {
         this.moveAnimationId = requestAnimationFrame(step);

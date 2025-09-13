@@ -20,6 +20,7 @@
     measureLeftPadding: Math.ceil((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2),
     measureRightPadding: Math.floor((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2)
   });
+  const barlineOffsetToNote = $derived(layoutBase.barLineWidth + layoutDerived.measureLeftPadding);
 
   // whole: 340 + 12 = 352
   // half: 164 + 12 = 176
@@ -35,32 +36,23 @@
     [notu(1)]
   ];
 
-  let measureTotalWidth = rhythms.length * layoutBase.measureWidth;
-  let barlineTotalWidth = (rhythms.length + 1) * layoutBase.barLineWidth;
-  let staffLineWidth = measureTotalWidth + barlineTotalWidth;
+  // Movable pan controller; bounds recomputed on mount/resize
   let movable = new MovableElement(0);
 
   let cardEl: HTMLDivElement;
   let staffEl: HTMLDivElement;
+  function recomputePanBounds() {
+    const staffLineWidth =
+      rhythms.length * layoutBase.measureWidth + (rhythms.length + 1) * layoutBase.barLineWidth;
+    movable.maxOffsetX = staffLineWidth;
+  }
   onMount(() => {
-    // Compute how far the wide staff can pan left, based on
-    // content width (staffLineWidth) minus the visible viewport (.card).
-    // This value is consumed by our custom neodrag clamp plugin
-    // (see src/lib/movable.ts) which clamps translateX to [-maxOffsetX, 0].
-    // We observe the container for resize to keep bounds accurate on layout changes.
-    const updateBounds = () => {
-      // Allow panning across the entire staff width.
-      // Sum of all measures and barlines (computed in staffLineWidth) is used directly.
-      movable.maxOffsetX = Math.max(0, staffLineWidth);
-    };
-    updateBounds();
-    buildNoteGeoms();
-    updateDimsSelective();
-    const ro = new ResizeObserver(() => {
-      updateBounds();
+    const willDo = () => {
       buildNoteGeoms();
       updateDimsSelective();
-    });
+      recomputePanBounds();
+    };
+    const ro = new ResizeObserver(willDo);
     if (cardEl) ro.observe(cardEl);
     return () => ro.disconnect();
   });
@@ -97,63 +89,65 @@
     restOffsetAfter: 0
   });
 
-  function getNoteEl(m: number, i: number): HTMLElement | null {
-    if (!staffEl) return null;
-    return staffEl.querySelector(`.note[data-m="${m}"][data-i="${i}"]`);
-  }
-
   // --- Shared helpers to reduce duplication ---
-  function currentTarget() {
+  function currentNote() {
     return rhythms[player.current.m]?.[player.current.i];
   }
-
-  function getCurrentEl() {
-    return getNoteEl(player.current.m, player.current.i);
+  function currentNoteGeomIndex() {
+    return measureStartIdxs[player.current.m] + player.current.i;
+  }
+  function currentNoteGeom() {
+    return noteGeoms[currentNoteGeomIndex()];
   }
 
-  let viewportEl: HTMLDivElement | null = null;
-  let playheadEl: HTMLDivElement | null = null;
-
   // Precomputed geometry for notes (content-space positions, no layout reads).
-  type NoteGeom = { m: number; i: number; x: number; w: number; el: HTMLElement | null };
+  type NoteGeom = { m: number; i: number; x: number; w: number };
   let noteGeoms: NoteGeom[] = [];
+  // Width of dim overlay for each note in flattened order across all measures
+  let dimWidths = $state<number[]>([]);
+  // Start index in flattened note array for each measure m
+  let measureStartIdxs = $state<number[]>([]);
 
   function buildNoteGeoms() {
     noteGeoms = [];
+    measureStartIdxs = [];
     let x = 0;
+    let runningIdx = 0;
     for (let m = 0; m < rhythms.length; m++) {
       // Leading barline before each measure
       x += layoutBase.barLineWidth;
       // Inside measure: start after left padding
       let insideX = x + layoutDerived.measureLeftPadding;
       const seq = rhythms[m];
+      measureStartIdxs[m] = runningIdx;
       for (let i = 0; i < seq.length; i++) {
         const dura = seq[i];
         const w = noteWidth({ ...layoutBase }, dura);
-        const el = staffEl?.querySelector(
-          `.note[data-m="${m}"][data-i="${i}"]`
-        ) as HTMLElement | null;
-        noteGeoms.push({ m, i, x: insideX, w, el });
+        noteGeoms.push({ m, i, x: insideX, w });
         insideX += w + layoutBase.notesSpacing;
+        runningIdx += 1;
       }
       // Move to next measure start
       x += layoutBase.measureWidth;
     }
+    // Reset dim overlays to match note count
+    dimWidths = Array(noteGeoms.length).fill(0);
   }
-
-  let lastIdx: number | null = null;
 
   // Binary search for note index by effectiveX (content-space playhead X)
   function findNoteIndex(effectiveX: number): number {
     if (noteGeoms.length === 0) return -1;
-    let lo = 0, hi = noteGeoms.length; // upper_bound on x
+    let lo = 0,
+      hi = noteGeoms.length;
     while (lo < hi) {
       const mid = (lo + hi) >>> 1;
-      if (noteGeoms[mid].x <= effectiveX) lo = mid + 1; else hi = mid;
+      if (noteGeoms[mid].x <= effectiveX) lo = mid + 1;
+      else hi = mid;
     }
     const idx = Math.max(0, lo - 1);
     // Prefer containing note; if outside width, choose nearest by x
-    if (effectiveX >= noteGeoms[idx].x && effectiveX <= noteGeoms[idx].x + noteGeoms[idx].w) return idx;
+    if (effectiveX >= noteGeoms[idx].x && effectiveX <= noteGeoms[idx].x + noteGeoms[idx].w)
+      return idx;
     // Check neighbor to decide nearest
     const leftDist = Math.abs(effectiveX - noteGeoms[idx].x);
     const rightIdx = Math.min(noteGeoms.length - 1, idx + 1);
@@ -161,25 +155,40 @@
     return rightDist < leftDist ? rightIdx : idx;
   }
 
+  let lastIdx: number | null = null;
+
+  // function updateDimsSelective() {
+  //   const staffXToPlayhead = movable.currentOffsetX + barlineOffsetToNote;
+  //   const g = currentNoteGeom();
+  //   const passed = Math.min(g.w, Math.max(0, staffXToPlayhead - g.x));
+  //   dimWidths[currentNoteGeomIndex()] = passed;
+  // }
+
   function updateDimsSelective() {
-    const startOffsetToNote = layoutBase.barLineWidth + layoutDerived.measureLeftPadding;
-    const staffXToPlayhead = movable.currentOffsetX + startOffsetToNote;
-    if (noteGeoms.length === 0) return;
+    const staffXToPlayhead = movable.currentOffsetX + barlineOffsetToNote;
     const idx = findNoteIndex(staffXToPlayhead);
 
     // If playhead jumped across multiple notes, finalize dims for skipped notes
     if (lastIdx !== null && idx !== lastIdx) {
+      const jump = Math.abs(idx - lastIdx);
+      const BATCH_THRESHOLD = 16;
       if (idx > lastIdx) {
         // Moved forward: mark all notes between lastIdx and idx-1 as fully dimmed
-        for (let j = lastIdx; j < idx; j++) {
-          const dim = noteGeoms[j].el?.querySelector('.dim') as HTMLElement | null;
-          if (dim) dim.style.width = `${noteGeoms[j].w}px`;
+        if (jump > BATCH_THRESHOLD) {
+          const next = dimWidths.slice();
+          for (let j = lastIdx; j < idx; j++) next[j] = noteGeoms[j].w;
+          dimWidths = next;
+        } else {
+          for (let j = lastIdx; j < idx; j++) dimWidths[j] = noteGeoms[j].w;
         }
       } else {
         // Moved backward: clear dims for notes between idx+1 and lastIdx
-        for (let j = idx + 1; j <= lastIdx; j++) {
-          const dim = noteGeoms[j].el?.querySelector('.dim') as HTMLElement | null;
-          if (dim) dim.style.width = '0px';
+        if (jump > BATCH_THRESHOLD) {
+          const next = dimWidths.slice();
+          for (let j = idx + 1; j <= lastIdx; j++) next[j] = 0;
+          dimWidths = next;
+        } else {
+          for (let j = idx + 1; j <= lastIdx; j++) dimWidths[j] = 0;
         }
       }
     }
@@ -188,8 +197,7 @@
     for (const j of [idx - 1, idx, idx + 1]) {
       if (j < 0 || j >= noteGeoms.length) continue;
       const passed = Math.min(noteGeoms[j].w, Math.max(0, staffXToPlayhead - noteGeoms[j].x));
-      const dim = noteGeoms[j].el?.querySelector('.dim') as HTMLElement | null;
-      if (dim) dim.style.width = `${passed}px`;
+      dimWidths[j] = passed;
     }
 
     lastIdx = idx;
@@ -197,37 +205,14 @@
 
   let dimUpdateRaf: number | null = null;
 
-  function pxPerMsForAlignment() {
-    // Prefer the exact glide speed used during rests if applicable; fallback to note speed.
-    if (player.restMsAfter > 0 && player.restOffsetAfter > 0) {
-      return player.restOffsetAfter / player.restMsAfter;
-    }
-    if (player.expectedMs > 0 && player.expectedOffset > 0) {
-      return player.expectedOffset / player.expectedMs;
-    }
-    return 0; // no meaningful speed
-  }
-
   function alignToCurrentNote() {
-    const startOffsetToNote = layoutBase.barLineWidth + layoutDerived.measureLeftPadding;
-    const g = noteGeoms.find((ng) => ng.m === player.current.m && ng.i === player.current.i);
+    const g = currentNoteGeom();
     if (!g) return;
-    const desiredOffset = g.x - startOffsetToNote;
-    const delta = desiredOffset - movable.currentOffsetX;
-    if (Math.abs(delta) > 0) {
-      const v = pxPerMsForAlignment();
-      const dur = v > 0 ? Math.abs(delta) / v : 0; // ms
-      if (dur > 0 && Number.isFinite(dur)) {
-        movable.adjustByAnimated(delta, dur);
-      } else {
-        movable.adjustBy(delta);
-      }
-    }
+    const desiredOffset = g.x - barlineOffsetToNote;
+    movable.moveTo(desiredOffset, 0);
   }
 
   function advanceAfterSuccess() {
-    // Movement during a successful hold is handled progressively in $effect.
-    // Here we only advance the logical cursor to the next target.
     player.current.i += 1;
     if (player.current.i >= rhythms[player.current.m].length) {
       player.current.i = 0;
@@ -238,12 +223,7 @@
     }
   }
 
-  function beginHold() {
-    if (player.finished) return;
-    if (player.holding) return;
-
-    const next = currentTarget();
-    if (!next) return;
+  function restAfterNote() {
     // Precompute consecutive rests after this note for smooth auto-pan while holding
     let restMs = 0;
     let restOffset = 0;
@@ -263,49 +243,46 @@
       restOffset += widthFor(nxt);
       ii += 1;
     }
-    player.restMsAfter = restMs;
-    player.restOffsetAfter = restOffset;
+    return { duration: restMs, width: restOffset };
+  }
+
+  function beginHold() {
+    if (player.finished) return;
+    if (player.holding) return;
+
+    const next = currentNote();
+    if (!next) return;
 
     player.holding = true;
     player.startTs = performance.now();
     player.expectedMs = msFor(next);
     player.expectedOffset = widthFor(next);
+
+    const rests = restAfterNote();
+    player.restMsAfter = rests.duration;
+    player.restOffsetAfter = rests.width;
+
     startHoldAnimationLoop();
   }
 
   function endHold() {
     if (!player.holding) return;
-    const target = currentTarget();
-    if (!target) return;
     const now = performance.now();
     const held = now - player.startTs;
     const expected = player.expectedMs;
     player.holding = false;
     stopHoldAnimationLoop();
-    const el = getCurrentEl();
     if (held + TOL_MS >= expected) {
-      if (el) {
-        const dimEl = el.querySelector('.dim') as HTMLElement | null;
-        if (dimEl) dimEl.style.width = '100%';
-      }
       advanceAfterSuccess();
       if (player.finished) return;
-
-      // Regardless of rest glide progress, snap exactly to the next note using geometry
-      alignToCurrentNote();
-    } else {
-      // Incorrect duration: rollback the distance moved during this hold
-      const fraction = Math.min(1, Math.max(0, held / expected));
-      const rollbackPx = fraction * player.expectedOffset;
-      if (rollbackPx > 0) {
-        // the .dim width will change in onMove callback
-        movable.adjustBy(-rollbackPx);
-      }
     }
+    alignToCurrentNote();
   }
 
   function resetUI() {
     stopHoldAnimationLoop();
+    if (dimUpdateRaf) cancelAnimationFrame(dimUpdateRaf);
+    dimUpdateRaf = null;
     player.current.m = 0;
     player.current.i = 0;
     player.holding = false;
@@ -313,7 +290,10 @@
     player.startTs = 0;
     player.progress = 0;
     player.expectedMs = 0;
-    // .dim width will be reset in onMove callback
+    // Quick reset of dim overlays
+    dimWidths = Array(noteGeoms.length).fill(0);
+    lastIdx = null;
+    // .dim width will be reset in onMove callback as well
     movable.reset();
   }
 
@@ -342,7 +322,6 @@
           prevRestProgress = restProgress;
         }
       }
-      updateDimsSelective();
       // Stop animating once we've completed all planned movement (note + following rests)
       const totalMs = player.expectedMs + (player.restMsAfter || 0);
       const totalProg = Math.min(1, totalMs > 0 ? elapsed / totalMs : 1);
@@ -405,13 +384,11 @@
 <h3>rhythm master v2</h3>
 
 <div class="card" bind:this={cardEl}>
-  <div class="staff-viewport" bind:this={viewportEl}>
+  <div class="staff-viewport">
     <div
       class="playhead"
       style:width="{layoutBase.cursorLineWidth}px"
-      style:transform="translate3d({layoutBase.barLineWidth + layoutDerived.measureLeftPadding}px,
-      0, 0)"
-      bind:this={playheadEl}
+      style:transform="translate3d({barlineOffsetToNote}px, 0, 0)"
     ></div>
     <div class="staff-line" bind:this={staffEl} {@attach movable.draggable()}>
       {#each rhythms as rhythm, m}
@@ -431,7 +408,7 @@
               data-m={m}
               data-i={i}
             >
-              <div class="dim"></div>
+              <div class="dim" style:width="{dimWidths[measureStartIdxs[m] + i]}px"></div>
             </div>
           {/each}
         </div>
