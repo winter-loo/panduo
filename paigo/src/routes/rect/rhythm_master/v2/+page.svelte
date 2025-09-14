@@ -223,25 +223,17 @@
     }
   }
 
-  function restAfterNote() {
-    // Precompute consecutive rests after this note for smooth auto-pan while holding
+  function restsAfterNote() {
+    // Sum consecutive rests after the current item for smooth auto-pan while holding
     let restMs = 0;
     let restOffset = 0;
-    let mm = player.current.m;
-    let ii = player.current.i + 1;
-    while (mm < rhythms.length) {
-      const seq = rhythms[mm];
-      if (!seq) break;
-      if (ii >= seq.length) {
-        mm += 1;
-        ii = 0;
-        continue;
-      }
-      const nxt = seq[ii];
-      if (!(nxt instanceof RestDuration)) break;
-      restMs += msFor(nxt);
-      restOffset += widthFor(nxt);
-      ii += 1;
+    const dura = currentNote();
+    const start = currentNoteGeomIndex() + 1;
+    for (let k = start; k < noteGeoms.length; k++) {
+      const g = noteGeoms[k];
+      if (!(dura instanceof RestDuration)) break;
+      restMs += msFor(dura);
+      restOffset += g.w + layoutBase.notesSpacing;
     }
     return { duration: restMs, width: restOffset };
   }
@@ -258,7 +250,7 @@
     player.expectedMs = msFor(next);
     player.expectedOffset = widthFor(next);
 
-    const rests = restAfterNote();
+    const rests = restsAfterNote();
     player.restMsAfter = rests.duration;
     player.restOffsetAfter = rests.width;
 
