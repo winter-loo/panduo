@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events'
+import { showPianoLoading, hidePianoLoading, requirePianoUserGesture, clearPianoUserGesture } from '$lib/stores/pianoLoading';
 
 export interface VirtualMidiKeyboardOption {
   audioSamplesUri?: string,
@@ -69,14 +70,20 @@ export class VirtualMidiKeyboard extends EventEmitter {
         // no-op if Tone couldn't be loaded; piano will still emit events without sound
       }
     }
-    try {
-      // Attempt to start/resume the audio context (requires user gesture on some browsers)
-      if (this.tone && this.tone.getContext().state !== 'running') {
-        await this.tone.start();
-      }
-    } catch (_e) {
-      // ignore if start is blocked; we'll try again on next gesture
+    // If context is not running, do not block; request user gesture via overlay button.
+    if (this.tone && this.tone.getContext().state !== 'running') {
+      requirePianoUserGesture(() => {
+        // Called in a user gesture. Try to start; don't rely on outer awaits.
+        showPianoLoading('Enabling audio...');
+        void this.tone.start().then(() => {
+          clearPianoUserGesture();
+        }).catch(() => {
+          // Keep the button visible if it still fails
+        });
+      });
+      return;
     }
+    clearPianoUserGesture();
   }
 
   _addListeners() {
@@ -148,28 +155,20 @@ export class VirtualMidiKeyboard extends EventEmitter {
     document.addEventListener('keydown', this.keydownListener);
     document.addEventListener('keyup', this.keyupListener);
 
-    // Proactively unlock/resume audio on the first pointer interaction to reduce initial latency
-    this.unlockHandler = () => {
-      void self.ensureToneReady();
-      document.removeEventListener('pointerdown', self.unlockHandler);
-      self.unlockHandler = null;
-    };
-    document.addEventListener('pointerdown', this.unlockHandler, { once: true });
+    // Explicit unlock handled via overlay button; no global pointerdown hook needed.
   }
 
   _removeListeners() {
     document.removeEventListener('keydown', this.keydownListener);
     document.removeEventListener('keyup', this.keyupListener);
-    if (this.unlockHandler) {
-      document.removeEventListener('pointerdown', this.unlockHandler);
-      this.unlockHandler = null;
-    }
+    // No unlock handler to remove; handled by overlay button
   }
 
   async charge(): Promise<void> {
     // Avoid loading audio libraries during SSR
     if (typeof window === 'undefined') return;
     if (this.audioSamplesUri) {
+      showPianoLoading('Loading piano sound...');
       // Prepare Tone with low-latency settings before creating the piano
       await this.ensureToneReady();
       // Dynamically import the piano library only in the browser to avoid SSR errors.
@@ -181,7 +180,11 @@ export class VirtualMidiKeyboard extends EventEmitter {
       });
       this.pianoSound.toDestination();
       console.log('[VirtualMidiKeyboard] loading audio samples...');
-      await this.pianoSound.load();
+      try {
+        await this.pianoSound.load();
+      } finally {
+        hidePianoLoading();
+      }
     }
   }
 

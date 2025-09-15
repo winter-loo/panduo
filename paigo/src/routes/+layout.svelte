@@ -1,5 +1,6 @@
 <script lang="ts">
 	let { children } = $props();
+	import PianoLoadingOverlay from '$lib/ui/PianoLoadingOverlay.svelte';
 
 	// Organize all UI state in a single object
 	const S = $state({
@@ -137,6 +138,8 @@
 		}
 	</style>
 </nav>
+
+<PianoLoadingOverlay />
 
 <div class="controls">
 	<button onclick={toggleGrid}>Toggle Grid</button>
