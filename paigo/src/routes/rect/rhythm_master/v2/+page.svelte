@@ -175,9 +175,16 @@
       let idx = findNoteIndexAtX(staffXToPlayhead);
       targetIdx = idx;
       const g2 = noteGeoms[idx];
-      if (g2 && (g2.m !== player.current.m || g2.i !== player.current.i)) {
-        player.current.m = g2.m;
-        player.current.i = g2.i;
+      if (g2) {
+        // Update current pointer to note under playhead during manual drag
+        if (g2.m !== player.current.m || g2.i !== player.current.i) {
+          player.current.m = g2.m;
+          player.current.i = g2.i;
+        }
+        // If the session had finished previously, allow replay from dragged position.
+        if (player.finished) {
+          player.finished = false;
+        }
       }
 
       // Update only the changed range between previous active and new active index
