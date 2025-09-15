@@ -87,6 +87,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
   }
 
   _addListeners() {
+    if (typeof document === 'undefined') return;
     let self = this;
     this.keydownListener = async function (event: any) {
       event.preventDefault();
@@ -159,6 +160,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
   }
 
   _removeListeners() {
+    if (typeof document === 'undefined') return;
     document.removeEventListener('keydown', this.keydownListener);
     document.removeEventListener('keyup', this.keyupListener);
     // No unlock handler to remove; handled by overlay button
