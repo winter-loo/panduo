@@ -27,8 +27,8 @@
   // quarter: 76 + 12 = 88
   // eighth: 32 + 12 = 44
   const rhythms: any = [
-    [notu(2), rest(2)],
-    // [notu(4), rest(4), rest(2)],
+    [notu(2), rest(4), rest(4)],
+    [rest(4), notu(4), rest(2)],
     // [rest(2), rest(4), notu(8), notu(8)],
     [notu(4), notu(4), notu(8), notu(8), rest(4)],
     [notu(8), notu(8), notu(4), notu(4), notu(8), notu(8)],
@@ -206,11 +206,38 @@
     dimWidths[targetIdx] = partial;
   }
 
+  function snapPlayheadToNearestLeftEdge() {
+    // Refresh which note is under the playhead.
+    updateDimsSelective();
+    const idx = currentNoteGeomIndex();
+    const curDura = currentDuration();
+    // If dropping on a rest, snap to the first non-rest on its left side.
+    if (curDura instanceof RestDuration) {
+      let targetIdx = -1;
+      for (let k = idx - 1; k >= 0; k--) {
+        const ng = noteGeoms[k];
+        const dura = rhythms[ng.m]?.[ng.i];
+        if (!(dura instanceof RestDuration)) {
+          targetIdx = k;
+          break;
+        }
+      }
+      if (targetIdx !== -1) {
+        const ng = noteGeoms[targetIdx];
+        const desiredOffset = ng.x - barlineOffsetToNote;
+        movable.moveTo(desiredOffset, 150);
+        return;
+      }
+      // If no non-rest exists to the left, fall back to current edge.
+    }
+    alignToEdge();
+  }
+
   function alignToEdge() {
     const g = currentNoteGeom();
     if (!g) return;
     const desiredOffset = g.x - barlineOffsetToNote;
-    movable.moveTo(desiredOffset, 0);
+    movable.moveTo(desiredOffset, 150);
   }
 
   function advanceAfterSuccess() {
@@ -416,6 +443,11 @@
     // Sync dim overlays while dragging or programmatic panning
     movable.onMove = () => {
       updateDimsSelective();
+    };
+    movable.onDragEnd = () => {
+      if (!player.holding && restRafId == null) {
+        snapPlayheadToNearestLeftEdge();
+      }
     };
     return () => midiKeyboard.turnOff();
   });

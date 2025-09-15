@@ -1,4 +1,4 @@
-import { draggable, Compartment, position, axis, unstable_definePlugin, touchAction } from '@neodrag/svelte';
+import { draggable, Compartment, position, axis, unstable_definePlugin, touchAction, events } from '@neodrag/svelte';
 import type { Attachment } from 'svelte/attachments';
 
 export class MovableElement {
@@ -9,6 +9,8 @@ export class MovableElement {
   currentPosComp: any;
   clampPlugin: any;
   onMove?: (offsetX: number) => void; // positive leftward distance
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 
   constructor(maxOffsetX: number) {
     this.maxOffsetX = maxOffsetX;
@@ -49,12 +51,17 @@ export class MovableElement {
   }
 
   draggable = (): Attachment<HTMLElement> => {
-    // Compose neodrag plugins (see next.neodrag.dev docs):
-    // - axis('x'): constrain movement to horizontal.
-    // - clampPlugin: clamp X to [-maxOffsetX, 0] using ctx.propose(), no snap-forward.
-    // - touchAction('pan-y'): allow vertical page scroll on touch devices.
-    // - position(...): used for programmatic moves (move/reset) via Compartment.
-    return draggable(() => [axis('x'), this.clampPlugin, touchAction('pan-y'), this.currentPosComp]);
+    // Compose with neodrag's events plugin to surface drag start/end.
+    return draggable(() => [
+      axis('x'),
+      this.clampPlugin,
+      touchAction('pan-y'),
+      events({
+        onDragStart: () => this.onDragStart?.(),
+        onDragEnd: () => this.onDragEnd?.()
+      }),
+      this.currentPosComp
+    ]);
   }
 
   move = () => {
