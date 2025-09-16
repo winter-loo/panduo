@@ -172,6 +172,8 @@
 	});
 </script>
 
+<Button variant="link" href="/layout">layout</Button>
+
 <svelte:document
 	onkeydown={(e) => {
 		if (e.key == 'r') movingStaff.reset();
