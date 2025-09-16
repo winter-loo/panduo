@@ -45,4 +45,3 @@ pnpm-lock.yaml
 dist/
 .vscode/
 /public/audio/
-paigo/src/lib/utils.ts
