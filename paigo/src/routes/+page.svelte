@@ -10,6 +10,7 @@
 	} from '$lib/vexflow/vexflow-core';
 	import type { PageProps } from './$types';
 	import { MovableElement } from '$lib/movable';
+  import { Button } from "$lib/components/ui/button/index";
 
 	const { data }: PageProps = $props();
 
@@ -194,10 +195,10 @@
 	</div>
 </div>
 
-<button type="button" id="renderButton" onclick={renderSong}>rerender</button>
-<button type="button" id="pauseButton" onclick={movingStaff.stop}>pause</button>
-<button type="button" id="resumeButton" onclick={movingStaff.move}>resume</button>
-<button type="button" id="resetButton" onclick={movingStaff.reset}>reset</button>
+<Button id="renderButton" onclick={renderSong}>rerender</Button>
+<Button id="pauseButton" onclick={movingStaff.stop}>pause</Button>
+<Button id="resumeButton" onclick={movingStaff.move}>resume</Button>
+<Button id="resetButton" onclick={movingStaff.reset}>reset</Button>
 
 <style>
 	#moving-staff {

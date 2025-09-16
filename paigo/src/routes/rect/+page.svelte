@@ -12,6 +12,7 @@
 	import { MovableElement } from '$lib/movable';
 	import { page } from '$app/state';
 	import { Tables } from '$lib/vexflow/src/tables';
+  import { Button } from "$lib/components/ui/button/index";
 
 	const PagePath = page.url.pathname;
 
@@ -199,8 +200,8 @@
 {/if}
 
 <nav>
-	<a class="nav-item" href={`${PagePath}/layout_lab`}>layout experiments</a>
-	<a class="nav-item" href={`${PagePath}/rhythm_master`}>rhythm master</a>
+	<Button variant="link" href={`${PagePath}/layout_lab`}>layout experiments</Button>
+	<Button variant="link" href={`${PagePath}/rhythm_master`}>rhythm master</Button>
 
 	<style>
 		nav {
@@ -226,10 +227,10 @@
 	</div>
 </div>
 
-<button type="button" id="renderButton" onclick={renderSong}>rerender</button>
-<button type="button" id="pauseButton" onclick={movingStaff.stop}>pause</button>
-<button type="button" id="resumeButton" onclick={movingStaff.move}>resume</button>
-<button type="button" id="resetButton" onclick={movingStaff.reset}>reset</button>
+<Button id="renderButton" onclick={renderSong}>rerender</Button>
+<Button id="pauseButton" onclick={movingStaff.stop}>pause</Button>
+<Button id="resumeButton" onclick={movingStaff.move}>resume</Button>
+<Button id="resetButton" onclick={movingStaff.reset}>reset</Button>
 
 <style>
 	#moving-staff {

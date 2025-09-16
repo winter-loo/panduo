@@ -2,6 +2,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode: _mode }) => {
   // Get dynamic version information
@@ -18,7 +19,7 @@ export default defineConfig(({ mode: _mode }) => {
   }
 
   return {
-    plugins: [sveltekit()],
+    plugins: [sveltekit(), tailwindcss()],
     define: {
       __VF_VERSION__: JSON.stringify(version),
       __VF_GIT_COMMIT_ID__: JSON.stringify(gitCommitId),

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Tables } from '$lib/vexflow/src/tables';
+  import { Button } from "$lib/components/ui/button/index";
 
 	// Basic boilerplate for using VexFlow with the SVG rendering context:
 	import {
@@ -212,10 +213,10 @@
 </div>
 
 <div id="controls">
-	<button id="add-note" disabled={app.notes.length == 0} onclick={app.addNote}>Add Note</button>
-	<button id="right-answer" disabled={app.visibleNoteGroups.length == 0} onclick={app.rightAnswer}
-		>Right Answer</button
-	>
+  <Button id="add-note" disabled={app.notes.length == 0} onclick={app.addNote}>Add Note</Button>
+  <Button id="right-answer" disabled={app.visibleNoteGroups.length == 0} onclick={app.rightAnswer}
+    >Right Answer</Button
+  >
 </div>
 
 <style>
@@ -235,10 +236,6 @@
 
 	#controls {
 		padding: 15px;
-	}
-
-	#controls > button {
-		margin: 5px;
 	}
 
 	:global {

@@ -1,6 +1,9 @@
 <script lang="ts">
-	let { children } = $props();
 	import PianoLoadingOverlay from '$lib/ui/PianoLoadingOverlay.svelte';
+  import { Button } from "$lib/components/ui/button/index";
+  import "../app.css"
+
+	let { children } = $props();
 
 	// Organize all UI state in a single object
 	const S = $state({
@@ -120,32 +123,20 @@
 </script>
 
 <nav>
-	<a href="/" class="nav-item">home</a>
-	<a href="/keyboard" class="nav-item">keyboard</a>
-	<a href="/rect" class="nav-item">rect</a>
-	<a href="/lab" class="nav-item">lab</a>
-	<a href="/sight-reading" class="nav-item">sight reading</a>
-
-	<style>
-		nav {
-			display: flex;
-			flex-flow: row wrap;
-			justify-content: flex-start;
-			margin-bottom: 8px;
-		}
-		.nav-item {
-			padding: 2px 4px;
-		}
-	</style>
+	<Button variant="link" href="/">home</Button>
+	<Button variant="link" href="/keyboard">keyboard</Button>
+	<Button variant="link" href="/rect">rect</Button>
+	<Button variant="link" href="/lab">lab</Button>
+	<Button variant="link" href="/sight-reading">sight reading</Button>
 </nav>
 
 <PianoLoadingOverlay />
 
 <div class="controls">
-	<button onclick={toggleGrid}>Toggle Grid</button>
-	<button onclick={() => changeGridSize(5)}>5px Grid</button>
-	<button onclick={() => changeGridSize(10)}>10px Grid</button>
-	<button onclick={() => changeGridSize(20)}>20px Grid</button>
+	<Button onclick={toggleGrid}>Toggle Grid</Button>
+	<Button onclick={() => changeGridSize(5)}>5px Grid</Button>
+	<Button onclick={() => changeGridSize(10)}>10px Grid</Button>
+	<Button onclick={() => changeGridSize(20)}>20px Grid</Button>
 	<span>Grid: {S.grid.unit}px | Mouse: ({S.mouse.x}, {S.mouse.y})</span>
 </div>
 

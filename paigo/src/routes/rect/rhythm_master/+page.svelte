@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
 	import { page } from '$app/state';
+  import { Button } from "$lib/components/ui/button/index";
 
 	const PagePath = page.url.pathname;
 
@@ -218,7 +219,7 @@
 </script>
 
 <h3>rhythm master</h3>
-<a href="{PagePath}/v2">v2</a>
+<Button variant="link" href="{PagePath}/v2">v2</Button>
 
 <div class="card" bind:this={cardEl}>
 	<div class="staff-line" bind:this={staffEl} {@attach movable.draggable()}>
