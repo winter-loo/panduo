@@ -42,7 +42,7 @@
 <script lang="ts">
 	let {
 		class: className,
-		variant = "default",
+		variant = "outline",
 		size = "default",
 		ref = $bindable(null),
 		href = undefined,

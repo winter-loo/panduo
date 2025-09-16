@@ -9,4 +9,5 @@
 	<Button variant="link" href={`${PagePath}/neodrag`}>neodrag</Button>
 	<Button variant="link" href={`${PagePath}/key-rollover`}>key-rollover</Button>
 	<Button variant="link" href={`${PagePath}/transcribe`}>transcribe</Button>
+	<Button variant="link" href={`${PagePath}/shadcn`}>shadcn</Button>
 </nav>

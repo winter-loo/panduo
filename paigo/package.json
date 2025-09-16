@@ -26,7 +26,8 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.34.0",
-		"@lucide/svelte": "^0.544.0",
+		"@internationalized/date": "^3.9.0",
+		"@lucide/svelte": "^0.515.0",
 		"@playwright/test": "^1.49.1",
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/kit": "^2.22.0",
@@ -38,6 +39,7 @@
 		"@typescript-eslint/parser": "^8.42.0",
 		"@vexflow-fonts/bravura": "^1.0.2",
 		"@vitest/browser": "^3.2.3",
+		"bits-ui": "^2.9.8",
 		"clsx": "^2.1.1",
 		"eslint": "^9.34.0",
 		"eslint-config-prettier": "^10.1.8",
