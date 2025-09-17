@@ -1,9 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/ui/button/button.svelte';
-	import { page } from '$app/state';
   import { fade } from 'svelte/transition';
-
-	const PagePath = page.url.pathname;
 
   let showDonut = $state(false);
 
@@ -32,11 +29,10 @@
   }
 
   const WIDTH_CLASS_MAP: Record<string, string> = {
-    '1': 'w-828',
-    '2': 'w-396',
-    '4': 'w-180',
-    '8': 'w-72',
-    '16': 'w-18'
+    '1': 'w-432',
+    '2': 'w-208',
+    '4': 'w-96',
+    '8': 'w-40',
   };
 
   const DURATION_MAP: Record<number, number> = {
@@ -73,44 +69,39 @@
         style:animation-duration="{DURATION_MAP[duration]}ms"
       ></div>
       <div
-        class="outter absolute w-full h-56 -top-18 -right-18 -bottom-18 -left-18 border-9 rounded-full border-cyan-400"
+        class="outter absolute w-full h-36 -top-8 -right-8 -bottom-8 -left-8 border-4 rounded-full border-cyan-400"
       ></div>
       <div class="dot absolute -top-1 -left-1 w-22 h-22 rounded-full bg-cyan-400"></div>
     </div>
   {:else}
-    {parseInt(parseWidthClass(WIDTH_CLASS_MAP[duration])) + 36}
+    {parseInt(parseWidthClass(WIDTH_CLASS_MAP[duration])) + 16}
   {/if}
 {/snippet}
 
-<div class="line relative flex items-center w-1296 h-128">
-  <div class="w-216 {showDonut ? 'h-2' : 'h-20'} ml-216 anim-height bg-red-200">
+<div class="line relative flex items-center w-672 h-128">
+  <div class="w-56 {showDonut ? 'h-2' : 'h-20'} ml-440 anim-height bg-red-200">
+    {@render donut(8)}
+  </div>
+  <div class="barline absolute left-440 h-100 w-4 bg-[#d7d7d7] opacity-50"></div>
+  <div class="w-224 {showDonut ? 'h-2' : 'h-20'} mt-20 anim-height bg-red-200">
+    {@render donut(2)}
+  </div>
+  <div class="w-224 {showDonut ? 'h-2' : 'h-20'} anim-height bg-red-200">
+    {@render donut(2)}
+  </div>
+  <div class="barline absolute left-888 h-100 w-4 bg-[#d7d7d7] opacity-50"></div>
+  <div class="w-112 {showDonut ? 'h-2' : 'h-20'} anim-height mb-20 bg-red-200">
     {@render donut(4)}
-  </div>
-  <div class="w-108 {showDonut ? 'h-2' : 'h-20'} mt-20 anim-height bg-red-200">
-    {@render donut(8)}
-  </div>
-  <div class="w-108 {showDonut ? 'h-2' : 'h-20'} anim-height bg-red-200">
-    {@render donut(8)}
-  </div>
-  <div class="barline absolute left-632 h-100 w-9 bg-[#d7d7d7] opacity-50"></div>
-  <div class="dura-4 w-216 {showDonut ? 'h-2' : 'h-20'} anim-height mb-20 bg-red-200">
-    {@render donut(4)}
-  </div>
-  <div class="w-216 {showDonut ? 'h-2' : 'h-20'} anim-height bg-red-200">
-    {@render donut(4)}
-  </div>
-  <div class="w-108 {showDonut ? 'h-2' : 'h-20'} anim-height mt-20 bg-red-200">
-    {@render donut(8)}
-  </div>
-  <div class="w-108 {showDonut ? 'h-2' : 'h-20'} anim-height bg-red-200">
-    {@render donut(8)}
   </div>
   <!-- 216*3*2-9-7 -->
-  <div class="barline absolute left-1280 h-100 w-9 bg-[#d7d7d7] opacity-50"></div>
+  <div class="barline absolute left-656 h-100 w-4 bg-[#d7d7d7] opacity-50"></div>
 </div>
 
-<Button variant="link" href="{PagePath}/v2">v2</Button>
-
+<h3>metrics</h3>
+<p>
+  donut border width: 4px <br />
+  barline to the first note: 4px <br />
+</p>
 <style>
   .line {
     --spacing: 1px;
@@ -146,7 +137,8 @@
       width: 0px;
     }
     100% {
-      width: calc(100% - 36px);
+      width: calc(100% - 16px);
     }
   }
 </style>
+
