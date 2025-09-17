@@ -1,14 +1,14 @@
 export type BaseNoteValue = 1 | 2 | 4 | 8 | 16 | 32;
 export class NoteDuration {
   baseNoteValue: BaseNoteValue;
-  repeat: 1 | 3;
+  multiplier: 1 | 3;
 
   constructor(baseNoteValue: BaseNoteValue, repeat: 1 | 3 = 1) {
     this.baseNoteValue = baseNoteValue;
-    this.repeat = repeat;
+    this.multiplier = repeat;
   }
   toString(): string {
-    return `${this.repeat}/${this.baseNoteValue}`;
+    return `${this.multiplier}/${this.baseNoteValue}`;
   }
 }
 export class RestDuration extends NoteDuration {
@@ -35,7 +35,7 @@ export interface LayoutBase {
 // 3/4 3/8 3/16 3/32
 export function noteWidth(layoutBase: LayoutBase, notu: NoteDuration): number {
   return (
-    (notu.repeat * (layoutBase.measureWidth + layoutBase.barLineWidth)) / notu.baseNoteValue -
+    (notu.multiplier * (layoutBase.measureWidth + layoutBase.barLineWidth)) / notu.baseNoteValue -
     layoutBase.notesSpacing
   );
 }
