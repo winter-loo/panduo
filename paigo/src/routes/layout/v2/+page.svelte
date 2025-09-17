@@ -42,6 +42,11 @@
   function noteWidth(duration: NoteDuration, wholeWidth: number): number {
     return (duration.multiplier * wholeWidth) / duration.baseNoteValue;
   }
+
+  function donutInnerWidth(duration: NoteDuration, fullWidth: number, borderWidth: number): number {
+    const baseWidth = noteWidth(duration, fullWidth);
+    return duration.baseNoteValue === 8 ? borderWidth * 4 * 2 * 2 : baseWidth - borderWidth * 4;
+  }
 </script>
 
 <!-- <img src="/image0.png" alt="iPhone screenshot" class="w-[5.51in] h-[2.54in]"/> -->
@@ -66,10 +71,8 @@
           class="inner absolute h-26 bg-cyan-300 rounded-full {duration.baseNoteValue == 8
             ? 'animate-expand-2'
             : 'animate-expand'}"
-          style:width="{duration.baseNoteValue == 8
-            ? noteWidth(duration, fullWidth) + borderWidth * 4
-            : noteWidth(duration, fullWidth) - borderWidth * 4}px"
-          data-initial-width={noteWidth(duration, fullWidth) - borderWidth * 4}
+          style:width="{donutInnerWidth(duration, fullWidth, borderWidth)}px"
+          data-initial-width={donutInnerWidth(duration, fullWidth, borderWidth)}
           style:animation-duration="{DURATION_MAP[duration.baseNoteValue]}ms"
           style="--donut-border-width: {borderWidth}px"
         ></div>
@@ -78,10 +81,8 @@
           class="inner absolute h-64 bg-cyan-300 rounded-full {duration.baseNoteValue == 8
             ? 'animate-expand-2'
             : 'animate-expand'}"
-          style:width="{duration.baseNoteValue == 8
-            ? noteWidth(duration, fullWidth) + borderWidth * 4
-            : noteWidth(duration, fullWidth) - borderWidth * 4}px"
-          data-initial-width={noteWidth(duration, fullWidth) + borderWidth * 4}
+          style:width="{donutInnerWidth(duration, fullWidth, borderWidth)}px"
+          data-initial-width={donutInnerWidth(duration, fullWidth, borderWidth)}
           style:animation-duration="{DURATION_MAP[duration.baseNoteValue]}ms"
           style="--donut-border-width: {borderWidth}px"
         ></div>
@@ -89,14 +90,14 @@
       {#if borderWidth == 4}
         <!-- 32 + 32 + 16 -->
         <div
-          class="outter absolute {duration.baseNoteValue == 8
+          class="outeer absolute {duration.baseNoteValue == 8
             ? 'w-80'
             : 'w-full'} h-42 -top-8 -right-8 -bottom-8 -left-8 border-4 rounded-full border-cyan-400"
         ></div>
       {:else if borderWidth == 9}
         <!-- 180 = 72 + 72 + 36 -->
         <div
-          class="outter absolute {duration.baseNoteValue == 8
+          class="outeer absolute {duration.baseNoteValue == 8
             ? 'w-180'
             : 'w-full'} h-102 -top-18 -right-18 -bottom-18 -left-18 border-9 rounded-full border-cyan-400"
         ></div>
@@ -114,7 +115,7 @@
 
 <section class="mt-20">
   <!-- 112*4*3 -->
-  <div class="line relative flex items-center w-1344 h-128 ml-100">
+  <div class="line relative flex items-center w-1344 h-128 ml-100 border-2 border-dashed">
     <!-- 112*4, includs border width and padding -->
     <!-- the first measure inclues only 3 beats -->
     <div
@@ -161,7 +162,7 @@
 
 <section class="mt-20">
   <!-- 288*3 -->
-  <div class="line relative flex items-center w-864 h-128 ml-100">
+  <div class="line relative flex items-center w-864 h-128 ml-100 border-2 border-dashed">
     <!-- 112*4, includs border width and padding -->
     <!-- the first measure inclues only 3 beats -->
     <div
@@ -172,7 +173,9 @@
       <div class="flex-none w-72 bg-red-400 opacity-0"></div>
       <div class="flex-none w-36 bg-red-400 opacity-0"></div>
       <div class="flex-none w-36 {showDonut ? 'h-2' : 'h-20'} anim-height bg-red-400 opacity-50">
-        {@render donut(notu(8), 288, 4)}
+        <div class="shift-left-a-little -ml-11">
+          {@render donut(notu(8), 288, 4)}
+        </div>
       </div>
     </div>
     <div
@@ -204,12 +207,13 @@
     barline to the first note: 4px <br />
     barline width: 4px <br />
     whole note width: 288px <br />
+    <span class="font-bold">margin left 11px for the first 8th note so that there are gaps between donut circle and the bar line</span> <br />
   </p>
 </section>
 
 <section class="mt-20">
   <!-- 855 + 148 + 148 -->
-  <div class="line relative flex items-center w-1151 h-128 ml-100">
+  <div class="line relative flex items-center w-1151 h-128 ml-100 border-2 border-dashed">
     <!-- 112*4, includs border width and padding -->
     <!-- the first measure inclues only 3 beats -->
     <div
