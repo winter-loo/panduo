@@ -2,13 +2,18 @@
   import { onDestroy, onMount } from 'svelte';
   import {
     Metrics,
-    MetricsDefaults,
     Renderer,
     Stave,
     StemmableNote,
     VexFlow,
     type StaveNoteStruct,
   } from '$lib/vexflow/vexflow-core';
+  import {
+    applyVexflowMetrics,
+    resolveStaffConfig,
+    type ResolvedVexflowStaffConfig,
+    type VexflowStaffConfig,
+  } from '$lib/vexflow/staffConfig';
   import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
   import { Button } from '$lib/components/ui/button/index';
@@ -22,7 +27,6 @@
 
   let vexflowError = $state('');
   try {
-    // Initialize VexFlow safely
     const musicFontName = 'Bravura';
     VexFlow.setFonts(`${musicFontName}`);
   } catch (error) {
@@ -37,25 +41,11 @@
   VexFlow.EasyScore.DEBUG = true;
   VexFlow.ModifierContext.DEBUG = true;
 
-  const Constants = {
-    MEASURE_WIDTH: 288,
-    STAVE_HEIGHT: 180,
+  const staffOverrides: Partial<VexflowStaffConfig> = {
+    measureWidth: 288,
+    staveHeight: 180,
     spacingBetweenLinesPx: 20,
-  };
-
-  const Derived = {
-    numPaddingSpaces: Math.floor(
-      (Constants.STAVE_HEIGHT - 4 * Constants.spacingBetweenLinesPx) /
-        2 /
-        Constants.spacingBetweenLinesPx,
-    ),
-  };
-
-  class MovingStaff extends MovableElement {
-    static staveStyle = {
-      spacingBetweenLinesPx: Constants.spacingBetweenLinesPx,
-      spaceAboveStaffLn: Derived.numPaddingSpaces,
-      spaceBelowStaffLn: Derived.numPaddingSpaces,
+    staveStyle: {
       style: {
         lineWidth: 3,
         strokeStyle: '#dadada',
@@ -72,109 +62,145 @@
           fillStyle: '#dadada',
         },
       },
-    };
-
-    notesContainer?: HTMLDivElement;
-    renderer: Renderer;
-    context: any;
-    staveX: number;
-    notes: StemmableNote[];
-
-    constructor(clefElement: HTMLElement, notesElement: HTMLElement, maxOffsetX: number) {
-      super(maxOffsetX);
-
-      // draw the treble clef on the staff independently
-      const TREBLE_CLEF_STAVE_WIDTH = 120;
-      clefElement.innerHTML = '';
-      const renderer = new VexFlow.Renderer(
-        clefElement as HTMLDivElement,
-        VexFlow.Renderer.Backends.SVG,
-      );
-      renderer.resize(TREBLE_CLEF_STAVE_WIDTH, Constants.STAVE_HEIGHT);
-      let clefStave = new Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
-        ...MovingStaff.staveStyle,
-        stillCursor: true,
-      });
-      clefStave.addClef('treble', {
+    },
+    clef: {
+      type: 'treble',
+      width: 120,
+      options: {
         style: {
           fillStyle: '#afafaf',
         },
-      });
-      clefStave.setContext(renderer.getContext()).draw();
+      },
+      staveOverrides: {
+        stillCursor: true,
+      },
+    },
+    renderer: {
+      width: 30000,
+      height: 180,
+      backend: VexFlow.Renderer.Backends.SVG,
+    },
+    metrics: {
+      stemWidth: 3,
+      stemHeight: 70,
+      metrics: {
+        fontSize: 60,
+      },
+    },
+  };
 
-      this.renderer = new VexFlow.Renderer(
-        notesElement as HTMLDivElement,
-        VexFlow.Renderer.Backends.SVG,
+  const staffConfig = resolveStaffConfig(staffOverrides);
+
+  class MovingStaff extends MovableElement {
+    private config: ResolvedVexflowStaffConfig;
+    private metricsDisposer: () => void;
+    private clefElement: HTMLDivElement;
+    private notesElement: HTMLDivElement;
+    private clefRenderer: Renderer | null = null;
+    renderer!: Renderer;
+    context!: ReturnType<Renderer['getContext']>;
+    staveX = 0;
+    notes: StemmableNote[] = [];
+
+    constructor(
+      clefElement: HTMLElement,
+      notesElement: HTMLElement,
+      maxOffsetX: number,
+      config: ResolvedVexflowStaffConfig,
+    ) {
+      super(maxOffsetX);
+      this.config = config;
+      this.metricsDisposer = applyVexflowMetrics(config.metrics);
+      this.clefElement = clefElement as HTMLDivElement;
+      this.notesElement = notesElement as HTMLDivElement;
+
+      this.drawClef();
+      this.prepareForRedraw();
+    }
+
+    private drawClef() {
+      this.clefElement.innerHTML = '';
+      this.clefRenderer = new VexFlow.Renderer(
+        this.clefElement,
+        this.config.renderer.backend,
       );
+      this.clefRenderer.resize(this.config.clef.width, this.config.staveHeight);
+      const clefStave = new Stave(0, 0, this.config.clef.width, this.config.clef.staveOverrides);
+      clefStave.addClef(this.config.clef.type, this.config.clef.options);
+      clefStave.setContext(this.clefRenderer.getContext()).draw();
+    }
 
-      // Configure the rendering context.
-      // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
-      this.renderer.resize(30000, Constants.STAVE_HEIGHT);
+    prepareForRedraw() {
+      this.notesElement.innerHTML = '';
+      this.renderer = new VexFlow.Renderer(
+        this.notesElement,
+        this.config.renderer.backend,
+      );
+      this.renderer.resize(this.config.renderer.width, this.config.staveHeight);
       this.context = this.renderer.getContext();
-      // do not count the treble clef width
       this.staveX = 0;
       this.notes = [];
     }
 
+    dispose() {
+      this.metricsDisposer?.();
+    }
+
     addMeasure(notes: StaveNoteStruct[]) {
-      // add stave
-      const measureStave = new VexFlow.Stave(this.staveX, 0, Constants.MEASURE_WIDTH, {
-        ...MovingStaff.staveStyle,
-      });
-      this.staveX += Constants.MEASURE_WIDTH;
-      // draw five staff lines and treble clef
+      const measureStave = new Stave(
+        this.staveX,
+        0,
+        this.config.measureWidth,
+        this.config.staveStyle,
+      );
+      this.staveX += this.config.measureWidth;
       measureStave.setContext(this.context).draw();
 
-      let staveNotes: StemmableNote[] = [];
-      notes.forEach((note) => {
-        let sn = new VexFlow.StaveNote(note);
-        staveNotes.push(sn);
-        this.notes.push(sn);
-        // NOTE: why does VexFlow not draw a dotted quarter note for me?
-        if (note.duration.indexOf('d') != -1) {
+      const staveNotes = notes.map((note) => {
+        const staveNote = new VexFlow.StaveNote(note);
+        if (note.duration.includes('d')) {
           const dot = new VexFlow.Dot();
-          sn.addModifier(dot, 0);
+          staveNote.addModifier(dot, 0);
         }
+        this.notes.push(staveNote);
+        return staveNote;
       });
+
       if (staveNotes.length > 0) {
         VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
       }
     }
   }
 
-  const maxOffsetX = data.song.measures.length * Constants.MEASURE_WIDTH;
-  let movingStaff: MovingStaff | null = null;
+  const maxOffsetX = data.song.measures.length * staffConfig.measureWidth;
+  let movingStaff = $state<MovingStaff | null>(null);
 
   function renderSong() {
-    BindingDom.notesContainer!.innerHTML = '';
+    if (!BindingDom.fixedClef || !BindingDom.notesContainer) return;
+    if (!movingStaff) {
+      movingStaff = new MovingStaff(
+        BindingDom.fixedClef,
+        BindingDom.notesContainer,
+        maxOffsetX,
+        staffConfig,
+      );
+    }
 
-    if (movingStaff == null)
-      movingStaff = new MovingStaff(BindingDom.fixedClef!, BindingDom.notesContainer!, maxOffsetX);
+    movingStaff?.prepareForRedraw();
 
     data.song.measures.forEach((measure) => {
       movingStaff?.addMeasure(measure.notes);
     });
   }
 
-  let OldStaffProps: any;
-  onDestroy(() => {
-    if (OldStaffProps) VexFlow.STEM_WIDTH = OldStaffProps.stemWidth;
-    if (OldStaffProps) VexFlow.STEM_HEIGHT = OldStaffProps.stemHeight;
-    if (OldStaffProps) MetricsDefaults.fontSize = OldStaffProps.fontSize;
-  });
-  onMount(async () => {
+  onMount(() => {
     Metrics.clear();
-    OldStaffProps = {
-      stemWidth: VexFlow.STEM_WIDTH,
-      stemHeight: VexFlow.STEM_HEIGHT,
-      fontSize: MetricsDefaults.fontSize,
-    };
-
-    VexFlow.STEM_WIDTH = 3;
-    VexFlow.STEM_HEIGHT = 70;
-    MetricsDefaults.fontSize = 60;
-
     renderSong();
+  });
+
+  onDestroy(() => {
+    movingStaff?.dispose();
+    movingStaff = null;
   });
 </script>
 
