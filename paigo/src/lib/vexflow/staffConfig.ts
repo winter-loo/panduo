@@ -356,7 +356,11 @@ const setMetricsDefaultValue = (key: string, value: unknown) => {
   });
 
   const previous = cursor[last];
-  cursor[last] = value;
+  if (typeof previous == 'object' && typeof value == 'object') {
+    cursor[last] = { ...previous, ...value};
+  } else {
+    cursor[last] = value;
+  }
   return { previous, rootKey: parts[0] };
 };
 
