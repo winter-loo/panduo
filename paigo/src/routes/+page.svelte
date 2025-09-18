@@ -85,6 +85,9 @@
       stemHeight: 70,
       metrics: {
         fontSize: 60,
+        Stave: {
+          padding: 3,
+        },
       },
     },
   };
@@ -120,10 +123,7 @@
 
     private drawClef() {
       this.clefElement.innerHTML = '';
-      this.clefRenderer = new VexFlow.Renderer(
-        this.clefElement,
-        this.config.renderer.backend,
-      );
+      this.clefRenderer = new VexFlow.Renderer(this.clefElement, this.config.renderer.backend);
       this.clefRenderer.resize(this.config.clef.width, this.config.staveHeight);
       const clefStave = new Stave(0, 0, this.config.clef.width, this.config.clef.staveOverrides);
       clefStave.addClef(this.config.clef.type, this.config.clef.options);
@@ -132,10 +132,7 @@
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
-      this.renderer = new VexFlow.Renderer(
-        this.notesElement,
-        this.config.renderer.backend,
-      );
+      this.renderer = new VexFlow.Renderer(this.notesElement, this.config.renderer.backend);
       this.renderer.resize(this.config.renderer.width, this.config.staveHeight);
       this.context = this.renderer.getContext();
       this.staveX = 0;

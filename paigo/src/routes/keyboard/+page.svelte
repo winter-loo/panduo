@@ -2,6 +2,10 @@
   import { onDestroy, onMount } from 'svelte';
   import { Metrics, MetricsDefaults, VexFlow } from '$lib/vexflow/vexflow-core';
   import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { page } from '$app/state';
+  import Button from '$lib/components/ui/button/button.svelte';
+
+  let PagePath = page.url.pathname;
 
   let outputContainer: HTMLDivElement;
   let currentNotes = $state<string[]>([]);
@@ -67,6 +71,8 @@
     return () => midiKeyboard.turnOff();
   });
 </script>
+
+<Button variant="link" href="{PagePath}/ui">UI</Button>
 
 <div class="keyboard">
   <div id="output" bind:this={outputContainer}></div>

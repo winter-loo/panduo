@@ -100,8 +100,7 @@ const baseStaffConfig: VexflowStaffConfig = {
   },
 };
 
-export interface ResolvedVexflowClefConfig
-  extends Omit<VexflowClefConfig, 'staveOverrides'> {
+export interface ResolvedVexflowClefConfig extends Omit<VexflowClefConfig, 'staveOverrides'> {
   staveOverrides: StaveOptions;
 }
 
@@ -191,8 +190,7 @@ const mergeStaveOptions = (base: StaveOptions, override?: Partial<StaveOptions>)
 export const resolveStaffConfig = (
   overrides?: Partial<VexflowStaffConfig>,
 ): ResolvedVexflowStaffConfig => {
-  const spacing =
-    overrides?.spacingBetweenLinesPx ?? baseStaffConfig.spacingBetweenLinesPx;
+  const spacing = overrides?.spacingBetweenLinesPx ?? baseStaffConfig.spacingBetweenLinesPx;
   const measureWidth = overrides?.measureWidth ?? baseStaffConfig.measureWidth;
   const staveHeight =
     overrides?.staveHeight ?? overrides?.renderer?.height ?? baseStaffConfig.staveHeight;
@@ -204,23 +202,18 @@ export const resolveStaffConfig = (
     return Math.max(0, Math.floor(raw));
   })();
 
-  const mergedStaveStyle = mergeStaveOptions(
-    defaultStaveStyle,
-    {
-      ...overrides?.staveStyle,
-      spacingBetweenLinesPx: spacing,
-      spaceAboveStaffLn: overrides?.staveStyle?.spaceAboveStaffLn ?? derivedPadding,
-      spaceBelowStaffLn: overrides?.staveStyle?.spaceBelowStaffLn ?? derivedPadding,
-    },
-  );
+  const mergedStaveStyle = mergeStaveOptions(defaultStaveStyle, {
+    ...overrides?.staveStyle,
+    spacingBetweenLinesPx: spacing,
+    spaceAboveStaffLn: overrides?.staveStyle?.spaceAboveStaffLn ?? derivedPadding,
+    spaceBelowStaffLn: overrides?.staveStyle?.spaceBelowStaffLn ?? derivedPadding,
+  });
 
   const defaultClefStave = mergeStaveOptions(defaultStaveStyle, {
     ...defaultClefConfig.staveOverrides,
     spacingBetweenLinesPx: spacing,
-    spaceAboveStaffLn:
-      overrides?.clef?.staveOverrides?.spaceAboveStaffLn ?? derivedPadding,
-    spaceBelowStaffLn:
-      overrides?.clef?.staveOverrides?.spaceBelowStaffLn ?? derivedPadding,
+    spaceAboveStaffLn: overrides?.clef?.staveOverrides?.spaceAboveStaffLn ?? derivedPadding,
+    spaceBelowStaffLn: overrides?.clef?.staveOverrides?.spaceBelowStaffLn ?? derivedPadding,
   });
 
   type ClefOptions = Record<string, unknown> & { style?: ElementStyle };
@@ -357,7 +350,7 @@ const setMetricsDefaultValue = (key: string, value: unknown) => {
 
   const previous = cursor[last];
   if (typeof previous == 'object' && typeof value == 'object') {
-    cursor[last] = { ...previous, ...value};
+    cursor[last] = { ...previous, ...value };
   } else {
     cursor[last] = value;
   }

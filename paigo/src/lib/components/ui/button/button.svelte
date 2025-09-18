@@ -56,7 +56,10 @@
     (e.target as HTMLButtonElement).classList.add('shadow-none', 'translate-y-[4px]');
   };
   const onMouseUp = (e: MouseEvent) => {
-    setTimeout(() => (e.target as HTMLButtonElement).classList.remove('shadow-none', 'translate-y-[4px]'), 64);
+    setTimeout(
+      () => (e.target as HTMLButtonElement).classList.remove('shadow-none', 'translate-y-[4px]'),
+      64,
+    );
   };
 </script>
 
