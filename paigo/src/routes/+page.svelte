@@ -3,6 +3,7 @@
   import {
     Metrics,
     MetricsDefaults,
+    Renderer,
     Stave,
     StemmableNote,
     VexFlow,
@@ -36,19 +37,25 @@
   VexFlow.EasyScore.DEBUG = true;
   VexFlow.ModifierContext.DEBUG = true;
 
-  class MovingStaff extends MovableElement {
-    static MEASURE_WIDTH = 400;
-    static STAVE_HEIGHT = 180;
-    static spacingBetweenLinesPx = 20;
-    static numPaddingSpaces = Math.floor(
-      (MovingStaff.STAVE_HEIGHT - 4 * MovingStaff.spacingBetweenLinesPx) /
+  const Constants = {
+    MEASURE_WIDTH: 288,
+    STAVE_HEIGHT: 180,
+    spacingBetweenLinesPx: 20,
+  };
+
+  const Derived = {
+    numPaddingSpaces: Math.floor(
+      (Constants.STAVE_HEIGHT - 4 * Constants.spacingBetweenLinesPx) /
         2 /
-        MovingStaff.spacingBetweenLinesPx,
-    );
+        Constants.spacingBetweenLinesPx,
+    ),
+  };
+
+  class MovingStaff extends MovableElement {
     static staveStyle = {
-      spacingBetweenLinesPx: MovingStaff.spacingBetweenLinesPx,
-      spaceAboveStaffLn: MovingStaff.numPaddingSpaces,
-      spaceBelowStaffLn: MovingStaff.numPaddingSpaces,
+      spacingBetweenLinesPx: Constants.spacingBetweenLinesPx,
+      spaceAboveStaffLn: Derived.numPaddingSpaces,
+      spaceBelowStaffLn: Derived.numPaddingSpaces,
       style: {
         lineWidth: 3,
         strokeStyle: '#dadada',
@@ -68,18 +75,14 @@
     };
 
     notesContainer?: HTMLDivElement;
-    renderer: any;
+    renderer: Renderer;
     context: any;
     staveX: number;
     notes: StemmableNote[];
 
-    constructor(maxOffsetX: number) {
+    constructor(clefElement: HTMLElement, notesElement: HTMLElement, maxOffsetX: number) {
       super(maxOffsetX);
-      this.staveX = 0;
-      this.notes = [];
-    }
 
-    init(clefElement: HTMLElement, notesElement: HTMLElement) {
       // draw the treble clef on the staff independently
       const TREBLE_CLEF_STAVE_WIDTH = 120;
       clefElement.innerHTML = '';
@@ -87,7 +90,7 @@
         clefElement as HTMLDivElement,
         VexFlow.Renderer.Backends.SVG,
       );
-      renderer.resize(TREBLE_CLEF_STAVE_WIDTH, MovingStaff.STAVE_HEIGHT);
+      renderer.resize(TREBLE_CLEF_STAVE_WIDTH, Constants.STAVE_HEIGHT);
       let clefStave = new Stave(0, 0, TREBLE_CLEF_STAVE_WIDTH, {
         ...MovingStaff.staveStyle,
         stillCursor: true,
@@ -106,7 +109,7 @@
 
       // Configure the rendering context.
       // 45000 / 300 = 150 measures = 600 beats = 600 seconds = 10 minutes
-      this.renderer.resize(30000, MovingStaff.STAVE_HEIGHT);
+      this.renderer.resize(30000, Constants.STAVE_HEIGHT);
       this.context = this.renderer.getContext();
       // do not count the treble clef width
       this.staveX = 0;
@@ -115,10 +118,10 @@
 
     addMeasure(notes: StaveNoteStruct[]) {
       // add stave
-      const measureStave = new VexFlow.Stave(this.staveX, 0, MovingStaff.MEASURE_WIDTH, {
+      const measureStave = new VexFlow.Stave(this.staveX, 0, Constants.MEASURE_WIDTH, {
         ...MovingStaff.staveStyle,
       });
-      this.staveX += MovingStaff.MEASURE_WIDTH;
+      this.staveX += Constants.MEASURE_WIDTH;
       // draw five staff lines and treble clef
       measureStave.setContext(this.context).draw();
 
@@ -139,15 +142,17 @@
     }
   }
 
-  const maxOffsetX = data.song.measures.length * MovingStaff.MEASURE_WIDTH;
-  let movingStaff = new MovingStaff(maxOffsetX);
+  const maxOffsetX = data.song.measures.length * Constants.MEASURE_WIDTH;
+  let movingStaff: MovingStaff | null = null;
 
   function renderSong() {
     BindingDom.notesContainer!.innerHTML = '';
 
-    movingStaff.init(BindingDom.fixedClef!, BindingDom.notesContainer!);
+    if (movingStaff == null)
+      movingStaff = new MovingStaff(BindingDom.fixedClef!, BindingDom.notesContainer!, maxOffsetX);
+
     data.song.measures.forEach((measure) => {
-      movingStaff.addMeasure(measure.notes);
+      movingStaff?.addMeasure(measure.notes);
     });
   }
 
@@ -168,6 +173,7 @@
     VexFlow.STEM_WIDTH = 3;
     VexFlow.STEM_HEIGHT = 70;
     MetricsDefaults.fontSize = 60;
+
     renderSong();
   });
 </script>
@@ -176,7 +182,7 @@
 
 <svelte:document
   onkeydown={(e) => {
-    if (e.key == 'r') movingStaff.reset();
+    if (e.key == 'r') movingStaff?.reset();
   }}
 />
 
@@ -186,32 +192,33 @@
   </div>
 {/if}
 
-<div id="moving-staff">
+<!-- 1015=285*3+120+40 -->
+<div id="moving-staff" class="w-[1015px] mx-auto">
   <div bind:this={BindingDom.fixedClef}></div>
-  <div id="notes-container-wrapper">
+  <div id="notes-viewport">
     <div
       id="notes-container"
       bind:this={BindingDom.notesContainer}
-      {@attach movingStaff.draggable()}
+      {@attach movingStaff?.draggable()}
     ></div>
   </div>
 </div>
 
 <Button id="renderButton" onclick={renderSong}>rerender</Button>
-<Button id="pauseButton" onclick={movingStaff.stop}>pause</Button>
-<Button id="resumeButton" onclick={movingStaff.move}>resume</Button>
-<Button id="resetButton" onclick={movingStaff.reset}>reset</Button>
+<Button id="pauseButton" onclick={movingStaff?.stop}>pause</Button>
+<Button id="resumeButton" onclick={movingStaff?.move}>resume</Button>
+<Button id="resetButton" onclick={movingStaff?.reset}>reset</Button>
 
 <style>
   #moving-staff {
     display: flex;
-    align-items: flex-start;
+    justify-content: center;
     flex-direction: row;
     position: relative;
     z-index: 2;
   }
 
-  #notes-container-wrapper {
+  #notes-viewport {
     width: 100%;
     overflow: hidden;
     cursor: grab;
