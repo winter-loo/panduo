@@ -214,7 +214,7 @@ export abstract class StemmableNote extends Note {
 
       return Math.min(
         stave.getYForTopText(textLine),
-        extents.topY - this.renderOptions.annotationSpacing * (textLine + 1)
+        extents.topY - this.renderOptions.annotationSpacing * (textLine + 1),
       );
     } else {
       return stave.getYForTopText(textLine);
@@ -228,7 +228,10 @@ export abstract class StemmableNote extends Note {
       const extents = this.getStemExtents();
       if (!extents) throw new RuntimeError('InvalidState', 'Stem does not have extents.');
 
-      return Math.max(stave.getYForTopText(textLine), extents.baseY + this.renderOptions.annotationSpacing * textLine);
+      return Math.max(
+        stave.getYForTopText(textLine),
+        extents.baseY + this.renderOptions.annotationSpacing * textLine,
+      );
     } else {
       return stave.getYForBottomText(textLine);
     }

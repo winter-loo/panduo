@@ -244,7 +244,14 @@ export class CanvasContext extends RenderContext {
     return this;
   }
 
-  bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): this {
+  bezierCurveTo(
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x: number,
+    y: number,
+  ): this {
     this.context2D.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
     return this;
   }
@@ -254,7 +261,14 @@ export class CanvasContext extends RenderContext {
     return this;
   }
 
-  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise: boolean): this {
+  arc(
+    x: number,
+    y: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise: boolean,
+  ): this {
     this.context2D.arc(x, y, radius, startAngle, endAngle, counterclockwise);
     return this;
   }
@@ -334,7 +348,12 @@ export class CanvasContext extends RenderContext {
    * @param weight is a string (e.g., 'bold', 'normal') or a number (100, 200, ... 900).
    * @param style is a string (e.g., 'italic', 'normal').
    */
-  setFont(f?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this {
+  setFont(
+    f?: string | FontInfo,
+    size?: string | number,
+    weight?: string | number,
+    style?: string,
+  ): this {
     const fontInfo = Font.validate(f, size, weight, style);
     this.context2D.font = Font.toCSSString(fontInfo);
     this.textHeight = Font.convertSizeToPixelValue(fontInfo.size);

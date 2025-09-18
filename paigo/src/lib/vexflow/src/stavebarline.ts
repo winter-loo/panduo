@@ -19,8 +19,8 @@ export enum BarlineType {
 }
 
 export interface BarlineOptions {
-  width?: number,
-  style?: ElementStyle,
+  width?: number;
+  style?: ElementStyle;
 }
 
 export class Barline extends StaveModifier {
@@ -187,11 +187,19 @@ export class Barline extends StaveModifier {
     const fillStyle = this.options?.style?.fillStyle ?? 'currentColor';
 
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, width, botY - topY,
-      { rx: 0, ry: 0, fill: fillStyle, stroke: 'none' });
+      staveCtx.fillRect(x - 3, topY, width, botY - topY, {
+        rx: 0,
+        ry: 0,
+        fill: fillStyle,
+        stroke: 'none',
+      });
     }
-    staveCtx.fillRect(x, topY, width, botY - topY,
-      { rx: 0, ry: 0, fill: fillStyle, stroke: 'none' });
+    staveCtx.fillRect(x, topY, width, botY - topY, {
+      rx: 0,
+      ry: 0,
+      fill: fillStyle,
+      stroke: 'none',
+    });
   }
 
   drawVerticalEndBar(stave: Stave, x: number): void {

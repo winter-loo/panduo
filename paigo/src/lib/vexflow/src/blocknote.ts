@@ -58,7 +58,11 @@ function L(...args: any[]) {
 }
 
 // Helper methods for rest positioning in ModifierContext.
-function shiftRestVertical(rest: BlockNoteFormatSettings, _note: BlockNoteFormatSettings, dir: number) {
+function shiftRestVertical(
+  rest: BlockNoteFormatSettings,
+  _note: BlockNoteFormatSettings,
+  dir: number,
+) {
   const delta = dir;
 
   rest.line += delta;
@@ -68,7 +72,11 @@ function shiftRestVertical(rest: BlockNoteFormatSettings, _note: BlockNoteFormat
 }
 
 // Called from formatNotes :: center a rest between two notes
-function centerRest(rest: BlockNoteFormatSettings, noteU: BlockNoteFormatSettings, noteL: BlockNoteFormatSettings) {
+function centerRest(
+  rest: BlockNoteFormatSettings,
+  noteU: BlockNoteFormatSettings,
+  noteL: BlockNoteFormatSettings,
+) {
   const delta = rest.line - midLine(noteU.minLine, noteL.maxLine);
   rest.note.setKeyLine(0, rest.note.getKeyLine(0) - delta);
   rest.line -= delta;
@@ -138,7 +146,7 @@ export class NoteRect extends Note {
     if (this.stave && !this._width) {
       const totalTicks = this.getVoice().getTotalTicks().value();
       const myTicks = this.getTicks().value();
-      this._width = this.stave.getJustifyWidth() * myTicks / totalTicks;
+      this._width = (this.stave.getJustifyWidth() * myTicks) / totalTicks;
     }
     return this._width;
   }
@@ -224,8 +232,21 @@ export class NoteRect extends Note {
 
     let { x, y, w: width, h: height } = this.getBoundingBox();
 
-    L("Drawing note rect pitch=", this.pitch, " duration=", this.duration, " x=", x, " y=", y, " width=", width, " height=", height);
-    this.getContext()?.fillRect(x, y - height/2, width, height, {
+    L(
+      'Drawing note rect pitch=',
+      this.pitch,
+      ' duration=',
+      this.duration,
+      ' x=',
+      x,
+      ' y=',
+      y,
+      ' width=',
+      width,
+      ' height=',
+      height,
+    );
+    this.getContext()?.fillRect(x, y - height / 2, width, height, {
       rx: 3,
       ry: 3,
     });
@@ -265,10 +286,16 @@ export class BlockNote extends Note {
       if (notes[i].isRest()) {
         maxL =
           line +
-          Math.ceil(notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxAscent / Tables.STAVE_LINE_DISTANCE);
+          Math.ceil(
+            notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxAscent /
+              Tables.STAVE_LINE_DISTANCE,
+          );
         minL =
           line -
-          Math.ceil(notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxDescent / Tables.STAVE_LINE_DISTANCE);
+          Math.ceil(
+            notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxDescent /
+              Tables.STAVE_LINE_DISTANCE,
+          );
       } else {
         maxL = props[props.length - 1].keyProps.line;
         minL = props[0].keyProps.line;
@@ -621,7 +648,10 @@ export class BlockNote extends Note {
   // If `isTopNote` is `true` then get the top note's line number instead
   override getLineNumber(isTopNote?: boolean): number {
     if (!this.keyProps.length) {
-      throw new RuntimeError('NoKeyProps', "Can't get bottom note line, because note is not initialized properly.");
+      throw new RuntimeError(
+        'NoKeyProps',
+        "Can't get bottom note line, because note is not initialized properly.",
+      );
     }
 
     let resultLine = this.keyProps[0].line;
@@ -658,7 +688,7 @@ export class BlockNote extends Note {
     const extents = this.getStemExtents();
     return Math.min(
       this.checkStave().getYForTopText(textLine),
-      extents.topY - this.renderOptions.annotationSpacing * (textLine + 1)
+      extents.topY - this.renderOptions.annotationSpacing * (textLine + 1),
     );
   }
 
@@ -721,10 +751,13 @@ export class BlockNote extends Note {
   override getModifierStartXY(
     position: number,
     index: number,
-    _options: { forceFlagRight?: boolean } = {}
+    _options: { forceFlagRight?: boolean } = {},
   ): { x: number; y: number } {
     if (!this.preFormatted) {
-      throw new RuntimeError('UnformattedNote', "Can't call GetModifierStartXY on an unformatted note");
+      throw new RuntimeError(
+        'UnformattedNote',
+        "Can't call GetModifierStartXY on an unformatted note",
+      );
     }
 
     if (this.ys.length === 0) {
@@ -850,7 +883,8 @@ export class BlockNote extends Note {
       }
     }
 
-    let width = this.getGlyphWidth() + this.leftDisplacedHeadPx + this.rightDisplacedHeadPx + noteHeadPadding;
+    let width =
+      this.getGlyphWidth() + this.leftDisplacedHeadPx + this.rightDisplacedHeadPx + noteHeadPadding;
 
     this.setWidth(width);
 
@@ -894,8 +928,10 @@ export class BlockNote extends Note {
       lowestLine = Math.min(line, lowestLine);
 
       if (notehead.isDisplaced()) {
-        highestDisplacedLine = highestDisplacedLine === undefined ? line : Math.max(line, highestDisplacedLine);
-        lowestDisplacedLine = lowestDisplacedLine === undefined ? line : Math.min(line, lowestDisplacedLine);
+        highestDisplacedLine =
+          highestDisplacedLine === undefined ? line : Math.max(line, highestDisplacedLine);
+        lowestDisplacedLine =
+          lowestDisplacedLine === undefined ? line : Math.min(line, lowestDisplacedLine);
       } else {
         highestNonDisplacedLine = Math.max(line, highestNonDisplacedLine);
         lowestNonDisplacedLine = Math.min(line, lowestNonDisplacedLine);

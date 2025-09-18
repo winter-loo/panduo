@@ -15,7 +15,11 @@ function L(...args: any[]) {
   if (Clef.DEBUG) log('VexFlow.Clef', args);
 }
 
-export interface ClefOptions { size?: string, annotation?: string, style?: ElementStyle };
+export interface ClefOptions {
+  size?: string;
+  annotation?: string;
+  style?: ElementStyle;
+}
 
 /**
  * Clef implements various types of clefs that can be rendered on a stave.
@@ -162,7 +166,7 @@ export class Clef extends StaveModifier {
     this.y = stave.getYForLine(this.line);
     let fillStyle = this.getStyle().fillStyle ?? 'currentColor';
     this.renderText(ctx, this.padding, 0, {
-      "fill": fillStyle,
+      fill: fillStyle,
     });
     this.drawPointerRect();
     ctx.closeGroup();

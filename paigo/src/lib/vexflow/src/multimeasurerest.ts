@@ -226,7 +226,7 @@ export class MultiMeasureRest extends Element {
       this.renderText(
         ctx,
         left + (right - left) * 0.5 - this.width * 0.5,
-        stave.getYForLine(options.numberLine) - this.height * 0.5
+        stave.getYForLine(options.numberLine) - this.height * 0.5,
       );
     }
   }

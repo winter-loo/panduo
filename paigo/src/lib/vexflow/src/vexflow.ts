@@ -6,7 +6,12 @@ import { Beam } from './beam';
 import { Bend } from './bend';
 import { BoundingBox } from './boundingbox';
 import { CanvasContext } from './canvascontext';
-import { ChordSymbol, ChordSymbolHorizontalJustify, ChordSymbolVerticalJustify, SymbolModifiers } from './chordsymbol';
+import {
+  ChordSymbol,
+  ChordSymbolHorizontalJustify,
+  ChordSymbolVerticalJustify,
+  SymbolModifiers,
+} from './chordsymbol';
 import { Clef } from './clef';
 import { ClefNote } from './clefnote';
 import { Crescendo } from './crescendo';

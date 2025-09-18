@@ -1,74 +1,77 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="%sveltekit.assets%/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
+    <link rel="shortcut icon" href="%sveltekit.assets%/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="paigo" />
+    <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="preload"
+      href="/duolingo.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <style>
+      @font-face {
+        font-family: 'Bravura';
+        src: url('/duolingo.woff2') format('woff2');
+        font-display: block;
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <link rel="icon" type="image/png" href="%sveltekit.assets%/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="%sveltekit.assets%/favicon.svg" />
-  <link rel="shortcut icon" href="%sveltekit.assets%/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="paigo" />
-  <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="preload" href="/duolingo.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-  <style>
-    @font-face {
-      font-family: "Bravura";
-      src: url("/duolingo.woff2") format("woff2");
-      font-display: block;
-    }
+      /* apply css styles to vexflow generated elements */
+      /* Use *= (contains) instead of ^= (starts with) */
+      /* will match '.vf-pitch-C/.vf-pitch-C#/.vf-pitch-CB' */
+      [class*='vf-pitch-C'] {
+        color: #ce82ff;
+        stroke: #ce82ff;
+        fill: #ce82ff;
+      }
 
+      [class*='vf-pitch-D'] {
+        color: #ff9600;
+        stroke: #ff9600;
+        fill: #ff9600;
+      }
 
-    /* apply css styles to vexflow generated elements */
-    /* Use *= (contains) instead of ^= (starts with) */
-    /* will match '.vf-pitch-C/.vf-pitch-C#/.vf-pitch-CB' */
-    [class*='vf-pitch-C'] {
-      color: #ce82ff;
-      stroke: #ce82ff;
-      fill: #ce82ff;
-    }
+      [class*='vf-pitch-E'] {
+        color: #58cc02;
+        stroke: #58cc02;
+        fill: #58cc02;
+      }
 
-    [class*='vf-pitch-D'] {
-      color: #ff9600;
-      stroke: #ff9600;
-      fill: #ff9600;
-    }
+      [class*='vf-pitch-F'] {
+        color: #cc348d;
+        stroke: #cc348d;
+        fill: #cc348d;
+      }
 
-    [class*='vf-pitch-E'] {
-      color: #58cc02;
-      stroke: #58cc02;
-      fill: #58cc02;
-    }
+      [class*='vf-pitch-G'] {
+        color: #708fff;
+        stroke: #708fff;
+        fill: #708fff;
+      }
 
-    [class*='vf-pitch-F'] {
-      color: #cc348d;
-      stroke: #cc348d;
-      fill: #cc348d;
-    }
+      [class*='vf-pitch-A'] {
+        color: #ff86d0;
+        stroke: #ff86d0;
+        fill: #ff86d0;
+      }
 
-    [class*='vf-pitch-G'] {
-      color: #708fff;
-      stroke: #708fff;
-      fill: #708fff;
-    }
+      [class*='vf-pitch-B'] {
+        color: #00ce9f;
+        stroke: #00ce9f;
+        fill: #00ce9f;
+      }
+    </style>
+    %sveltekit.head%
+  </head>
 
-    [class*='vf-pitch-A'] {
-      color: #ff86d0;
-      stroke: #ff86d0;
-      fill: #ff86d0;
-    }
-
-    [class*='vf-pitch-B'] {
-      color: #00ce9f;
-      stroke: #00ce9f;
-      fill: #00ce9f;
-    }
-  </style>
-  %sveltekit.head%
-</head>
-
-<body data-sveltekit-preload-data="hover">
-  <div style="display: contents">%sveltekit.body%</div>
-</body>
-
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
 </html>

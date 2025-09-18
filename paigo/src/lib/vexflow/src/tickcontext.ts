@@ -268,8 +268,14 @@ export class TickContext {
       this.modRightPx = Math.max(this.modRightPx, metrics.modRightPx);
 
       // Total shift
-      this.totalLeftPx = Math.max(this.totalLeftPx, metrics.modLeftPx + metrics.leftDisplacedHeadPx);
-      this.totalRightPx = Math.max(this.totalRightPx, metrics.modRightPx + metrics.rightDisplacedHeadPx);
+      this.totalLeftPx = Math.max(
+        this.totalLeftPx,
+        metrics.modLeftPx + metrics.leftDisplacedHeadPx,
+      );
+      this.totalRightPx = Math.max(
+        this.totalRightPx,
+        metrics.modRightPx + metrics.rightDisplacedHeadPx,
+      );
 
       // Recalculate the tick context total width
       this.width = this.notePx + this.totalLeftPx + this.totalRightPx;

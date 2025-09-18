@@ -38,7 +38,8 @@ export class Tremolo extends Modifier {
     const ySpacing = Metrics.get(`Tremolo.spacing`) * stemDirection * scale;
 
     const x =
-      note.getAbsoluteX() + (stemDirection === Stem.UP ? note.getGlyphWidth() - Stem.WIDTH / 2 : Stem.WIDTH / 2);
+      note.getAbsoluteX() +
+      (stemDirection === Stem.UP ? note.getGlyphWidth() - Stem.WIDTH / 2 : Stem.WIDTH / 2);
     let y = note.getStemExtents().topY + (this.num <= 3 ? ySpacing : 0);
 
     this.fontInfo.size = Metrics.get(`Tremolo.fontSize`) * scale;

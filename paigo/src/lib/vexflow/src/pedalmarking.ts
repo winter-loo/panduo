@@ -151,7 +151,10 @@ export class PedalMarking extends Element {
 
       // Throw if current note is positioned before the previous note
       if (x < prevX) {
-        throw new RuntimeError('InvalidConfiguration', 'The notes provided must be in order of ascending x positions');
+        throw new RuntimeError(
+          'InvalidConfiguration',
+          'The notes provided must be in order of ascending x positions',
+        );
       }
 
       // Determine if the previous or next note are the same

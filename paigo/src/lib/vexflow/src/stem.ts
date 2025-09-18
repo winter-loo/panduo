@@ -204,10 +204,20 @@ export class Stem extends Element {
 
     const stemHeight = this.getHeight();
 
-    L('Rendering stem - ', 'Top Y: ', this.yTop, 'Bottom Y: ', this.yBottom, 'stem height: ', stemHeight);
+    L(
+      'Rendering stem - ',
+      'Top Y: ',
+      this.yTop,
+      'Bottom Y: ',
+      this.yBottom,
+      'stem height: ',
+      stemHeight,
+    );
 
     // The offset from the stem's base which is required fo satisfy the stemlet height
-    const stemletYOffset = this.isStemlet ? stemHeight - this.stemletHeight * this.stemDirection : 0;
+    const stemletYOffset = this.isStemlet
+      ? stemHeight - this.stemletHeight * this.stemDirection
+      : 0;
 
     // Draw the stem
     ctx.openGroup('stem', this.getAttribute('id'));

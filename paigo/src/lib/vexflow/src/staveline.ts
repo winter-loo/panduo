@@ -35,7 +35,7 @@ function drawArrowHead(
   x1: number,
   y1: number,
   x2: number,
-  y2: number
+  y2: number,
 ): void {
   // all cases do this.
   ctx.beginPath();
@@ -140,7 +140,10 @@ export class StaveLine extends Element {
   // Set the notes for the `StaveLine`
   setNotes(notes: StaveLineNotes): this {
     if (!notes.firstNote && !notes.lastNote) {
-      throw new RuntimeError('BadArguments', 'Notes needs to have either firstNote or lastNote set.');
+      throw new RuntimeError(
+        'BadArguments',
+        'Notes needs to have either firstNote or lastNote set.',
+      );
     }
 
     if (!notes.firstIndexes) notes.firstIndexes = [0];
@@ -179,7 +182,11 @@ export class StaveLine extends Element {
   }
 
   // Helper function to draw a line with arrow heads
-  protected drawArrowLine(ctx: RenderContext, pt1: { x: number; y: number }, pt2: { x: number; y: number }): void {
+  protected drawArrowLine(
+    ctx: RenderContext,
+    pt1: { x: number; y: number },
+    pt2: { x: number; y: number },
+  ): void {
     const bothArrows = this.renderOptions.drawStartArrow && this.renderOptions.drawEndArrow;
 
     const x1 = pt1.x;
@@ -226,7 +233,9 @@ export class StaveLine extends Element {
     // calculate the angle of the line
     const lineAngle = Math.atan2(y2 - y1, x2 - x1);
     // h is the line length of a side of the arrow head
-    const h = Math.abs(this.renderOptions.arrowheadLength / Math.cos(this.renderOptions.arrowheadAngle));
+    const h = Math.abs(
+      this.renderOptions.arrowheadLength / Math.cos(this.renderOptions.arrowheadAngle),
+    );
 
     let angle1;
     let angle2;

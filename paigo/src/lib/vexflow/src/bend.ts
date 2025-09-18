@@ -154,7 +154,8 @@ export class Bend extends Modifier {
       if (bend.width !== undefined) {
         totalWidth += bend.width;
       } else {
-        const additionalWidth = bend.type === Bend.UP ? this.renderOptions.bendWidth : this.renderOptions.releaseWidth;
+        const additionalWidth =
+          bend.type === Bend.UP ? this.renderOptions.bendWidth : this.renderOptions.releaseWidth;
 
         bend.width = Math.max(additionalWidth, measureText(bend.text)) + 3;
         bend.drawWidth = bend.width / 2;

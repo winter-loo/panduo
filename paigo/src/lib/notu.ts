@@ -26,9 +26,9 @@ export function notu(baseNoteValue: BaseNoteValue, repeat: 1 | 3 = 1): NoteDurat
 }
 
 export interface LayoutBase {
-  measureWidth: number,
-  barLineWidth: number,
-  notesSpacing: number
+  measureWidth: number;
+  barLineWidth: number;
+  notesSpacing: number;
 }
 
 // 1 2 4 8 16 32

@@ -36,7 +36,7 @@
     4: 1000,
     8: 500,
     16: 250,
-    32: 125
+    32: 125,
   };
 
   function noteWidth(duration: NoteDuration, wholeWidth: number): number {
@@ -207,7 +207,10 @@
     barline to the first note: 4px <br />
     barline width: 4px <br />
     whole note width: 288px <br />
-    <span class="font-bold">margin left 11px for the first 8th note so that there are gaps between donut circle and the bar line</span> <br />
+    <span class="font-bold"
+      >margin left 11px for the first 8th note so that there are gaps between donut circle and the
+      bar line</span
+    > <br />
   </p>
 </section>
 

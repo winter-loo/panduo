@@ -93,7 +93,9 @@ export class Element {
 
   // Note: Canvas is node-canvas.
   // https://www.npmjs.com/package/canvas
-  static setTextMeasurementCanvas(canvas: HTMLCanvasElement | OffscreenCanvas /* | Canvas */): void {
+  static setTextMeasurementCanvas(
+    canvas: HTMLCanvasElement | OffscreenCanvas /* | Canvas */,
+  ): void {
     Element.txtCanvas = canvas;
   }
 
@@ -222,7 +224,10 @@ export class Element {
   }
 
   /** Apply the element style to `context`. */
-  applyStyle(context: RenderContext | undefined = this.context, style: ElementStyle = this.getStyle()): this {
+  applyStyle(
+    context: RenderContext | undefined = this.context,
+    style: ElementStyle = this.getStyle(),
+  ): this {
     if (!context) return this;
     if (style.shadowColor) context.setShadowColor(style.shadowColor);
     if (style.shadowBlur) context.setShadowBlur(style.shadowBlur);
@@ -340,7 +345,7 @@ export class Element {
       this.x + this.xShift,
       this.y + this.yShift - this.textMetrics.actualBoundingBoxAscent,
       this.width,
-      this.height
+      this.height,
     );
   }
 
@@ -400,12 +405,18 @@ export class Element {
    * If no arguments are provided, then the font is set to the default font.
    * Each Element subclass may specify its own default by overriding the static `TEXT_FONT` property.
    */
-  setFont(font?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this {
+  setFont(
+    font?: string | FontInfo,
+    size?: string | number,
+    weight?: string | number,
+    style?: string,
+  ): this {
     const defaultTextFont: Required<FontInfo> = Metrics.getFontInfo(this.attrs.type);
 
     const fontIsObject = typeof font === 'object';
     const fontIsString = typeof font === 'string';
-    const sizeWeightStyleAreUndefined = size === undefined && weight === undefined && style === undefined;
+    const sizeWeightStyleAreUndefined =
+      size === undefined && weight === undefined && style === undefined;
 
     this.metricsValid = false;
     if (fontIsObject) {
@@ -423,7 +434,7 @@ export class Element {
         font ?? defaultTextFont.family,
         size ?? defaultTextFont.size,
         weight ?? defaultTextFont.weight,
-        style ?? defaultTextFont.style
+        style ?? defaultTextFont.style,
       );
     }
     return this;
@@ -628,12 +639,15 @@ export class Element {
     }
     context.font = Font.toCSSString(Font.validate(this.fontInfo));
     this._textMetrics = context.measureText(this.text);
-    this._height = this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
+    this._height =
+      this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
     this._width = this._textMetrics.width;
     this.metricsValid = true;
 
-    if (this.text != "") {
-      const unicodeEscapes = Array.from(this.text).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+    if (this.text != '') {
+      const unicodeEscapes = Array.from(this.text)
+        .map((c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'))
+        .join('');
       console.log(`text ${unicodeEscapes} width=${this._width} height=${this._height}`);
     }
 

@@ -13,7 +13,7 @@ export default [
       parser: tsParser,
       parserOptions: {
         ecmaVersion: 2022,
-        sourceType: 'module'
+        sourceType: 'module',
       },
       globals: {
         // Browser globals
@@ -71,11 +71,11 @@ export default [
         // Custom globals
         __VF_VERSION__: 'readonly',
         __VF_GIT_COMMIT_ID__: 'readonly',
-        __VF_BUILD_DATE__: 'readonly'
-      }
+        __VF_BUILD_DATE__: 'readonly',
+      },
     },
     plugins: {
-      '@typescript-eslint': ts
+      '@typescript-eslint': ts,
     },
     rules: {
       ...ts.configs.recommended.rules,
@@ -83,16 +83,19 @@ export default [
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-unreachable': 'warn',
       'no-undef': 'error',
-      'no-unused-vars': 'off' // Too many false positives in VexFlow library
-    }
+      'no-unused-vars': 'off', // Too many false positives in VexFlow library
+    },
   },
   {
     files: ['src/routes/**/*.{js,ts,svelte}', 'src/lib/**/*.{js,ts}', '!src/lib/vexflow/**'],
     rules: {
       // Enable stricter rules for our own code (not VexFlow library)
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
-    }
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
   },
   {
     files: ['**/*.svelte'],
@@ -100,7 +103,7 @@ export default [
       parser: svelteParser,
       parserOptions: {
         parser: tsParser,
-        extraFileExtensions: ['.svelte']
+        extraFileExtensions: ['.svelte'],
       },
       globals: {
         // Browser globals for Svelte files
@@ -120,20 +123,23 @@ export default [
         MouseEvent: 'readonly',
         KeyboardEvent: 'readonly',
         requestAnimationFrame: 'readonly',
-        cancelAnimationFrame: 'readonly'
-      }
+        cancelAnimationFrame: 'readonly',
+      },
     },
     plugins: {
       svelte,
-      '@typescript-eslint': ts
+      '@typescript-eslint': ts,
     },
     rules: {
       ...svelte.configs.recommended.rules,
       'svelte/no-unused-svelte-ignore': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'no-undef': 'error',
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
-    }
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
   },
   prettier,
   {
@@ -144,7 +150,7 @@ export default [
       'node_modules/',
       '*.config.js',
       '*.config.*.ts',
-      'src/lib/vexflow/**'
-    ]
-  }
+      'src/lib/vexflow/**',
+    ],
+  },
 ];

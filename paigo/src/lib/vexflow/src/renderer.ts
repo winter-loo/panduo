@@ -41,7 +41,7 @@ export class Renderer {
     backend: number,
     width: number,
     height: number,
-    background: string = '#FFF'
+    background: string = '#FFF',
   ): RenderContext {
     const renderer = new Renderer(elementId, backend);
     if (width && height) {
@@ -54,11 +54,21 @@ export class Renderer {
     return ctx;
   }
 
-  static getCanvasContext(elementId: string, width: number, height: number, background?: string): RenderContext {
+  static getCanvasContext(
+    elementId: string,
+    width: number,
+    height: number,
+    background?: string,
+  ): RenderContext {
     return Renderer.buildContext(elementId, Renderer.Backends.CANVAS, width, height, background);
   }
 
-  static getSVGContext(elementId: string, width: number, height: number, background?: string): RenderContext {
+  static getSVGContext(
+    elementId: string,
+    width: number,
+    height: number,
+    background?: string,
+  ): RenderContext {
     return Renderer.buildContext(elementId, Renderer.Backends.SVG, width, height, background);
   }
 
@@ -71,7 +81,7 @@ export class Renderer {
     fromY: number,
     toX: number,
     toY: number,
-    dashPattern: number[]
+    dashPattern: number[],
   ): void {
     context.beginPath();
 

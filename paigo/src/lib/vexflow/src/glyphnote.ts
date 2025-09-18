@@ -58,7 +58,9 @@ export class GlyphNote extends Note {
     this.setRendered();
     ctx.openGroup('glyphNote', this.getAttribute('id'));
 
-    this.x = this.isCenterAligned() ? this.getAbsoluteX() - this.getWidth() / 2 : this.getAbsoluteX();
+    this.x = this.isCenterAligned()
+      ? this.getAbsoluteX() - this.getWidth() / 2
+      : this.getAbsoluteX();
     this.y = stave.getYForLine(this.options.line);
     this.renderText(ctx, 0, 0);
     this.drawModifiers();

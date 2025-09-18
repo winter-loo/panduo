@@ -45,7 +45,7 @@
 
   onMount(() => {
     // Focus the test area on mount for convenience
-    setTimeout(() => (testArea?.focus()), 0);
+    setTimeout(() => testArea?.focus(), 0);
   });
 
   let testArea: HTMLDivElement | null = null;
@@ -59,9 +59,10 @@
   <button on:click={reset}>Reset</button>
   <a class="back" href="/lab">← back to lab</a>
   <style>
-    .back { margin-left: auto; }
+    .back {
+      margin-left: auto;
+    }
   </style>
-  
 </div>
 
 <div class="stats">
@@ -69,15 +70,9 @@
   <div><strong>Max simultaneous:</strong> {maxPressed}</div>
   <div class="hint">Tip: some OS/browser shortcuts don’t reach the page; focus the test box.</div>
   <div class="hint">Try rows (ASDF, numbers, arrows) to probe ghosting.</div>
-  
 </div>
 
-<div
-  class="test-area"
-  tabindex="0"
-  bind:this={testArea}
-  aria-label="Keyboard test area"
->
+<div class="test-area" tabindex="0" bind:this={testArea} aria-label="Keyboard test area">
   {#if pressed.size === 0}
     <div class="placeholder">Press and hold multiple keys…</div>
   {/if}
@@ -92,13 +87,19 @@
   <div class="focus-tip">Ensure this box has focus for best results.</div>
   <div class="focus-ring" aria-hidden="true"></div>
   <style>
-    .focus-ring { display: none; }
-    .test-area:focus .focus-ring { display: none; }
+    .focus-ring {
+      display: none;
+    }
+    .test-area:focus .focus-ring {
+      display: none;
+    }
   </style>
 </div>
 
 <style>
-  h3 { margin: 16px; }
+  h3 {
+    margin: 16px;
+  }
 
   .controls {
     display: flex;
@@ -106,10 +107,18 @@
     align-items: center;
     margin: 0 16px 8px;
   }
-  .controls label { user-select: none; }
+  .controls label {
+    user-select: none;
+  }
 
-  .stats { margin: 0 16px 12px; color: #222; }
-  .stats .hint { color: #666; font-size: 12px; }
+  .stats {
+    margin: 0 16px 12px;
+    color: #222;
+  }
+  .stats .hint {
+    color: #666;
+    font-size: 12px;
+  }
 
   .test-area {
     margin: 0 16px 24px;
@@ -125,7 +134,10 @@
     border-color: #6b8cff;
     background: #f2f6ff;
   }
-  .placeholder { color: #7a8699; margin-bottom: 8px; }
+  .placeholder {
+    color: #7a8699;
+    margin-bottom: 8px;
+  }
 
   .key-chip {
     display: inline-block;
@@ -134,13 +146,35 @@
     border-radius: 6px;
     background: #e3e9ff;
     color: #243b7a;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.06);
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.06);
   }
 
-  .note { margin-top: 12px; color: #546e7a; font-size: 12px; }
-  .legend { margin-top: 8px; color: #546e7a; font-size: 12px; display: flex; align-items: center; gap: 6px; }
-  .chip-swatch { width: 14px; height: 14px; background: #e3e9ff; border-radius: 4px; display: inline-block; }
-  .focus-tip { margin-top: 8px; color: #7a8699; font-size: 12px; }
+  .note {
+    margin-top: 12px;
+    color: #546e7a;
+    font-size: 12px;
+  }
+  .legend {
+    margin-top: 8px;
+    color: #546e7a;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chip-swatch {
+    width: 14px;
+    height: 14px;
+    background: #e3e9ff;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .focus-tip {
+    margin-top: 8px;
+    color: #7a8699;
+    font-size: 12px;
+  }
 </style>
-

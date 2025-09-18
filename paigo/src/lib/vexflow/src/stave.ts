@@ -34,8 +34,8 @@ export interface StaveOptions {
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
-  stillCursor?: boolean,
-  style?: ElementStyle,
+  stillCursor?: boolean;
+  style?: ElementStyle;
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
@@ -122,9 +122,19 @@ export class Stave extends Element {
     this.resetLines();
 
     // beg bar
-    this.addModifier(new Barline(this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE, this.options.leftBar));
+    this.addModifier(
+      new Barline(
+        this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE,
+        this.options.leftBar,
+      ),
+    );
     // end bar
-    this.addEndModifier(new Barline(this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE, this.options.rightBar));
+    this.addEndModifier(
+      new Barline(
+        this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE,
+        this.options.rightBar,
+      ),
+    );
   }
 
   /** Set default style for ledger lines. */
@@ -146,7 +156,8 @@ export class Stave extends Element {
     for (let i = 0; i < this.options.numLines; i++) {
       this.options.lineConfig.push({ visible: true });
     }
-    this.height = (this.options.numLines + this.options.spaceAboveStaffLn) * this.options.spacingBetweenLinesPx;
+    this.height =
+      (this.options.numLines + this.options.spaceAboveStaffLn) * this.options.spacingBetweenLinesPx;
     this.options.bottomTextPosition = this.options.numLines;
   }
 
@@ -279,7 +290,10 @@ export class Stave extends Element {
 
   // Section functions
   setSection(section: string, y: number, xOffset = 0, fontSize?: number, drawRect = true) {
-    const staveSection = new StaveSection(section).setYShift(y).setXShift(xOffset).setDrawRect(drawRect);
+    const staveSection = new StaveSection(section)
+      .setYShift(y)
+      .setXShift(xOffset)
+      .setDrawRect(drawRect);
     if (fontSize) {
       staveSection.setFontSize(fontSize);
     }
@@ -301,7 +315,7 @@ export class Stave extends Element {
       shiftX?: number;
       shiftY?: number;
       justification?: number;
-    } = {}
+    } = {},
   ): this {
     this.modifiers.push(new StaveText(text, position, options));
     return this;
@@ -509,24 +523,29 @@ export class Stave extends Element {
    * @param position
    * @returns
    */
-  addClef(clef: string, options?:
-    {
-      style?: ElementStyle,
-      size?: string,
-      annotation?: string,
-      position?: number
-    }): this {
+  addClef(
+    clef: string,
+    options?: {
+      style?: ElementStyle;
+      size?: string;
+      annotation?: string;
+      position?: number;
+    },
+  ): this {
     if (options?.position === undefined || options?.position === StaveModifierPosition.BEGIN) {
       this.clef = clef;
     } else if (options?.position === StaveModifierPosition.END) {
       this.endClef = clef;
     }
 
-    this.addModifier(new Clef(clef, {
-      style: options?.style,
-      size: options?.size,
-      annotation: options?.annotation
-    }), options?.position);
+    this.addModifier(
+      new Clef(clef, {
+        style: options?.style,
+        size: options?.size,
+        annotation: options?.annotation,
+      }),
+      options?.position,
+    );
     return this;
   }
 
@@ -580,7 +599,9 @@ export class Stave extends Element {
       return this.modifiers.filter((m: StaveModifier) => position === m.getPosition());
     } else {
       // Both position and category were provided!
-      return this.modifiers.filter((m: StaveModifier) => position === m.getPosition() && category === m.getCategory());
+      return this.modifiers.filter(
+        (m: StaveModifier) => position === m.getPosition() && category === m.getCategory(),
+      );
     }
   }
 
@@ -755,13 +776,19 @@ export class Stave extends Element {
     const offset = this.width - width;
     const paddingTop = 5;
     const paddingBottom = 5;
-    (<SVGContext>ctx).rect(this.x + offset, paddingTop, width, (<SVGContext>ctx).height - paddingBottom - paddingTop, {
-      stroke: 'none',
-      rx: width / 2,
-      ry: width / 2,
-      fill: '#cccccc',
-      opacity: 0.9
-    });
+    (<SVGContext>ctx).rect(
+      this.x + offset,
+      paddingTop,
+      width,
+      (<SVGContext>ctx).height - paddingBottom - paddingTop,
+      {
+        stroke: 'none',
+        rx: width / 2,
+        ry: width / 2,
+        fill: '#cccccc',
+        opacity: 0.9,
+      },
+    );
   }
 
   getVerticalBarWidth(): number {
@@ -787,18 +814,21 @@ export class Stave extends Element {
     if (lineNumber >= this.options.numLines || lineNumber < 0) {
       throw new RuntimeError(
         'StaveConfigError',
-        'The line number must be within the range of the number of lines in the Stave.'
+        'The line number must be within the range of the number of lines in the Stave.',
       );
     }
 
     if (lineConfig.visible === undefined) {
-      throw new RuntimeError('StaveConfigError', "The line configuration object is missing the 'visible' property.");
+      throw new RuntimeError(
+        'StaveConfigError',
+        "The line configuration object is missing the 'visible' property.",
+      );
     }
 
     if (typeof lineConfig.visible !== 'boolean') {
       throw new RuntimeError(
         'StaveConfigError',
-        "The line configuration objects 'visible' property must be true or false."
+        "The line configuration objects 'visible' property must be true or false.",
       );
     }
 
@@ -820,7 +850,7 @@ export class Stave extends Element {
     if (linesConfiguration.length !== this.options.numLines) {
       throw new RuntimeError(
         'StaveConfigError',
-        'The length of the lines configuration array must match the number of lines in the Stave'
+        'The length of the lines configuration array must match the number of lines in the Stave',
       );
     }
 
@@ -850,7 +880,8 @@ export class Stave extends Element {
       staves.forEach((stave) => {
         const modifiers = stave.getModifiers(StaveModifierPosition.BEGIN, category);
         // Consider only the first instance
-        if (modifiers.length > 0 && modifiers[0].getX() > minStartX) minStartX = modifiers[0].getX();
+        if (modifiers.length > 0 && modifiers[0].getX() > minStartX)
+          minStartX = modifiers[0].getX();
       });
       let adjustX = 0;
       staves.forEach((stave) => {

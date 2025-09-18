@@ -1,9 +1,9 @@
 <script lang="ts">
   import Button from '$lib/components/ui/button/button.svelte';
-	import { page } from '$app/state';
+  import { page } from '$app/state';
   import { fade } from 'svelte/transition';
 
-	const PagePath = page.url.pathname;
+  const PagePath = page.url.pathname;
 
   let showDonut = $state(false);
 
@@ -36,7 +36,7 @@
     '2': 'w-396',
     '4': 'w-180',
     '8': 'w-72',
-    '16': 'w-18'
+    '16': 'w-18',
   };
 
   const DURATION_MAP: Record<number, number> = {
@@ -45,7 +45,7 @@
     4: 1000,
     8: 500,
     16: 250,
-    32: 125
+    32: 125,
   };
 
   function parseWidthClass(width_clsname: string) {

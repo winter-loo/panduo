@@ -13,12 +13,12 @@
     measureWidth: 349,
     barLineWidth: 3,
     notesSpacing: 12,
-    cursorLineWidth: 8
+    cursorLineWidth: 8,
   });
 
   const layoutDerived = $derived({
     measureLeftPadding: Math.ceil((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2),
-    measureRightPadding: Math.floor((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2)
+    measureRightPadding: Math.floor((layoutBase.notesSpacing - layoutBase.barLineWidth) / 2),
   });
   const barlineOffsetToNote = $derived(layoutBase.barLineWidth + layoutDerived.measureLeftPadding);
 
@@ -33,7 +33,7 @@
     [notu(4), notu(4), notu(8), notu(8), rest(4)],
     [notu(8), notu(8), notu(4), notu(4), notu(8), notu(8)],
     [notu(4), notu(4), notu(4), notu(4)],
-    [notu(1)]
+    [notu(1)],
   ];
 
   // Movable pan controller; bounds recomputed on mount/resize
@@ -77,14 +77,14 @@
   const player = $state({
     current: {
       m: 0,
-      i: 0
+      i: 0,
     },
     holding: false,
     startTs: 0,
     finished: false,
     progress: 0,
     expectedMs: 0,
-    expectedOffset: 0
+    expectedOffset: 0,
   });
 
   // --- Shared helpers to reduce duplication ---

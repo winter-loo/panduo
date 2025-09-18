@@ -11,22 +11,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
-    "lib": [
-      "dom",
-      "es2020"
-    ],
+    "lib": ["dom", "es2020"],
     "noImplicitOverride": true
   },
-  "include": [
-    "./src",
-    "./entry"
-  ],
-  "exclude": [
-    "node_modules/**/*",
-    "tools/fonts/legacy",
-    "releases",
-    "reference",
-    "build",
-    "dist"
-  ]
+  "include": ["./src", "./entry"],
+  "exclude": ["node_modules/**/*", "tools/fonts/legacy", "releases", "reference", "build", "dist"]
 }

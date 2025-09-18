@@ -199,7 +199,12 @@ export class System extends Element {
 
     const stave =
       params.stave ??
-      this.factory.Stave({ x: this.options.x, y: this.options.y, width: this.options.width, options: staveOptions });
+      this.factory.Stave({
+        x: this.options.x,
+        y: this.options.y,
+        width: this.options.width,
+        options: staveOptions,
+      });
 
     const p = {
       spaceAbove: 0, // stave spaces
@@ -284,7 +289,11 @@ export class System extends Element {
         : this.options.width - (startX - this.options.x) - Stave.defaultPadding;
     }
     if (this.partVoices.length > 0) {
-      formatter.format(this.partVoices, this.options.noJustification ? 0 : justifyWidth, this.options.formatOptions);
+      formatter.format(
+        this.partVoices,
+        this.options.noJustification ? 0 : justifyWidth,
+        this.options.formatOptions,
+      );
     }
     formatter.postFormat();
 
@@ -300,7 +309,12 @@ export class System extends Element {
 
   /** Get the boundingBox. */
   override getBoundingBox(): BoundingBox {
-    return new BoundingBox(this.options.x, this.options.y, this.options.width, (this.lastY ?? 0) - this.options.y);
+    return new BoundingBox(
+      this.options.x,
+      this.options.y,
+      this.options.width,
+      (this.lastY ?? 0) - this.options.y,
+    );
   }
 
   /** Render the system. */

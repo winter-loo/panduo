@@ -87,7 +87,10 @@ export class Voice extends Element {
     };
 
     // Recalculate total ticks.
-    this.totalTicks = new Fraction(this.time.numBeats * (this.time.resolution / this.time.beatValue), 1);
+    this.totalTicks = new Fraction(
+      this.time.numBeats * (this.time.resolution / this.time.beatValue),
+      1,
+    );
     // until tickables are added, the smallestTickCount is the same as the stated totalTicks duration.
     this.smallestTickCount = this.totalTicks.clone();
   }
@@ -200,7 +203,8 @@ export class Voice extends Element {
    */
   protected reCalculateExpTicksUsed(): number {
     const totalTicks = this.ticksUsed.value();
-    const exp = (tickable: Tickable) => Math.pow(this.options.softmaxFactor, tickable.getTicks().value() / totalTicks);
+    const exp = (tickable: Tickable) =>
+      Math.pow(this.options.softmaxFactor, tickable.getTicks().value() / totalTicks);
     this.expTicksUsed = sumArray(this.tickables.map(exp));
     return this.expTicksUsed;
   }
@@ -294,7 +298,11 @@ export class Voice extends Element {
       if (stave) {
         tickable.setStave(stave);
       }
-      defined(tickable.getStave(), 'MissingStave', 'The voice cannot draw tickables without staves.');
+      defined(
+        tickable.getStave(),
+        'MissingStave',
+        'The voice cannot draw tickables without staves.',
+      );
 
       tickable.setContext(context);
       tickable.drawWithStyle();

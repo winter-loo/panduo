@@ -49,7 +49,12 @@ function getRoundingFunction(line: number, position: number): (a: number) => num
   }
 }
 
-function snapLineToStaff(canSitBetweenLines: boolean, line: number, position: number, offsetDirection: number): number {
+function snapLineToStaff(
+  canSitBetweenLines: boolean,
+  line: number,
+  position: number,
+  offsetDirection: number,
+): number {
   // Initially, snap to nearest staff line or space
   const snappedLine = roundToNearestHalf(getRoundingFunction(line, position), line);
   const canSnapToStaffSpace = canSitBetweenLines && isWithinLines(snappedLine, position);
@@ -91,7 +96,10 @@ export function getTopY(note: Note, textLine: number): number {
       return note.checkStave().getYForTopText(textLine);
     }
   } else {
-    throw new RuntimeError('UnknownCategory', 'Only can get the top and bottom ys of stavenotes and tabnotes');
+    throw new RuntimeError(
+      'UnknownCategory',
+      'Only can get the top and bottom ys of stavenotes and tabnotes',
+    );
   }
 }
 
@@ -120,7 +128,10 @@ export function getBottomY(note: Note, textLine: number): number {
       return note.checkStave().getYForBottomText(textLine);
     }
   } else {
-    throw new RuntimeError('UnknownCategory', 'Only can get the top and bottom ys of stavenotes and tabnotes');
+    throw new RuntimeError(
+      'UnknownCategory',
+      'Only can get the top and bottom ys of stavenotes and tabnotes',
+    );
   }
 }
 
@@ -261,7 +272,7 @@ export class Articulation extends Modifier {
       .reduce((maxWidth, articWidth) => Math.max(articWidth, maxWidth));
     const overlap = Math.min(
       Math.max(width - maxGlyphWidth, 0),
-      Math.max(width - (state.leftShift + state.rightShift), 0)
+      Math.max(width - (state.leftShift + state.rightShift), 0),
     );
 
     state.leftShift += overlap / 2;
@@ -269,7 +280,11 @@ export class Articulation extends Modifier {
     return true;
   }
 
-  static easyScoreHook({ articulations }: { articulations: string }, note: StemmableNote, builder: Builder): void {
+  static easyScoreHook(
+    { articulations }: { articulations: string },
+    note: StemmableNote,
+    builder: Builder,
+  ): void {
     if (!articulations) return;
 
     const articNameToCode: Record<string, string> = {
@@ -354,11 +369,15 @@ export class Articulation extends Modifier {
       {
         [ABOVE]: () => {
           const y = getTopY(note, textLine) - (textLine + initialOffset) * staffSpace;
-          return shouldSitOutsideStaff ? Math.min(stave.getYForTopText(Articulation.INITIAL_OFFSET), y) : y;
+          return shouldSitOutsideStaff
+            ? Math.min(stave.getYForTopText(Articulation.INITIAL_OFFSET), y)
+            : y;
         },
         [BELOW]: () => {
           const y = getBottomY(note, textLine) + (textLine + initialOffset) * staffSpace;
-          return shouldSitOutsideStaff ? Math.max(stave.getYForBottomText(Articulation.INITIAL_OFFSET), y) : y;
+          return shouldSitOutsideStaff
+            ? Math.max(stave.getYForBottomText(Articulation.INITIAL_OFFSET), y)
+            : y;
         },
       } as Record<number, () => number>
     )[position]();

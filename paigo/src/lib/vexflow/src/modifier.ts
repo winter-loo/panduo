@@ -207,7 +207,10 @@ export class Modifier extends Element {
     const subNoteXOffset =
       position === Modifier.Position.RIGHT
         ? tickContext.getX() + this.getSpacingFromNextModifier() * subNotes.length + 10
-        : tickContext.getX() - metrics.modLeftPx - metrics.modRightPx + this.getSpacingFromNextModifier();
+        : tickContext.getX() -
+          metrics.modLeftPx -
+          metrics.modRightPx +
+          this.getSpacingFromNextModifier();
 
     subNotes.forEach((subNote) => {
       const subTickContext = subNote.getTickContext();

@@ -1,12 +1,16 @@
-import { EventEmitter } from 'events'
-import { showPianoLoading, hidePianoLoading, requirePianoUserGesture, clearPianoUserGesture } from '$lib/stores/pianoLoading';
+import { EventEmitter } from 'events';
+import {
+  showPianoLoading,
+  hidePianoLoading,
+  requirePianoUserGesture,
+  clearPianoUserGesture,
+} from '$lib/stores/pianoLoading';
 
 export interface VirtualMidiKeyboardOption {
-  audioSamplesUri?: string,
+  audioSamplesUri?: string;
 }
 
 export class VirtualMidiKeyboard extends EventEmitter {
-
   private NoteNameMap = new Map([
     ['Space', { noteName: 'C', holding: false }],
     ['KeyJ', { noteName: 'D', holding: false }],
@@ -75,11 +79,14 @@ export class VirtualMidiKeyboard extends EventEmitter {
       requirePianoUserGesture(() => {
         // Called in a user gesture. Try to start; don't rely on outer awaits.
         showPianoLoading('Enabling audio...');
-        void this.tone.start().then(() => {
-          clearPianoUserGesture();
-        }).catch(() => {
-          // Keep the button visible if it still fails
-        });
+        void this.tone
+          .start()
+          .then(() => {
+            clearPianoUserGesture();
+          })
+          .catch(() => {
+            // Keep the button visible if it still fails
+          });
       });
       return;
     }
@@ -101,7 +108,8 @@ export class VirtualMidiKeyboard extends EventEmitter {
         self.OctaveNumberMap.forEach(({ octave, holding }, _key) => {
           if (holding) {
             octaveNumberHolding = true;
-            if (self.pianoSound) self.pianoSound.keyDown({ note: `${validKeyDown.noteName}${octave}` });
+            if (self.pianoSound)
+              self.pianoSound.keyDown({ note: `${validKeyDown.noteName}${octave}` });
             self.emit('noteOn', { note: validKeyDown.noteName, octave: octave });
           }
         });
@@ -115,7 +123,8 @@ export class VirtualMidiKeyboard extends EventEmitter {
           validKeyDown.holding = true;
           self.NoteNameMap.forEach(({ noteName, holding }, _key) => {
             if (holding) {
-              if (self.pianoSound) self.pianoSound.keyDown({ note: `${noteName}${validKeyDown.octave}` });
+              if (self.pianoSound)
+                self.pianoSound.keyDown({ note: `${noteName}${validKeyDown.octave}` });
               self.emit('noteOn', { note: noteName, octave: validKeyDown.octave });
             }
           });
@@ -204,7 +213,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
       km.set(key, noteName);
     });
     this.OctaveNumberMap.forEach(({ octave }, key) => {
-      km.set(key, "octave " + octave.toString());
+      km.set(key, 'octave ' + octave.toString());
     });
     return km;
   }
@@ -214,7 +223,7 @@ let virtualMidiKeyboard: VirtualMidiKeyboard;
 
 export function getVirtualMidiKeyboard(): VirtualMidiKeyboard {
   if (!virtualMidiKeyboard) {
-    virtualMidiKeyboard = new VirtualMidiKeyboard({ audioSamplesUri: "/audio/" });
+    virtualMidiKeyboard = new VirtualMidiKeyboard({ audioSamplesUri: '/audio/' });
 
     virtualMidiKeyboard.charge().then(() => {
       console.log('midi keyboard connected');

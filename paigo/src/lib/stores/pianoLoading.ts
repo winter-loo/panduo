@@ -11,7 +11,7 @@ export const pianoLoading = writable<PianoLoadingState>({
   loading: false,
   message: 'Loading piano sound...',
   needsUnlock: false,
-  onUnlock: undefined
+  onUnlock: undefined,
 });
 
 export function showPianoLoading(message = 'Loading piano sound...') {

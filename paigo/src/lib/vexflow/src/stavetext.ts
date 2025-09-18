@@ -16,7 +16,7 @@ export class StaveText extends StaveModifier {
   constructor(
     text: string,
     position: number,
-    options: { shiftX?: number; shiftY?: number; justification?: number } = {}
+    options: { shiftX?: number; shiftY?: number; justification?: number } = {},
   ) {
     super();
 

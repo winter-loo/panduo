@@ -1,4 +1,12 @@
-import { draggable, Compartment, position, axis, unstable_definePlugin, touchAction, events } from '@neodrag/svelte';
+import {
+  draggable,
+  Compartment,
+  position,
+  axis,
+  unstable_definePlugin,
+  touchAction,
+  events,
+} from '@neodrag/svelte';
 import type { Attachment } from 'svelte/attachments';
 
 export class MovableElement {
@@ -19,7 +27,9 @@ export class MovableElement {
     // position() plugin controls the element's translate when NOT actively dragging.
     // We wrap it in a Compartment so we can change the current position reactively
     // from imperative methods like move()/reset().
-    this.currentPosComp = Compartment.of(() => position({ current: { x: this.currentOffsetX, y: 0 } }));
+    this.currentPosComp = Compartment.of(() =>
+      position({ current: { x: this.currentOffsetX, y: 0 } }),
+    );
     // Define a custom clamp plugin using neodrag's plugin API.
     // Docs: @neodrag/svelte exports from @neodrag/core/plugins (see axis, position,
     // touchAction, and unstable_definePlugin). The plugin `drag` hook receives a
@@ -45,7 +55,7 @@ export class MovableElement {
           this.currentOffsetX = nextOffsetX;
           this.onMove?.(nextOffsetX);
         }
-      }
+      },
     }));
     this.clampPlugin = clampX();
   }
@@ -58,50 +68,53 @@ export class MovableElement {
       touchAction('pan-y'),
       events({
         onDragStart: () => this.onDragStart?.(),
-        onDragEnd: () => this.onDragEnd?.()
+        onDragEnd: () => this.onDragEnd?.(),
       }),
-      this.currentPosComp
+      this.currentPosComp,
     ]);
-  }
+  };
 
   move = () => {
     const moveLeft = () => {
       this.currentOffsetX = Math.min(this.currentOffsetX + 1, this.maxOffsetX);
       this.currentPosComp.current = position({
-        current: { x: -this.currentOffsetX, y: 0 }
+        current: { x: -this.currentOffsetX, y: 0 },
       });
       this.onMove?.(this.currentOffsetX);
       if (this.currentOffsetX != this.maxOffsetX) {
         this.moveAnimationId = requestAnimationFrame(moveLeft);
       }
-    }
+    };
     if (!this.moveAnimationId) moveLeft();
-  }
+  };
 
   stop = () => {
     if (this.moveAnimationId) {
       cancelAnimationFrame(this.moveAnimationId);
       this.moveAnimationId = null;
     }
-  }
+  };
 
   reset = () => {
     this.stop();
     this.currentOffsetX = 0;
     this.currentPosComp.current = position({
-      current: { x: this.currentOffsetX, y: 0 }
+      current: { x: this.currentOffsetX, y: 0 },
     });
     this.onMove?.(this.currentOffsetX);
-  }
+  };
 
   // Nudge left by a positive pixel distance (immediate), respecting bounds.
   nudgeBy = (distancePx: number) => {
     if (!Number.isFinite(distancePx)) return;
-    const next = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
+    const next = Math.min(
+      this.maxOffsetX,
+      Math.max(0, this.currentOffsetX + Math.max(0, distancePx)),
+    );
     this.currentOffsetX = next;
     this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
     this.onMove?.(this.currentOffsetX);
-  }
+  };
 
   // Animate to a target offset (absolute, 0..maxOffsetX)
   moveTo = (targetOffsetX: number, durationMs = 220) => {
@@ -133,14 +146,17 @@ export class MovableElement {
       }
     };
     this.moveAnimationId = requestAnimationFrame(step);
-  }
+  };
 
   // Animate a leftward nudge by the given distance (positive), respecting bounds.
   nudgeByAnimated = (distancePx: number, durationMs = 220) => {
     if (!Number.isFinite(distancePx)) return;
-    const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + Math.max(0, distancePx)));
+    const target = Math.min(
+      this.maxOffsetX,
+      Math.max(0, this.currentOffsetX + Math.max(0, distancePx)),
+    );
     this.moveTo(target, durationMs);
-  }
+  };
 
   // Adjust by a signed distance: positive moves left, negative moves right.
   adjustBy = (distancePx: number) => {
@@ -148,12 +164,12 @@ export class MovableElement {
     const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + distancePx));
     this.currentOffsetX = target;
     this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
-  }
+  };
 
   // Animated version of adjustBy: positive moves left, negative moves right.
   adjustByAnimated = (distancePx: number, durationMs = 220) => {
     if (!Number.isFinite(distancePx)) return;
     const target = Math.min(this.maxOffsetX, Math.max(0, this.currentOffsetX + distancePx));
     this.moveTo(target, durationMs);
-  }
+  };
 }

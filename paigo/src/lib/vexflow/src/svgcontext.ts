@@ -20,7 +20,10 @@ export type Attributes = {
 };
 
 /** For a particular element type (e.g., rect), we will not apply certain presentation attributes. */
-const ATTRIBUTES_TO_IGNORE: Record<string /* element type */, Record<string, boolean> /* ignored attributes */> = {
+const ATTRIBUTES_TO_IGNORE: Record<
+  string /* element type */,
+  Record<string, boolean> /* ignored attributes */
+> = {
   path: {
     x: true,
     y: true,
@@ -161,7 +164,7 @@ export class SVGContext extends RenderContext {
     if (classList) {
       let classNames = '';
       if (classList instanceof Array) {
-        classNames = classList.map(cls => prefix(cls)).join(" ");
+        classNames = classList.map((cls) => prefix(cls)).join(' ');
       } else {
         classNames = classList;
       }
@@ -170,7 +173,10 @@ export class SVGContext extends RenderContext {
     if (id) group.setAttribute('id', prefix(id));
 
     this.applyAttributes(group, this.attributes);
-    this.groupAttributes.push({ ...this.groupAttributes[this.groupAttributes.length - 1], ...this.attributes });
+    this.groupAttributes.push({
+      ...this.groupAttributes[this.groupAttributes.length - 1],
+      ...this.attributes,
+    });
     return group;
   }
 
@@ -181,7 +187,10 @@ export class SVGContext extends RenderContext {
   }
 
   openRotation(angleDegrees: number, x: number, y: number) {
-    this.openGroup().setAttribute('transform', `translate(${x},${y}) rotate(${angleDegrees}) translate(-${x},-${y})`);
+    this.openGroup().setAttribute(
+      'transform',
+      `translate(${x},${y}) rotate(${angleDegrees}) translate(-${x},-${y})`,
+    );
   }
 
   closeRotation() {
@@ -364,7 +373,11 @@ export class SVGContext extends RenderContext {
     }
 
     const rectangle = this.create('rect');
-    attributes = attributes ?? { fill: 'none', 'stroke-width': this.attributes['stroke-width'], stroke: 'black' };
+    attributes = attributes ?? {
+      fill: 'none',
+      'stroke-width': this.attributes['stroke-width'],
+      stroke: 'black',
+    };
     x = this.round(x);
     y = this.round(y);
     width = this.round(width);
@@ -374,14 +387,25 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  fillRect(x: number, y: number, width: number, height: number, optional_attributes?: Attributes): this {
+  fillRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    optional_attributes?: Attributes,
+  ): this {
     const attributes = { fill: 'currentColor', stroke: 'none', ...optional_attributes };
     this.rect(x, y, width, height, attributes);
     return this;
   }
 
   pointerRect(x: number, y: number, width: number, height: number): this {
-    const attributes = { fill: 'none', 'stroke-width': 1.0, stroke: 'currentColor', 'pointer-events': 'auto' };
+    const attributes = {
+      fill: 'none',
+      'stroke-width': 1.0,
+      stroke: 'currentColor',
+      'pointer-events': 'auto',
+    };
     this.rect(x, y, width, height, attributes);
     return this;
   }
@@ -448,7 +472,14 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise: boolean): this {
+  arc(
+    x: number,
+    y: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise: boolean,
+  ): this {
     let x0 = x + radius * Math.cos(startAngle);
     let y0 = y + radius * Math.sin(startAngle);
     x0 = this.round(x0);
@@ -553,7 +584,7 @@ export class SVGContext extends RenderContext {
       this.attributes['font-family'],
       this.attributes['font-size'],
       this.attributes['font-weight'],
-      this.attributes['font-style']
+      this.attributes['font-style'],
     );
     const bb = SVGContext.measureTextElement.getBoundingBox();
     return { x: bb.x, y: bb.y, width: bb.w, height: bb.h };
@@ -624,7 +655,12 @@ export class SVGContext extends RenderContext {
    * @param style is a string (e.g., 'italic', 'normal') that is inserted into the
    *              font-style attribute (e.g., font-style="italic")
    */
-  setFont(f?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this {
+  setFont(
+    f?: string | FontInfo,
+    size?: string | number,
+    weight?: string | number,
+    style?: string,
+  ): this {
     const fontInfo = Font.validate(f, size, weight, style);
     this.fontCSSString = Font.toCSSString(fontInfo);
     const fontAttributes = {

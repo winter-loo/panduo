@@ -195,7 +195,7 @@ export class Beam extends Element {
       beamRests?: boolean;
       groups?: Fraction[];
       stemDirection?: number;
-    } = {}
+    } = {},
   ): Beam[] {
     if (!config.groups || !config.groups.length) {
       config.groups = [new Fraction(2, 8)];
@@ -204,7 +204,10 @@ export class Beam extends Element {
     // Convert beam groups to tick amounts
     const tickGroups = config.groups.map((group) => {
       if (!group.multiply) {
-        throw new RuntimeError('InvalidBeamGroups', 'The beam groups must be an array of VexFlow.Fractions');
+        throw new RuntimeError(
+          'InvalidBeamGroups',
+          'The beam groups must be an array of VexFlow.Fractions',
+        );
       }
       return group.clone().multiply(Tables.RESOLUTION, 1);
     });
@@ -304,7 +307,8 @@ export class Beam extends Element {
           const prevNote = group[index - 1];
 
           const breaksOnEachRest = !config.beamRests && note.isRest();
-          const breaksOnFirstOrLastRest = config.beamRests && config.beamMiddleOnly && note.isRest() && isFirstOrLast;
+          const breaksOnFirstOrLastRest =
+            config.beamRests && config.beamMiddleOnly && note.isRest() && isFirstOrLast;
 
           let breakOnStemChange = false;
           if (config.maintainStemDirections && prevNote && !note.isRest() && !prevNote.isRest()) {
@@ -316,7 +320,11 @@ export class Beam extends Element {
           const isUnbeamableDuration = parseInt(note.getDuration(), 10) < 8;
 
           // Determine if the group should be broken at this note
-          const shouldBreak = breaksOnEachRest || breaksOnFirstOrLastRest || breakOnStemChange || isUnbeamableDuration;
+          const shouldBreak =
+            breaksOnEachRest ||
+            breaksOnFirstOrLastRest ||
+            breakOnStemChange ||
+            isUnbeamableDuration;
 
           if (shouldBreak) {
             // Add current group
@@ -430,7 +438,9 @@ export class Beam extends Element {
     allTuplets.forEach((tuplet) => {
       // Set the tuplet location based on the stem direction
       const direction =
-        (tuplet.notes[0] as StemmableNote).stemDirection === Stem.DOWN ? TupletLocation.BOTTOM : TupletLocation.TOP;
+        (tuplet.notes[0] as StemmableNote).stemDirection === Stem.DOWN
+          ? TupletLocation.BOTTOM
+          : TupletLocation.TOP;
       tuplet.setTupletLocation(direction);
 
       // If any of the notes in the tuplet are not beamed, draw a bracket.
@@ -464,7 +474,10 @@ export class Beam extends Element {
 
     if (this._ticks >= Tables.durationToTicks('4')) {
       // Q(MSAC) -- what about beamed half-note measured tremolos?
-      throw new RuntimeError('BadArguments', 'Beams can only be applied to notes shorter than a quarter note.');
+      throw new RuntimeError(
+        'BadArguments',
+        'Beams can only be applied to notes shorter than a quarter note.',
+      );
     }
 
     let i; // shared iterator
@@ -594,7 +607,12 @@ export class Beam extends Element {
         const note = notes[i];
         if (note.hasStem() || note.isRest()) {
           const adjustedStemTipY =
-            this.getSlopeY(note.getStemX(), firstNote.getStemX(), firstNote.getStemExtents().topY, slope) + yShiftTemp;
+            this.getSlopeY(
+              note.getStemX(),
+              firstNote.getStemX(),
+              firstNote.getStemExtents().topY,
+              slope,
+            ) + yShiftTemp;
 
           const stemTipY = note.getStemExtents().topY;
           // beam needs to be shifted up to accommodate note
@@ -735,7 +753,9 @@ export class Beam extends Element {
         const beamedStemTipY = this.getSlopeY(stemX, firstStemX, firstStemTipY, slope) + yShift;
         const preBeamExtension = stem.getExtension();
         const beamExtension =
-          note.getStemDirection() === Stem.UP ? stemTipY - beamedStemTipY : beamedStemTipY - stemTipY;
+          note.getStemDirection() === Stem.UP
+            ? stemTipY - beamedStemTipY
+            : beamedStemTipY - stemTipY;
         // Determine necessary extension for cross-stave notes in the beam group
         let crossStemExtension = 0;
         if (note.getStemDirection() !== this._stemDirection) {
@@ -768,7 +788,7 @@ export class Beam extends Element {
     prevTick: number,
     tick: number,
     nextTick: number,
-    noteIndex: number
+    noteIndex: number,
   ): PartialBeamDirection {
     if (duration === '4') {
       return BEAM_LEFT;
@@ -819,7 +839,10 @@ export class Beam extends Element {
 
         // If the secondary breaks were auto-configured in the render options,
         //  handle that as well.
-        if (this.renderOptions.secondaryBreakTicks && tickTally >= this.renderOptions.secondaryBreakTicks) {
+        if (
+          this.renderOptions.secondaryBreakTicks &&
+          tickTally >= this.renderOptions.secondaryBreakTicks
+        ) {
           tickTally = 0;
           shouldBreak = true;
         }
@@ -834,7 +857,8 @@ export class Beam extends Element {
       const nextNote = this.notes[i + 1];
       const nextNoteGetsBeam = nextNote && nextNote.getIntrinsicTicks() < tickOfDuration;
       const prevNoteGetsBeam = prevNote && prevNote.getIntrinsicTicks() < tickOfDuration;
-      const beamAlone = prevNote && nextNote && noteGetsBeam && !prevNoteGetsBeam && !nextNoteGetsBeam;
+      const beamAlone =
+        prevNote && nextNote && noteGetsBeam && !prevNoteGetsBeam && !nextNoteGetsBeam;
       // const beamAlone = noteGetsBeam && !prevNoteGetsBeam && !nextNoteGetsBeam;
       if (noteGetsBeam) {
         // This note gets a beam at the current level

@@ -69,10 +69,13 @@ export class GraceNote extends StaveNote {
         const stemDirection = this.getStemDirection();
         const noteHeadBounds = this.getNoteHeadBounds();
         const noteHeadWidth = this.noteHeads[0].getWidth();
-        const x = stemDirection === Stem.DOWN ? this.getAbsoluteX() : this.getAbsoluteX() + noteHeadWidth;
+        const x =
+          stemDirection === Stem.DOWN ? this.getAbsoluteX() : this.getAbsoluteX() + noteHeadWidth;
         const defaultOffsetY = (Tables.STEM_HEIGHT * scale) / 2;
         const y =
-          stemDirection === Stem.DOWN ? noteHeadBounds.yBottom + defaultOffsetY : noteHeadBounds.yTop - defaultOffsetY;
+          stemDirection === Stem.DOWN
+            ? noteHeadBounds.yBottom + defaultOffsetY
+            : noteHeadBounds.yTop - defaultOffsetY;
 
         if (stemDirection === Stem.DOWN) {
           slashBBox = {
@@ -106,7 +109,7 @@ export class GraceNote extends StaveNote {
   calcBeamedNotesSlashBBox(
     slashStemOffset: number,
     slashBeamOffset: number,
-    protrusions: { beam: number; stem: number }
+    protrusions: { beam: number; stem: number },
   ): Record<string, number> {
     const beam = this.beam;
     if (!beam) throw new RuntimeError('NoBeam', "Can't calculate without a beam.");

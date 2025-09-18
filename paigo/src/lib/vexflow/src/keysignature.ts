@@ -43,7 +43,7 @@ export class KeySignature extends StaveModifier {
   protected convertToGlyph(
     acc: { type: string; line: number },
     nextAcc: { type: string; line: number },
-    stave: Stave
+    stave: Stave,
   ): void {
     const code = Tables.accidentalCodes(acc.type);
     const glyph = new Element(Category.KeySignature);
@@ -56,7 +56,8 @@ export class KeySignature extends StaveModifier {
     if (this.children.length > 0) {
       const prevGlyph = this.children[this.children.length - 1];
       const isNatural = (el: Element) => el.getText() === Glyphs.accidentalNatural;
-      const yShiftDiff = (el1: Element, el2: Element) => Math.abs(el2.getYShift() - el1.getYShift());
+      const yShiftDiff = (el1: Element, el2: Element) =>
+        Math.abs(el2.getYShift() - el1.getYShift());
 
       if ((isNatural(prevGlyph) || isNatural(glyph)) && yShiftDiff(prevGlyph, glyph) < 10) {
         extraWidth = 2;
@@ -80,17 +81,21 @@ export class KeySignature extends StaveModifier {
 
   // Convert the `cancelKeySpec` into a list of naturals to be displayed
   protected convertToCancelAccList(
-    spec: string
+    spec: string,
   ): { type: string; accList: { type: string; line: number }[] } | undefined {
     // Get the accidental list for the cancelled key signature
     const cancelAccList = Tables.keySignature(spec);
 
     // If the cancelled key has a different accidental type, ie: # vs b
     const differentTypes =
-      this.accList.length > 0 && cancelAccList.length > 0 && cancelAccList[0].type !== this.accList[0].type;
+      this.accList.length > 0 &&
+      cancelAccList.length > 0 &&
+      cancelAccList[0].type !== this.accList[0].type;
 
     // Determine how many naturals needed to add
-    const naturals = differentTypes ? cancelAccList.length : cancelAccList.length - this.accList.length;
+    const naturals = differentTypes
+      ? cancelAccList.length
+      : cancelAccList.length - this.accList.length;
 
     // Return if no naturals needed
     if (naturals < 1) return undefined;
@@ -272,7 +277,8 @@ export class KeySignature extends StaveModifier {
 
     if (this.accList.length > 0) {
       const clef =
-        (this.position === StaveModifierPosition.END ? stave.getEndClef() : stave.getClef()) || stave.getClef();
+        (this.position === StaveModifierPosition.END ? stave.getEndClef() : stave.getClef()) ||
+        stave.getClef();
       if (cancelAccList) {
         this.convertAccLines(clef, cancelAccList.type, cancelAccList.accList);
       }

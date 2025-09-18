@@ -88,7 +88,11 @@ export class EasyScoreGrammar implements Grammar {
       expect: [this.NOTENAME, this.ACCIDENTAL, this.OCTAVE],
       run: (state) => {
         const s = state!;
-        this.builder.addSingleNote(s.matches[0] as string, s.matches[1] as string, s.matches[2] as string);
+        this.builder.addSingleNote(
+          s.matches[0] as string,
+          s.matches[1] as string,
+          s.matches[2] as string,
+        );
       },
     };
   }
@@ -141,7 +145,11 @@ export class EasyScoreGrammar implements Grammar {
     return {
       expect: [this.KEY, this.EQUALS, this.VAL],
 
-      run: (state) => this.builder.addNoteOption(state!.matches[0] as string, unquote(state!.matches[2] as string)),
+      run: (state) =>
+        this.builder.addNoteOption(
+          state!.matches[0] as string,
+          unquote(state!.matches[2] as string),
+        ),
     };
   }
   VAL(): Rule {
@@ -355,7 +363,7 @@ export class Builder {
         notePiece.key +
         (standardAccidentals.includes(notePiece.accid ?? '') ? notePiece.accid : '') +
         '/' +
-        notePiece.octave
+        notePiece.octave,
     );
     const autoStem = stem === 'auto'; // StaveNoteStruct expects the underscore & lowercase.
 
@@ -508,7 +516,7 @@ export class EasyScore {
       partialBeamDirections?: {
         [noteIndex: number]: PartialBeamDirection;
       };
-    }
+    },
   ): StemmableNote[] {
     this.factory.Beam({ notes, options });
     return notes;
@@ -525,7 +533,10 @@ export class EasyScore {
     return this.builder.getElements().notes;
   }
 
-  voice(notes: Note[], options: { time?: string; options?: { softmaxFactor: number } } = {}): Voice {
+  voice(
+    notes: Note[],
+    options: { time?: string; options?: { softmaxFactor: number } } = {},
+  ): Voice {
     options = { time: this.defaults.time, ...options };
     return this.factory.Voice(options).addTickables(notes);
   }

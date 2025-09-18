@@ -70,7 +70,7 @@ export class NoteHead extends Note {
     this.pitch = noteStruct.pitch;
     let i = this.pitch.indexOf('/');
     if (i != -1) {
-      this.pitch = this.pitch.substring(0, i) + this.pitch.substring(i+1, i+2);
+      this.pitch = this.pitch.substring(0, i) + this.pitch.substring(i + 1, i + 2);
     }
 
     // Get glyph code based on duration and note type. This could be
@@ -79,9 +79,11 @@ export class NoteHead extends Note {
     defined(
       this.glyphProps,
       'BadArguments',
-      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`
+      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`,
     );
-    const unicodeEscapes = Array.from(this.glyphProps.codeHead).map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
+    const unicodeEscapes = Array.from(this.glyphProps.codeHead)
+      .map((c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'))
+      .join('');
     console.log(`[glyph] pitch=${this.pitch} code=${unicodeEscapes}`);
 
     // Swap out the glyph with ledger lines
@@ -133,7 +135,9 @@ export class NoteHead extends Note {
     // by half the stem width in order to maintain a slight overlap with the stem
     const displacementStemAdjustment = Stem.WIDTH / 2;
 
-    return x + (this.displaced ? (this.width - displacementStemAdjustment) * this.stemDirection : 0);
+    return (
+      x + (this.displaced ? (this.width - displacementStemAdjustment) * this.stemDirection : 0)
+    );
   }
 
   /** Set notehead to a provided `stave`. */

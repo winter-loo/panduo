@@ -371,7 +371,8 @@ export class Factory {
     // There is a default font based on the engraving font.  Only set then
     // font if it is specific, else use the default
     if (typeof p.fontFamily === 'string' && typeof p.fontSize === 'number') {
-      if (typeof p.fontWeight === 'string') chordSymbol.setFont(p.fontFamily, p.fontSize, p.fontWeight);
+      if (typeof p.fontWeight === 'string')
+        chordSymbol.setFont(p.fontFamily, p.fontSize, p.fontWeight);
       else chordSymbol.setFont(p.fontFamily, p.fontSize, '');
     } else if (typeof p.fontSize === 'number') {
       chordSymbol.setFontSize(p.fontSize);
@@ -380,7 +381,11 @@ export class Factory {
     return chordSymbol;
   }
 
-  Articulation(params?: { betweenLines?: boolean; type?: string; position?: string | number }): Articulation {
+  Articulation(params?: {
+    betweenLines?: boolean;
+    type?: string;
+    position?: string | number;
+  }): Articulation {
     const articulation = new Articulation(params?.type ?? 'a.');
 
     if (params?.position !== undefined) articulation.setPosition(params.position);
@@ -391,7 +396,12 @@ export class Factory {
 
   Ornament(
     type: string,
-    params?: { position?: string | number; upperAccidental?: string; lowerAccidental?: string; delayed?: boolean }
+    params?: {
+      position?: string | number;
+      upperAccidental?: string;
+      lowerAccidental?: string;
+      delayed?: boolean;
+    },
   ) {
     const options = {
       type,
@@ -415,7 +425,12 @@ export class Factory {
     return ornament;
   }
 
-  TextDynamics(params?: { text?: string; duration?: string; dots?: number; line?: number }): TextDynamics {
+  TextDynamics(params?: {
+    text?: string;
+    duration?: string;
+    dots?: number;
+    line?: number;
+  }): TextDynamics {
     const p = {
       text: 'p',
       duration: 'q',
@@ -484,7 +499,11 @@ export class Factory {
     return voice;
   }
 
-  StaveConnector(params: { topStave: Stave; bottomStave: Stave; type: StaveConnectorType }): StaveConnector {
+  StaveConnector(params: {
+    topStave: Stave;
+    bottomStave: Stave;
+    type: StaveConnectorType;
+  }): StaveConnector {
     const connector = new StaveConnector(params.topStave, params.bottomStave);
     connector.setType(params.type).setContext(this.context);
     this.renderQ.push(connector);
@@ -549,7 +568,7 @@ export class Factory {
         firstIndexes: params.firstIndexes,
         lastIndexes: params.lastIndexes,
       },
-      params.text
+      params.text,
     );
 
     if (params.options?.direction) tie.setDirection(params.options.direction);

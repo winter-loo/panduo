@@ -14,7 +14,8 @@ export function isHTMLCanvas(element: any): element is HTMLCanvasElement {
   const global = globalObject();
   return (
     // It's either an instance of the HTMLCanvasElement class,
-    (typeof global.HTMLCanvasElement === 'function' && element instanceof global.HTMLCanvasElement) ||
+    (typeof global.HTMLCanvasElement === 'function' &&
+      element instanceof global.HTMLCanvasElement) ||
     // OR it's pretending to be a <canvas> element. Good enough!
     // Do not rely on .tagName, because node-canvas doesn't provide a tagName.
     (typeof element.getContext === 'function' && typeof element.toDataURL === 'function')

@@ -80,7 +80,7 @@ function getRestLineForNextNoteGroup(
   notes: Tickable[],
   currRestLine: number,
   currNoteIndex: number,
-  compare: boolean
+  compare: boolean,
 ): number {
   // If no valid next note group, nextRestLine is same as current.
   let nextRestLine = currRestLine;
@@ -163,7 +163,7 @@ export class Formatter {
     xPos: number,
     y1: number,
     y2: number,
-    options?: { stavePadding: number }
+    options?: { stavePadding: number },
   ): void {
     options = {
       stavePadding: Metrics.get('Stave.padding'),
@@ -193,10 +193,10 @@ export class Formatter {
     ctx.setFillStyle('red');
     ctx.fillText(
       `Loss: ${(formatter.totalCost ?? 0).toFixed(2)} Shift: ${(formatter.totalShift ?? 0).toFixed(
-        2
+        2,
       )} Gap: ${contextGaps.total.toFixed(2)}`,
       x - 20,
-      y2 + 27
+      y2 + 27,
     );
     ctx.restore();
   }
@@ -220,7 +220,7 @@ export class Formatter {
     ctx: RenderContext,
     stave: Stave,
     notes: Note[],
-    params?: FormatParams | boolean
+    params?: FormatParams | boolean,
   ): BoundingBox | undefined {
     let options = {
       autoBeam: false,
@@ -272,7 +272,7 @@ export class Formatter {
     tabnotes: TabNote[],
     notes: Tickable[],
     autoBeam: boolean,
-    params: FormatParams
+    params: FormatParams,
   ): void {
     let opts = {
       autoBeam,
@@ -317,7 +317,11 @@ export class Formatter {
    * @param alignAllNotes If `false`, only align rests that are within a group of beamed notes.
    * @param alignTuplets If `false` (default), ignores tuplets.
    */
-  static AlignRestsToNotes(tickables: Tickable[], alignAllNotes: boolean, alignTuplets: boolean = false): void {
+  static AlignRestsToNotes(
+    tickables: Tickable[],
+    alignAllNotes: boolean,
+    alignTuplets: boolean = false,
+  ): void {
     tickables.forEach((currTickable: Tickable, index: number): void => {
       if (isStaveNote(currTickable) && currTickable.isRest()) {
         if (currTickable.getTuplet() && !alignTuplets) {
@@ -496,7 +500,7 @@ export class Formatter {
     if (!this.hasMinTotalWidth) {
       throw new RuntimeError(
         'NoMinTotalWidth',
-        "Call 'preCalculateMinTotalWidth' or 'preFormat' before calling 'getMinTotalWidth'"
+        "Call 'preCalculateMinTotalWidth' or 'preFormat' before calling 'getMinTotalWidth'",
       );
     }
 
@@ -512,7 +516,10 @@ export class Formatter {
     const totalTicks = voices[0].getTotalTicks();
     const resolutionMultiplier = voices.reduce((accumulator, voice) => {
       if (!voice.getTotalTicks().equals(totalTicks)) {
-        throw new RuntimeError('TickMismatch', 'Voices should have same total note duration in ticks.');
+        throw new RuntimeError(
+          'TickMismatch',
+          'Voices should have same total note duration in ticks.',
+        );
       }
 
       if (voice.getMode() === Voice.Mode.STRICT && !voice.isComplete()) {
@@ -649,7 +656,12 @@ export class Formatter {
    * that can't retrieve widths without a canvas. This method sets the `x` positions
    * of all the tickables/notes in the formatter.
    */
-  preFormat(justifyWidth = 0, renderingContext?: RenderContext, voicesParam?: Voice[], stave?: Stave): number {
+  preFormat(
+    justifyWidth = 0,
+    renderingContext?: RenderContext,
+    voicesParam?: Voice[],
+    stave?: Stave,
+  ): number {
     // Initialize context maps.
     const contexts: AlignmentTickContexts = this.tickContexts;
     if (!contexts) {
@@ -689,7 +701,6 @@ export class Formatter {
     });
     return 0;
 
-
     // Now distribute the ticks to each tick context, and assign them their
     // own X positions.
     let x = 0;
@@ -720,17 +731,18 @@ export class Formatter {
       // Calculate shift for the next tick.
       shift = width - metrics.totalLeftPx;
     });
-    console.log(`minTotalWidth: ${this.minTotalWidth}`)
+    console.log(`minTotalWidth: ${this.minTotalWidth}`);
 
     // Use softmax based on all notes across all staves. (options.globalSoftmax)
     const { globalSoftmax, softmaxFactor, maxIterations } = this.formatterOptions;
 
-    const exp = (tick: number) => softmaxFactor ** (contextMap[tick].getMaxTicks().value() / totalTicks);
+    const exp = (tick: number) =>
+      softmaxFactor ** (contextMap[tick].getMaxTicks().value() / totalTicks);
     const expTicksUsed = sumArray(contextList.map(exp));
     console.log(`expTicksUsed: ${expTicksUsed}`);
 
     this.minTotalWidth = x + shift;
-    console.log(`update minTotalWidth: ${this.minTotalWidth}`)
+    console.log(`update minTotalWidth: ${this.minTotalWidth}`);
 
     this.hasMinTotalWidth = true;
 
@@ -784,12 +796,16 @@ export class Formatter {
                 const thisTickable = voices[v];
                 const insideLeftEdge =
                   thisTickable.getX() -
-                  (thisTickable.getMetrics().modLeftPx + thisTickable.getMetrics().leftDisplacedHeadPx);
+                  (thisTickable.getMetrics().modLeftPx +
+                    thisTickable.getMetrics().leftDisplacedHeadPx);
                 console.log(`insideLeftEdge: ${insideLeftEdge}`);
 
                 const backMetrics = backVoices[v].getMetrics();
                 const insideRightEdge =
-                  backVoices[v].getX() + backMetrics.notePx + backMetrics.modRightPx + backMetrics.rightDisplacedHeadPx;
+                  backVoices[v].getX() +
+                  backMetrics.notePx +
+                  backMetrics.modRightPx +
+                  backMetrics.rightDisplacedHeadPx;
                 console.log(`insideRightEdge: ${insideRightEdge}`);
 
                 // Don't allow shifting if notes in the same voice can collide
@@ -802,14 +818,15 @@ export class Formatter {
               // so that two different tick contexts don't align across staves.
               maxNegativeShiftPx = Math.min(
                 maxNegativeShiftPx,
-                context.getX() - (prevContext.getX() + adjustedJustifyWidth * 0.05)
+                context.getX() - (prevContext.getX() + adjustedJustifyWidth * 0.05),
               );
 
               // Calculate the expected distance of the current context from the last matching tickable. The
               // distance is scaled down by the softmax for the voice.
               if (globalSoftmax) {
                 const t = totalTicks;
-                expectedDistance = (softmaxFactor ** (maxTicks / t) / expTicksUsed) * adjustedJustifyWidth;
+                expectedDistance =
+                  (softmaxFactor ** (maxTicks / t) / expTicksUsed) * adjustedJustifyWidth;
               } else if (typeof backTickable !== 'undefined') {
                 expectedDistance = backTickable.getVoice().softmax(maxTicks) * adjustedJustifyWidth;
               }
@@ -837,7 +854,8 @@ export class Formatter {
         if (index > 0) {
           const contextX = context.getX();
           const ideal = idealDistances[index];
-          const errorPx = defined(ideal.fromTickable).getX() + ideal.expectedDistance - (contextX + spaceAccum);
+          const errorPx =
+            defined(ideal.fromTickable).getX() + ideal.expectedDistance - (contextX + spaceAccum);
 
           let negativeShiftPx = 0;
           if (errorPx > 0) {
@@ -867,7 +885,9 @@ export class Formatter {
     const configMaxPadding = Metrics.get('Stave.endPaddingMax');
     const leftPadding = Metrics.get('Stave.padding');
     let targetWidth = adjustedJustifyWidth;
-    console.log(`targetWidth: ${targetWidth}(${justifyWidth} - ${lastContext.getMetrics().notePx})`);
+    console.log(
+      `targetWidth: ${targetWidth}(${justifyWidth} - ${lastContext.getMetrics().notePx})`,
+    );
     const distances = calculateIdealDistances(targetWidth);
     console.log('ideal distances:', distances);
     let actualWidth = shiftToIdealDistances(distances);
@@ -905,7 +925,8 @@ export class Formatter {
         const tickWidth = lastTickable.getWidth();
         console.log(`last tickable width: ${tickWidth}`);
         lastTickablePadding =
-          voice.softmax(lastContext.getMaxTicks().value()) * curTargetWidth - (tickWidth + leftPadding);
+          voice.softmax(lastContext.getMaxTicks().value()) * curTargetWidth -
+          (tickWidth + leftPadding);
         console.log(`last tickable padding: ${lastTickablePadding}`);
       }
       return configMaxPadding * 2 < lastTickablePadding ? lastTickablePadding : configMaxPadding;
@@ -921,7 +942,10 @@ export class Formatter {
     let iterations = maxIterations;
     // Adjust justification width until the right margin is as close as possible to the calculated padding,
     // without going over
-    while ((actualWidth > maxX && iterations > 0) || (actualWidth + paddingMax < maxX && iterations > 1)) {
+    while (
+      (actualWidth > maxX && iterations > 0) ||
+      (actualWidth + paddingMax < maxX && iterations > 1)
+    ) {
       targetWidth -= actualWidth - maxX;
       paddingMax = paddingMaxCalc(targetWidth);
       paddingMin = paddingMax - (configMaxPadding - configMinPadding);
@@ -989,13 +1013,15 @@ export class Formatter {
         const duration = note.getTicks().clone().simplify().toString();
         const metrics = note.getMetrics();
         const formatterMetrics = note.getFormatterMetrics();
-        const leftNoteEdge = note.getX() + metrics.notePx + metrics.modRightPx + metrics.rightDisplacedHeadPx;
+        const leftNoteEdge =
+          note.getX() + metrics.notePx + metrics.modRightPx + metrics.rightDisplacedHeadPx;
         let space = 0;
 
         if (i < notes.length - 1) {
           const rightNote = notes[i + 1];
           const rightMetrics = rightNote.getMetrics();
-          const rightNoteEdge = rightNote.getX() - rightMetrics.modLeftPx - rightMetrics.leftDisplacedHeadPx;
+          const rightNoteEdge =
+            rightNote.getX() - rightMetrics.modLeftPx - rightMetrics.leftDisplacedHeadPx;
 
           space = rightNoteEdge - leftNoteEdge;
           formatterMetrics.space.used = rightNote.getX() - note.getX();

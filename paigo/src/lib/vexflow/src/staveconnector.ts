@@ -9,9 +9,21 @@ import { Tables } from './tables';
 import { Category } from './typeguard';
 import { RuntimeError } from './util';
 
-function drawBoldDoubleLine(ctx: RenderContext, type: number, topX: number, topY: number, botY: number) {
-  if (type !== StaveConnector.type.BOLD_DOUBLE_LEFT && type !== StaveConnector.type.BOLD_DOUBLE_RIGHT) {
-    throw new RuntimeError('InvalidConnector', 'A REPEAT_BEGIN or REPEAT_END type must be provided.');
+function drawBoldDoubleLine(
+  ctx: RenderContext,
+  type: number,
+  topX: number,
+  topY: number,
+  botY: number,
+) {
+  if (
+    type !== StaveConnector.type.BOLD_DOUBLE_LEFT &&
+    type !== StaveConnector.type.BOLD_DOUBLE_RIGHT
+  ) {
+    throw new RuntimeError(
+      'InvalidConnector',
+      'A REPEAT_BEGIN or REPEAT_END type must be provided.',
+    );
   }
 
   let xShift = 3;
@@ -90,7 +102,10 @@ export class StaveConnector extends Element {
    * * "thinDouble"
    * * "none"
    */
-  static readonly typeString: Record<Exclude<StaveConnectorType, number>, Exclude<StaveConnectorType, string>> = {
+  static readonly typeString: Record<
+    Exclude<StaveConnectorType, number>,
+    Exclude<StaveConnectorType, string>
+  > = {
     singleRight: StaveConnector.type.SINGLE_RIGHT,
     singleLeft: StaveConnector.type.SINGLE_LEFT,
     single: StaveConnector.type.SINGLE,
@@ -252,7 +267,10 @@ export class StaveConnector extends Element {
       case StaveConnector.type.NONE:
         break;
       default:
-        throw new RuntimeError('InvalidType', `The provided StaveConnector.type (${this.type}) is invalid.`);
+        throw new RuntimeError(
+          'InvalidType',
+          `The provided StaveConnector.type (${this.type}) is invalid.`,
+        );
     }
 
     if (

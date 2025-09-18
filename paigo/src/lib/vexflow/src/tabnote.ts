@@ -63,7 +63,12 @@ function getUnusedStringGroups(numLines: number, stringsUsed: number[]): number[
 // * unusedStrings - An array of groups of unused strings
 // * stave - The stave to use for reference
 // * stemDirection - The direction of the stem
-function getPartialStemLines(stemY: number, unusedStrings: number[][], stave: Stave, stemDirection: number) {
+function getPartialStemLines(
+  stemY: number,
+  unusedStrings: number[][],
+  stave: Stave,
+  stemDirection: number,
+) {
   const upStem = stemDirection !== 1;
   const downStem = stemDirection !== -1;
 
@@ -161,7 +166,7 @@ export class TabNote extends StemmableNote {
     defined(
       this.glyphProps,
       'BadArguments',
-      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`
+      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`,
     );
 
     this.buildStem();
@@ -270,7 +275,10 @@ export class TabNote extends StemmableNote {
   // `position` at a fret position `index`
   override getModifierStartXY(position: number, index: number): { x: number; y: number } {
     if (!this.preFormatted) {
-      throw new RuntimeError('UnformattedNote', "Can't call GetModifierStartXY on an unformatted note");
+      throw new RuntimeError(
+        'UnformattedNote',
+        "Can't call GetModifierStartXY on an unformatted note",
+      );
     }
 
     if (this.ys.length === 0) {
@@ -381,7 +389,12 @@ export class TabNote extends StemmableNote {
       const stringsUsed = this.positions.map((position) => Number(position.str));
 
       const unusedStrings = getUnusedStringGroups(numLines, stringsUsed);
-      const stemLines = getPartialStemLines(stemY, unusedStrings, this.checkStave(), this.getStemDirection());
+      const stemLines = getPartialStemLines(
+        stemY,
+        unusedStrings,
+        this.checkStave(),
+        this.getStemDirection(),
+      );
 
       ctx.setLineWidth(Stem.WIDTH);
       stemLines.forEach((bounds) => {

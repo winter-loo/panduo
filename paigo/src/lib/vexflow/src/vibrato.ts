@@ -22,7 +22,11 @@ export class Vibrato extends Modifier {
   protected renderOptions: VibratoRenderOptions;
 
   /** Arrange vibratos inside a `ModifierContext`. */
-  static format(vibratos: Vibrato[], state: ModifierContextState, context: ModifierContext): boolean {
+  static format(
+    vibratos: Vibrato[],
+    state: ModifierContextState,
+    context: ModifierContext,
+  ): boolean {
     if (!vibratos || vibratos.length === 0) return false;
 
     // Vibratos are always on top.
@@ -34,7 +38,8 @@ export class Vibrato extends Modifier {
     const bends = context.getMembers(Bend.CATEGORY) as Bend[];
     if (bends && bends.length > 0) {
       const bendHeight =
-        bends.map((bb) => bb.getTextHeight()).reduce((a, b) => (a > b ? a : b)) / Tables.STAVE_LINE_DISTANCE;
+        bends.map((bb) => bb.getTextHeight()).reduce((a, b) => (a > b ? a : b)) /
+        Tables.STAVE_LINE_DISTANCE;
       textLine = textLine - (bendHeight + 1);
     } else {
       state.topTextLine += 1;

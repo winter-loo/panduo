@@ -125,7 +125,8 @@ export abstract class Note extends Tickable {
     const xAbs = note.getAbsoluteX();
     const xPost1 = note.getAbsoluteX() + metrics.notePx;
     const xPost2 = note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx;
-    const xEnd = note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx + metrics.modRightPx;
+    const xEnd =
+      note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx + metrics.modRightPx;
     const xFreedomRight = xEnd + (note.getFormatterMetrics().freedom.right ?? 0);
 
     const xWidth = xEnd - xStart;
@@ -277,13 +278,19 @@ export abstract class Note extends Tickable {
     super();
 
     if (!noteStruct) {
-      throw new RuntimeError('BadArguments', 'Note must have valid initialization data to identify duration and type.');
+      throw new RuntimeError(
+        'BadArguments',
+        'Note must have valid initialization data to identify duration and type.',
+      );
     }
 
     /** Parses `noteStruct` and get note properties. */
     const parsedNoteStruct = Note.parseNoteStruct(noteStruct);
     if (!parsedNoteStruct) {
-      throw new RuntimeError('BadArguments', `Invalid note initialization object: ${JSON.stringify(noteStruct)}`);
+      throw new RuntimeError(
+        'BadArguments',
+        `Invalid note initialization object: ${JSON.stringify(noteStruct)}`,
+      );
     }
 
     // Set note properties from parameters.
@@ -544,7 +551,10 @@ export abstract class Note extends Tickable {
     // Some versions of VexFlow had the two parameters reversed.
     // Check here and throw an error if the argument types are not correct.
     if (typeof modifier !== 'object' || typeof index !== 'number') {
-      throw new RuntimeError('WrongParams', 'Incorrect call signature. Use ' + signature + ' instead.');
+      throw new RuntimeError(
+        'WrongParams',
+        'Incorrect call signature. Use ' + signature + ' instead.',
+      );
     }
     modifier.setNote(this);
     modifier.setIndex(index);
@@ -559,9 +569,16 @@ export abstract class Note extends Tickable {
 
   /** Get the coordinates for where modifiers begin. */
   // eslint-disable-next-line
-  getModifierStartXY(_position?: number, _index?: number, _options?: any): { x: number; y: number } {
+  getModifierStartXY(
+    _position?: number,
+    _index?: number,
+    _options?: any,
+  ): { x: number; y: number } {
     if (!this.preFormatted) {
-      throw new RuntimeError('UnformattedNote', "Can't call GetModifierStartXY on an unformatted note");
+      throw new RuntimeError(
+        'UnformattedNote',
+        "Can't call GetModifierStartXY on an unformatted note",
+      );
     }
 
     return {

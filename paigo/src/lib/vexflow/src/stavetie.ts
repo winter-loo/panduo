@@ -128,7 +128,13 @@ export class StaveTie extends Element {
    * @param params.firstX is specified in pixels.
    * @param params.lastX is specified in pixels.
    */
-  renderTie(params: { direction: number; firstX: number; lastX: number; lastYs: number[]; firstYs: number[] }): void {
+  renderTie(params: {
+    direction: number;
+    firstX: number;
+    lastX: number;
+    lastYs: number[];
+    firstYs: number[];
+  }): void {
     if (params.firstYs.length === 0 || params.lastYs.length === 0) {
       throw new RuntimeError('BadArguments', 'No Y-values to render');
     }

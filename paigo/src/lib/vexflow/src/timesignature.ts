@@ -26,7 +26,10 @@ const assertIsValidTimeSig = (timeSpec: string) => {
   numbers.forEach((number) => {
     // Characters consisting in number 0..9, '+', '-', '(' or ')'
     if (/^[0-9+\-()]+$/.test(number) === false) {
-      throw new RuntimeError('BadTimeSignature', `Invalid time spec: ${timeSpec}. Must contain valid signatures.`);
+      throw new RuntimeError(
+        'BadTimeSignature',
+        `Invalid time spec: ${timeSpec}. Must contain valid signatures.`,
+      );
     }
   });
 };
@@ -222,7 +225,8 @@ export class TimeSignature extends StaveModifier {
       if (this.botText.getText().length > 0) {
         this.topRenderY = stave.getYForLine(this.topLine - this.lineShift);
       } else {
-        this.topRenderY = (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
+        this.topRenderY =
+          (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
       }
       this.topText.renderText(ctx, startX, this.topRenderY);
 

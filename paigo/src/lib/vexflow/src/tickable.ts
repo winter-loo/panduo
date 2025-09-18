@@ -399,7 +399,11 @@ export abstract class Tickable extends Element {
 
   /** Check and get `ModifierContext`. */
   checkModifierContext(): ModifierContext {
-    return defined(this.modifierContext, 'NoModifierContext', 'No modifier context attached to this tickable.');
+    return defined(
+      this.modifierContext,
+      'NoModifierContext',
+      'No modifier context attached to this tickable.',
+    );
   }
 
   /** Get the target stave. */

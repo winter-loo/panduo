@@ -65,7 +65,9 @@ export class VibratoBracket extends Element {
     // If start note is not set then vibrato will be drawn
     // from the beginning of the stave
     const startX: number =
-      (this.start && this.start.getAbsoluteX()) || (this.stop && this.stop.checkStave().getTieStartX()) || 0;
+      (this.start && this.start.getAbsoluteX()) ||
+      (this.stop && this.stop.checkStave().getTieStartX()) ||
+      0;
     // If stop note is not set then vibrato will be drawn
     // until the end of the stave
     const stopX: number =

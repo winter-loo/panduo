@@ -15,7 +15,7 @@
     q: 60_000 / TEMPO_BPM,
     8: 60_000 / TEMPO_BPM / 2,
     16: 60_000 / TEMPO_BPM / 4,
-    32: 60_000 / TEMPO_BPM / 8
+    32: 60_000 / TEMPO_BPM / 8,
   } as any;
   const KEY_TO_DURATION: Record<string, VFDuration> = {
     '1': 'w',
@@ -23,7 +23,7 @@
     '4': 'q',
     '8': '8',
     '16': '16',
-    '32': '32'
+    '32': '32',
   } as any;
 
   let containerEl: HTMLDivElement;
@@ -64,13 +64,13 @@
     const renderer = new VexFlow.Renderer(containerEl, VexFlow.Renderer.Backends.SVG);
     const width = Math.max(700, 90 + notes.length * 60);
     const staveHeight = 240;
-		const numPaddingSpaces = Math.floor((staveHeight - 4 * 10) / 2 / 10);
+    const numPaddingSpaces = Math.floor((staveHeight - 4 * 10) / 2 / 10);
     renderer.resize(width, staveHeight);
     const stave = new VexFlow.Stave(10, 10, width - 20, {
       spacingBetweenLinesPx: 10,
       spaceAboveStaffLn: numPaddingSpaces,
       spaceBelowStaffLn: numPaddingSpaces,
-      style: { lineWidth: 1 }
+      style: { lineWidth: 1 },
     });
     stave.addClef('treble');
     const ctx = renderer.getContext();
@@ -110,7 +110,8 @@
     const notesSnap = $state.snapshot(notes) as NoteItem[];
     const entry: SavedScore = { id, name: newName || 'Untitled', imageUrl, notes: notesSnap };
     const idx = saved.findIndex((s) => s.id === id);
-    if (idx >= 0) saved[idx] = entry; else saved.push(entry);
+    if (idx >= 0) saved[idx] = entry;
+    else saved.push(entry);
     // persist using a snapshot to avoid proxy serialization
     const savedSnap = $state.snapshot(saved) as SavedScore[];
     localStorage.setItem('transcribe:scores', JSON.stringify(savedSnap));
@@ -156,7 +157,10 @@
       }
     }
     durBuf = '';
-    if (durTimer) { clearTimeout(durTimer); durTimer = null; }
+    if (durTimer) {
+      clearTimeout(durTimer);
+      durTimer = null;
+    }
   }
   function onKeyDown(e: KeyboardEvent) {
     const k = e.key;
@@ -173,19 +177,19 @@
 
   let midi = getVirtualMidiKeyboard();
 
-	let OldStaffProps: any;
-	onDestroy(() => {
-		if (OldStaffProps) MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
-	});
+  let OldStaffProps: any;
+  onDestroy(() => {
+    if (OldStaffProps) MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
+  });
   onMount(() => {
-		// clear the internal cache of VexFlow
-		Metrics.clear();
-		OldStaffProps = {
-			Stave: {
-				padding: MetricsDefaults.Stave.padding
-			}
-		};
-		MetricsDefaults.Stave.padding = 30;
+    // clear the internal cache of VexFlow
+    Metrics.clear();
+    OldStaffProps = {
+      Stave: {
+        padding: MetricsDefaults.Stave.padding,
+      },
+    };
+    MetricsDefaults.Stave.padding = 30;
     // Load saved scores
     try {
       const s = localStorage.getItem('transcribe:scores');
@@ -243,7 +247,8 @@
       <label>Name <input bind:value={newName} placeholder="Untitled" /></label>
       <button class="btn" onclick={saveCurrent}>Save</button>
       <button class="btn" onclick={newStaff}>New</button>
-      <button class="btn" onclick={removeLastNote} disabled={notes.length === 0}>Remove Last</button>
+      <button class="btn" onclick={removeLastNote} disabled={notes.length === 0}>Remove Last</button
+      >
       <div class="dur">Duration: {currentDuration}</div>
     </div>
     <div class="staff" bind:this={containerEl}></div>
@@ -307,7 +312,9 @@
   }
   .dur {
     margin-left: auto;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+      monospace;
   }
   .staff {
     background: #fafafa;
@@ -315,8 +322,19 @@
     border-radius: 6px;
     min-height: 260px;
   }
-  .saved { padding: 8px 16px; }
-  .saved .title { font-weight: 600; margin-bottom: 6px; }
-  .saved .list { display: flex; gap: 6px; flex-wrap: wrap; }
-  .saved .item[aria-current="true"] { outline: 2px solid #6b82ff; }
+  .saved {
+    padding: 8px 16px;
+  }
+  .saved .title {
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .saved .list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .saved .item[aria-current='true'] {
+    outline: 2px solid #6b82ff;
+  }
 </style>

@@ -278,10 +278,18 @@ const articulations: Record<string, ArticulationStruct> = {
   'a@': { aboveCode: Glyphs.fermataAbove, belowCode: Glyphs.fermataBelow, betweenLines: false }, // Fermata
   'a@a': { code: Glyphs.fermataAbove, betweenLines: false }, // Fermata above staff
   'a@u': { code: Glyphs.fermataBelow, betweenLines: false }, // Fermata below staff
-  'a@s': { aboveCode: Glyphs.fermataShortAbove, belowCode: Glyphs.fermataShortBelow, betweenLines: false }, // Fermata short
+  'a@s': {
+    aboveCode: Glyphs.fermataShortAbove,
+    belowCode: Glyphs.fermataShortBelow,
+    betweenLines: false,
+  }, // Fermata short
   'a@as': { code: Glyphs.fermataShortAbove, betweenLines: false }, // Fermata short above staff
   'a@us': { code: Glyphs.fermataShortBelow, betweenLines: false }, // Fermata short below staff
-  'a@l': { aboveCode: Glyphs.fermataLongAbove, belowCode: Glyphs.fermataLongBelow, betweenLines: false }, // Fermata long
+  'a@l': {
+    aboveCode: Glyphs.fermataLongAbove,
+    belowCode: Glyphs.fermataLongBelow,
+    betweenLines: false,
+  }, // Fermata long
   'a@al': { code: Glyphs.fermataLongAbove, betweenLines: false }, // Fermata long above staff
   'a@ul': { code: Glyphs.fermataLongBelow, betweenLines: false }, // Fermata long below staff
   'a@vl': {
@@ -449,7 +457,7 @@ export class Tables {
     keyOctaveGlyph: string,
     clef: string = 'treble',
     type: string = 'N',
-    params?: { octaveShift?: number }
+    params?: { octaveShift?: number },
   ): KeyProps {
     let options = { octaveShift: 0, duration: '4' };
     if (typeof params === 'object') {
@@ -461,7 +469,7 @@ export class Tables {
     if (pieces.length < 2) {
       throw new RuntimeError(
         'BadArguments',
-        `First argument must be note/octave or note/octave/glyph-code: ${keyOctaveGlyph}`
+        `First argument must be note/octave or note/octave/glyph-code: ${keyOctaveGlyph}`,
       );
     }
 
@@ -503,7 +511,10 @@ export class Tables {
 
   static integerToNote(integer?: number): string {
     if (typeof integer === 'undefined' || integer < 0 || integer > 11) {
-      throw new RuntimeError('BadArguments', `integerToNote() requires an integer in the range [0, 11]: ${integer}`);
+      throw new RuntimeError(
+        'BadArguments',
+        `integerToNote() requires an integer in the range [0, 11]: ${integer}`,
+      );
     }
 
     const table: Record<number, string> = {

@@ -119,7 +119,13 @@ export class Crescendo extends Note {
     const endX = nextContext ? nextContext.getX() : stave.getX() + stave.getWidth();
     const y = stave.getYForLine(this.line + -3) + 1;
 
-    L('Drawing ', this.decrescendo ? 'decrescendo ' : 'crescendo ', this.height, 'x', beginX - endX);
+    L(
+      'Drawing ',
+      this.decrescendo ? 'decrescendo ' : 'crescendo ',
+      this.height,
+      'x',
+      beginX - endX,
+    );
 
     renderHairpin(ctx, {
       beginX: beginX - this.options.extendLeft,

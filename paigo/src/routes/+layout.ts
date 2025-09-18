@@ -1,4 +1,4 @@
-import type { LayoutLoad } from "./$types";
+import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = () => {
   const song_data = {
@@ -10,16 +10,16 @@ export const load: LayoutLoad = () => {
           { keys: ['d/4'], duration: '4', fingering: 2 },
           { keys: ['f/4'], duration: '8', fingering: 4 },
           { keys: ['c/4'], duration: '8', fingering: 1 },
-          { keys: ['g/4'], duration: '2', fingering: null }
-        ]
+          { keys: ['g/4'], duration: '2', fingering: null },
+        ],
       },
       {
-        notes: [{ keys: ['b/4'], duration: '1', fingering: 5 }]
-      }
-    ]
+        notes: [{ keys: ['b/4'], duration: '1', fingering: 5 }],
+      },
+    ],
   };
 
   return {
-    song: song_data
-  }
-}
+    song: song_data,
+  };
+};
