@@ -115,7 +115,7 @@
 
 <section class="mt-20">
   <!-- 112*4*3 -->
-  <div class="line relative flex items-center w-1344 h-128 ml-100 border-2 border-dashed">
+  <div class="line relative flex items-center w-1232 h-128 ml-100 border-2 border-dashed">
     <!-- 112*4, includs border width and padding -->
     <!-- the first measure inclues only 3 beats -->
     <div
