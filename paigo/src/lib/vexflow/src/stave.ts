@@ -3,6 +3,8 @@
 
 import { BoundingBox, Bounds } from './boundingbox';
 import { Clef } from './clef';
+import { VexflowConfig } from './config';
+import type { DeepPartial, StaveConfigValues, VexflowConfigInstance } from './config';
 import { Element, ElementStyle } from './element';
 import { KeySignature } from './keysignature';
 import { Metrics } from './metrics';
@@ -14,7 +16,6 @@ import { StaveTempo, StaveTempoOptions } from './stavetempo';
 import { StaveText } from './stavetext';
 import { Volta } from './stavevolta';
 import { SVGContext } from './svgcontext';
-import { Tables } from './tables';
 import { TimeSignature } from './timesignature';
 import { Category, isBarline } from './typeguard';
 import { RuntimeError } from './util';
@@ -36,6 +37,7 @@ export interface StaveOptions {
   numLines?: number;
   stillCursor?: boolean;
   style?: ElementStyle;
+  config?: VexflowConfigInstance;
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
@@ -72,6 +74,8 @@ export class Stave extends Element {
   protected bounds: Bounds;
   protected readonly modifiers: StaveModifier[];
 
+  protected config: VexflowConfigInstance;
+
   protected defaultLedgerLineStyle: ElementStyle;
 
   // This is the sum of the padding that normally goes on left + right of a stave during
@@ -99,20 +103,16 @@ export class Stave extends Element {
     this.clef = 'treble';
     this.endClef = undefined;
 
+    const { config: providedConfig, ...optionOverrides } = options ?? {};
+    const configInstance = providedConfig ?? VexflowConfig.defaults();
+    this.config = configInstance;
+    const resolvedOptions = configInstance.stave(
+      optionOverrides as DeepPartial<StaveConfigValues>,
+    );
+
     this.options = {
-      verticalBarWidth: 10, // Width around vertical bar end-marker
-      numLines: 5,
-      leftBar: {}, // draw vertical bar on left
-      rightBar: {}, // draw vertical bar on right
-      spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE, // in pixels
-      spaceAboveStaffLn: 4, // in staff lines
-      spaceBelowStaffLn: 4, // in staff lines
-      topTextPosition: 1, // in staff lines
-      bottomTextPosition: 4, // in staff lines
-      lineConfig: [],
-      stillCursor: false,
-      style: {},
-      ...options,
+      ...resolvedOptions,
+      config: configInstance,
     };
     this.bounds = { x: this.x, y: this.y, w: this.width, h: 0 };
     this.defaultLedgerLineStyle = { strokeStyle: '#444', lineWidth: 3 };
@@ -135,6 +135,10 @@ export class Stave extends Element {
         this.options.rightBar,
       ),
     );
+  }
+
+  getConfig(): VexflowConfigInstance {
+    return this.config;
   }
 
   /** Set default style for ledger lines. */
@@ -543,6 +547,7 @@ export class Stave extends Element {
         style: options?.style,
         size: options?.size,
         annotation: options?.annotation,
+        config: this.config,
       }),
       options?.position,
     );

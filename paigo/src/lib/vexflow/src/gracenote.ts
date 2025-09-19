@@ -2,7 +2,6 @@
 
 import { StaveNote, StaveNoteStruct } from './stavenote';
 import { Stem } from './stem';
-import { Tables } from './tables';
 import { Category } from './typeguard';
 import { RuntimeError } from './util';
 
@@ -42,7 +41,8 @@ export class GraceNote extends StaveNote {
     }
 
     let ret = super.getStemExtension();
-    ret = Stem.HEIGHT * this.getFontScale() - Stem.HEIGHT + ret;
+    const baseHeight = this.getStem()?.getBaseHeight() ?? Stem.HEIGHT;
+    ret = baseHeight * this.getFontScale() - baseHeight + ret;
     return ret;
   }
 
@@ -71,7 +71,8 @@ export class GraceNote extends StaveNote {
         const noteHeadWidth = this.noteHeads[0].getWidth();
         const x =
           stemDirection === Stem.DOWN ? this.getAbsoluteX() : this.getAbsoluteX() + noteHeadWidth;
-        const defaultOffsetY = (Tables.STEM_HEIGHT * scale) / 2;
+        const baseHeight = this.getStem()?.getBaseHeight() ?? Stem.HEIGHT;
+        const defaultOffsetY = (baseHeight * scale) / 2;
         const y =
           stemDirection === Stem.DOWN
             ? noteHeadBounds.yBottom + defaultOffsetY

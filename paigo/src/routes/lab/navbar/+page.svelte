@@ -1,0 +1,86 @@
+<div class="segmented">
+  <label class="segmented-button">
+    <input type="radio" name="segmented" checked>
+    This
+  </label>
+  <label class="segmented-button">
+    <input type="radio" name="segmented">
+    is built
+  </label>
+  <label class="segmented-button">
+    <input type="radio" name="segmented">
+    with
+  </label>
+  <label class="segmented-button">
+    <input type="radio" name="segmented">
+    plain HTML &amp; CSS
+  </label>
+</div>
+
+<style>
+.segmented {
+  --padding: 0.25rem;
+  display: flex;
+  padding: var(--padding);
+  border-radius: 9999px;
+  anchor-name: --segmented-button-hover;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border-radius: inherit;
+    transition: inset 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    inset:
+      calc(anchor(start) + var(--padding))
+      calc(anchor(end) + var(--padding))
+      calc(anchor(end) + var(--padding))
+      calc(anchor(start) + var(--padding));
+  }
+
+  &::before {
+    background-color: light-dark(#E8E9E9, #1A1C20);
+    position-anchor: --segmented-button-hover;
+  }
+
+  &::after {
+    background-color: light-dark(white, #333537);
+    position-anchor: --segmented-button-checked;
+    box-shadow:
+      0 0 0 1px light-dark(#C7C8C8, #484A4C),
+      0 1px 3px 0 rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+}
+
+.segmented-button {
+  background-color: transparent;
+  border: none;
+  border-radius: inherit;
+  padding: 0.65rem 1.3rem;
+  font-size: inherit;
+  cursor: default;
+  z-index: 1;
+  anchor-name: var(--anchor-name-1, --a), var(--anchor-name-2, --b);
+
+  &:hover {
+    --anchor-name-1: --segmented-button-hover;
+  }
+
+  &:has(:checked) {
+    --anchor-name-2: --segmented-button-checked;
+  }
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+</style>

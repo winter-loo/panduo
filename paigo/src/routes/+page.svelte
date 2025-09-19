@@ -1,19 +1,12 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onMount } from 'svelte';
   import {
-    Metrics,
     Renderer,
     Stave,
     StemmableNote,
     VexFlow,
     type StaveNoteStruct,
   } from '$lib/vexflow/vexflow-core';
-  import {
-    applyVexflowMetrics,
-    resolveStaffConfig,
-    type ResolvedVexflowStaffConfig,
-    type VexflowStaffConfig,
-  } from '$lib/vexflow/staffConfig';
   import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
   import { Button } from '$lib/components/ui/button/index';
@@ -41,11 +34,35 @@
   VexFlow.EasyScore.DEBUG = true;
   VexFlow.ModifierContext.DEBUG = true;
 
-  const staffOverrides: Partial<VexflowStaffConfig> = {
+  const layout = {
     measureWidth: 288,
     staveHeight: 180,
+    clefWidth: 120,
+    rendererWidth: 30000,
     spacingBetweenLinesPx: 20,
-    staveStyle: {
+    numLines: 5,
+  };
+
+  const derivedPadding = Math.max(
+    0,
+    Math.floor(
+      (layout.staveHeight - layout.spacingBetweenLinesPx * (layout.numLines - 1)) /
+        (2 * layout.spacingBetweenLinesPx),
+    ),
+  );
+
+  type ConfigInstance = ReturnType<typeof VexFlow.Config.defaults>;
+
+  const configInstance = VexFlow.Config.create({
+    fontSize: 60,
+    stem: {
+      width: 3,
+      height: 70,
+    },
+    stave: {
+      spacingBetweenLinesPx: layout.spacingBetweenLinesPx,
+      spaceAboveStaffLn: derivedPadding,
+      spaceBelowStaffLn: derivedPadding,
       style: {
         lineWidth: 3,
         strokeStyle: '#dadada',
@@ -62,41 +79,24 @@
           fillStyle: '#dadada',
         },
       },
+      metrics: {
+        strokeStyle: '#999999',
+        padding: 0,
+        fontSize: 60,
+      },
     },
     clef: {
-      type: 'treble',
-      width: 120,
-      options: {
+      defaults: {
         style: {
           fillStyle: '#afafaf',
         },
       },
-      staveOverrides: {
-        stillCursor: true,
-      },
+      types: {},
     },
-    renderer: {
-      width: 30000,
-      height: 180,
-      backend: VexFlow.Renderer.Backends.SVG,
-    },
-    metrics: {
-      stemWidth: 3,
-      stemHeight: 70,
-      metrics: {
-        fontSize: 60,
-        Stave: {
-          padding: 3,
-        },
-      },
-    },
-  };
-
-  const staffConfig = resolveStaffConfig(staffOverrides);
+  });
 
   class MovingStaff extends MovableElement {
-    private config: ResolvedVexflowStaffConfig;
-    private metricsDisposer: () => void;
+    private config: ConfigInstance;
     private clefElement: HTMLDivElement;
     private notesElement: HTMLDivElement;
     private clefRenderer: Renderer | null = null;
@@ -109,11 +109,10 @@
       clefElement: HTMLElement,
       notesElement: HTMLElement,
       maxOffsetX: number,
-      config: ResolvedVexflowStaffConfig,
+      config: ConfigInstance,
     ) {
       super(maxOffsetX);
       this.config = config;
-      this.metricsDisposer = applyVexflowMetrics(config.metrics);
       this.clefElement = clefElement as HTMLDivElement;
       this.notesElement = notesElement as HTMLDivElement;
 
@@ -123,34 +122,30 @@
 
     private drawClef() {
       this.clefElement.innerHTML = '';
-      this.clefRenderer = new VexFlow.Renderer(this.clefElement, this.config.renderer.backend);
-      this.clefRenderer.resize(this.config.clef.width, this.config.staveHeight);
-      const clefStave = new Stave(0, 0, this.config.clef.width, this.config.clef.staveOverrides);
-      clefStave.addClef(this.config.clef.type, this.config.clef.options);
+      this.clefRenderer = new VexFlow.Renderer(this.clefElement, VexFlow.Renderer.Backends.SVG);
+      this.clefRenderer.resize(layout.clefWidth, layout.staveHeight);
+      const clefStave = new Stave(0, 0, layout.clefWidth, {
+        config: this.config,
+        stillCursor: true,
+      });
+      clefStave.addClef('treble');
       clefStave.setContext(this.clefRenderer.getContext()).draw();
     }
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
-      this.renderer = new VexFlow.Renderer(this.notesElement, this.config.renderer.backend);
-      this.renderer.resize(this.config.renderer.width, this.config.staveHeight);
+      this.renderer = new VexFlow.Renderer(this.notesElement, VexFlow.Renderer.Backends.SVG);
+      this.renderer.resize(layout.rendererWidth, layout.staveHeight);
       this.context = this.renderer.getContext();
       this.staveX = 0;
       this.notes = [];
     }
 
-    dispose() {
-      this.metricsDisposer?.();
-    }
-
     addMeasure(notes: StaveNoteStruct[]) {
-      const measureStave = new Stave(
-        this.staveX,
-        0,
-        this.config.measureWidth,
-        this.config.staveStyle,
-      );
-      this.staveX += this.config.measureWidth;
+      const measureStave = new Stave(this.staveX, 0, layout.measureWidth, {
+        config: this.config,
+      });
+      this.staveX += layout.measureWidth;
       measureStave.setContext(this.context).draw();
 
       const staveNotes = notes.map((note) => {
@@ -169,7 +164,7 @@
     }
   }
 
-  const maxOffsetX = data.song.measures.length * staffConfig.measureWidth;
+  const maxOffsetX = data.song.measures.length * layout.measureWidth;
   let movingStaff = $state<MovingStaff | null>(null);
 
   function renderSong() {
@@ -179,7 +174,7 @@
         BindingDom.fixedClef,
         BindingDom.notesContainer,
         maxOffsetX,
-        staffConfig,
+        configInstance,
       );
     }
 
@@ -191,13 +186,7 @@
   }
 
   onMount(() => {
-    Metrics.clear();
     renderSong();
-  });
-
-  onDestroy(() => {
-    movingStaff?.dispose();
-    movingStaff = null;
   });
 </script>
 

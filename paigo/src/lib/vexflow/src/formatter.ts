@@ -5,6 +5,8 @@ import { Beam } from './beam';
 import { BoundingBox } from './boundingbox';
 import { Fraction } from './fraction';
 import { Metrics } from './metrics';
+import { VexflowConfig } from './config';
+import type { VexflowConfigInstance } from './config';
 import { ModifierContext } from './modifiercontext';
 import { Note } from './note';
 import { RenderContext } from './rendercontext';
@@ -48,6 +50,8 @@ export interface FormatParams {
   stave?: Stave;
   /** The RenderContext **/
   context?: RenderContext;
+  /** Optional configuration instance passed to the formatter. */
+  config?: VexflowConfigInstance;
 }
 
 export interface AlignmentTickContexts {
@@ -140,6 +144,7 @@ export class Formatter {
   protected voices: Voice[];
   protected lossHistory: number[];
   protected durationStats: Record<string, { mean: number; count: number; total: number }>;
+  protected config: VexflowConfigInstance;
 
   /**
    * Helper function to layout "notes" one after the other without
@@ -165,8 +170,9 @@ export class Formatter {
     y2: number,
     options?: { stavePadding: number },
   ): void {
+    const metrics = formatter.getConfig().stave().metrics;
     options = {
-      stavePadding: Metrics.get('Stave.padding'),
+      stavePadding: metrics.padding,
       ...options,
     };
 
@@ -222,16 +228,19 @@ export class Formatter {
     notes: Note[],
     params?: FormatParams | boolean,
   ): BoundingBox | undefined {
-    let options = {
-      autoBeam: false,
-      alignRests: false,
-    };
-
+    const baseOptions: Partial<FormatParams> = {};
     if (typeof params === 'object') {
-      options = { ...options, ...params };
+      Object.assign(baseOptions, params);
     } else if (typeof params === 'boolean') {
-      options.autoBeam = params;
+      baseOptions.autoBeam = params;
     }
+
+    const config = baseOptions.config ?? stave.getConfig() ?? VexflowConfig.defaults();
+
+    const options = {
+      autoBeam: baseOptions.autoBeam ?? false,
+      alignRests: baseOptions.alignRests ?? false,
+    };
 
     // Start by creating a voice and adding all the notes to it.
     const voice = new Voice(Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(notes);
@@ -240,9 +249,13 @@ export class Formatter {
     const beams = options.autoBeam ? Beam.applyAndGetBeams(voice) : [];
 
     // Instantiate a `Formatter` and format the notes.
-    new Formatter({ softmaxFactor: 1 })
+    new Formatter({ softmaxFactor: 1, config })
       .joinVoices([voice]) // , { alignRests: options.alignRests })
-      .formatToStave([voice], stave, { alignRests: options.alignRests, stave });
+      .formatToStave([voice], stave, {
+        alignRests: options.alignRests,
+        stave,
+        config,
+      });
 
     // Render the voice and beams to the stave.
     voice.setContext(ctx).setStave(stave).drawWithStyle();
@@ -274,16 +287,19 @@ export class Formatter {
     autoBeam: boolean,
     params: FormatParams,
   ): void {
-    let opts = {
-      autoBeam,
-      alignRests: false,
-    };
-
+    const baseOptions: Partial<FormatParams> = { autoBeam };
     if (typeof params === 'object') {
-      opts = { ...opts, ...params };
+      Object.assign(baseOptions, params);
     } else if (typeof params === 'boolean') {
-      opts.autoBeam = params;
+      baseOptions.autoBeam = params;
     }
+
+    const config = baseOptions.config ?? stave.getConfig() ?? VexflowConfig.defaults();
+
+    const opts = {
+      autoBeam: baseOptions.autoBeam ?? false,
+      alignRests: baseOptions.alignRests ?? false,
+    };
 
     // Create a `4/4` voice for `notes`.
     const notevoice = new Voice(Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(notes);
@@ -295,10 +311,10 @@ export class Formatter {
     const beams = opts.autoBeam ? Beam.applyAndGetBeams(notevoice) : [];
 
     // Instantiate a `Formatter` and align tab and stave notes.
-    new Formatter()
+    new Formatter({ config })
       .joinVoices([notevoice]) // , { alignRests: opts.alignRests })
       .joinVoices([tabvoice])
-      .formatToStave([notevoice, tabvoice], stave, { alignRests: opts.alignRests });
+      .formatToStave([notevoice, tabvoice], stave, { alignRests: opts.alignRests, config });
 
     // Render voices and beams to staves.
     notevoice.draw(ctx, stave);
@@ -358,12 +374,16 @@ export class Formatter {
     });
   }
 
-  constructor(options?: FormatterOptions) {
+  constructor(options?: FormatterOptions & { config?: VexflowConfigInstance }) {
+    const resolvedOptions = options ?? {};
+    const { config, ...formatterOptions } = resolvedOptions;
+    this.config = config ?? VexflowConfig.defaults();
     this.formatterOptions = {
       globalSoftmax: false,
       softmaxFactor: Tables.SOFTMAX_FACTOR,
       maxIterations: 5,
-      ...options,
+      ...formatterOptions,
+      config: this.config,
     };
     this.justifyWidth = 0;
     this.totalCost = 0;
@@ -395,6 +415,10 @@ export class Formatter {
 
     this.voices = [];
     this.lossHistory = [];
+  }
+
+  getConfig(): VexflowConfigInstance {
+    return this.config;
   }
 
   /**
@@ -432,7 +456,7 @@ export class Formatter {
    * @returns the estimated width in pixels
    */
   preCalculateMinTotalWidth(voices: Voice[]): number {
-    const unalignedPadding = Metrics.get('Stave.unalignedNotePadding');
+    const unalignedPadding = this.config.stave().metrics.unalignedNotePadding;
     // Calculate additional padding based on 3 methods:
     // 1) unaligned beats in voices, 2) variance of width, 3) variance of durations
     let unalignedCtxCount = 0;
@@ -881,9 +905,10 @@ export class Formatter {
       lastContext.getMetrics().notePx -
       lastContext.getMetrics().totalRightPx -
       firstContext.getMetrics().totalLeftPx;
-    const configMinPadding = Metrics.get('Stave.endPaddingMin');
-    const configMaxPadding = Metrics.get('Stave.endPaddingMax');
-    const leftPadding = Metrics.get('Stave.padding');
+    const metrics = this.config.stave().metrics;
+    const configMinPadding = metrics.endPaddingMin;
+    const configMaxPadding = metrics.endPaddingMax;
+    const leftPadding = metrics.padding;
     let targetWidth = adjustedJustifyWidth;
     console.log(
       `targetWidth: ${targetWidth}(${justifyWidth} - ${lastContext.getMetrics().notePx})`,
@@ -1145,10 +1170,14 @@ export class Formatter {
    * to true to enable rest vertical alignment.
    */
   format(voices: Voice[], justifyWidth?: number, options?: FormatParams): this {
-    const opts = {
+    const mergedOptions: FormatParams = {
       alignRests: false,
       ...options,
     };
+    const { config, alignRests = false, context, stave } = mergedOptions;
+    if (config) {
+      this.config = config;
+    }
 
     this.voices = voices;
     const softmaxFactor = this.formatterOptions.softmaxFactor;
@@ -1156,13 +1185,13 @@ export class Formatter {
       this.voices.forEach((v) => v.setSoftmaxFactor(softmaxFactor));
     }
 
-    this.alignRests(voices, opts.alignRests);
+    this.alignRests(voices, alignRests);
     this.createTickContexts(voices);
-    this.preFormat(justifyWidth, opts.context, voices, opts.stave);
+    this.preFormat(justifyWidth, context, voices, stave);
     console.log('DONE DONE DONE preFormat');
 
     // Only postFormat if a stave was supplied for y value formatting
-    if (opts.stave) this.postFormat();
+    if (stave) this.postFormat();
 
     return this;
   }
@@ -1170,6 +1199,9 @@ export class Formatter {
   // This method is just like `format` except that the `justifyWidth` is inferred from the `stave`.
   formatToStave(voices: Voice[], stave: Stave, optionsParam?: FormatParams): this {
     const options: FormatParams = { context: stave.getContext(), ...optionsParam };
+    if (!options.config) {
+      options.config = stave.getConfig() ?? VexflowConfig.defaults();
+    }
 
     const justifyWidth = stave.getNoteEndX() - stave.getNoteStartX() - Stave.defaultPadding;
     L('Formatting voices to width: ', justifyWidth);

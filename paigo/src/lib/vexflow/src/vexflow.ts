@@ -13,6 +13,7 @@ import {
   SymbolModifiers,
 } from './chordsymbol';
 import { Clef } from './clef';
+import { VexflowConfig } from './config';
 import { ClefNote } from './clefnote';
 import { Crescendo } from './crescendo';
 import { Curve, CurvePosition } from './curve';
@@ -180,6 +181,8 @@ export class VexFlow {
   static Voice = Voice;
   static Volta = Volta;
 
+  static Config = VexflowConfig;
+
   static RuntimeError = RuntimeError;
 
   static Test = undefined; // Set by vexflow_test_helpers.ts in the debug version of this library.
@@ -338,20 +341,24 @@ export class VexFlow {
     Metrics.clear('TabStave');
   }
 
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get STEM_HEIGHT(): number {
-    return Tables.STEM_HEIGHT;
+    return VexflowConfig.defaults().stem().height;
   }
 
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static set STEM_HEIGHT(value: number) {
-    Tables.STEM_HEIGHT = value;
+    VexflowConfig.configure({ stem: { height: value } });
   }
 
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get STEM_WIDTH(): number {
-    return Tables.STEM_WIDTH;
+    return VexflowConfig.defaults().stem().width;
   }
 
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static set STEM_WIDTH(value: number) {
-    Tables.STEM_WIDTH = value;
+    VexflowConfig.configure({ stem: { width: value } });
   }
 
   static get TIME4_4(): VoiceTime {

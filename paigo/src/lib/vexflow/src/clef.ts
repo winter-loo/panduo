@@ -2,9 +2,10 @@
 // MIT License
 // Co-author: Benjamin W. Bohl
 
+import { VexflowConfig } from './config';
+import type { ClefConfigEntry, VexflowConfigInstance, DeepPartial } from './config';
 import { ElementStyle } from './element';
 import { Glyphs } from './glyphs';
-import { Metrics } from './metrics';
 import { Stave } from './stave';
 import { StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Category } from './typeguard';
@@ -19,6 +20,7 @@ export interface ClefOptions {
   size?: string;
   annotation?: string;
   style?: ElementStyle;
+  config?: VexflowConfigInstance;
 }
 
 /**
@@ -43,6 +45,7 @@ export class Clef extends StaveModifier {
 
   protected size = 'default';
   protected type = 'treble';
+  protected config: VexflowConfigInstance;
 
   /**
    * Every clef name is associated with a glyph code from the font file
@@ -107,9 +110,19 @@ export class Clef extends StaveModifier {
   constructor(type: string, options?: ClefOptions) {
     super();
 
+    const { config: providedConfig, ...optionOverrides } = options ?? {};
+    const configInstance = providedConfig ?? VexflowConfig.defaults();
+    const resolved = configInstance.clef(
+      type,
+      optionOverrides as DeepPartial<ClefConfigEntry>,
+    );
+    this.config = configInstance;
+
     this.setPosition(StaveModifierPosition.BEGIN);
-    this.setType(type, options?.size, options?.annotation);
-    if (options?.style) this.setStyle(options.style);
+    this.setType(type, resolved.size, resolved.annotation);
+
+    const style = resolved.style;
+    if (style && Object.keys(style).length > 0) this.setStyle(style);
     L('Creating clef:', type);
   }
 
@@ -138,20 +151,22 @@ export class Clef extends StaveModifier {
       }
     }
     this.text = this.code;
-    this.fontInfo.size = Math.floor(Clef.getPoint(this.size));
+    this.fontInfo.size = Math.floor(this.getPoint(this.size));
 
     return this;
   }
 
   /** Get point for clefs. */
-  static getPoint(size?: string): number {
+  getPoint(size?: string): number {
     // for sizes other than 'default', clef is 2/3 of the default value
-    return size === 'default' ? Metrics.get('fontSize') : (Metrics.get('fontSize') * 2) / 3;
+    const baseSize = this.config.fontSize;
+    return size === 'default' ? baseSize : (baseSize * 2) / 3;
   }
 
   /** Set associated stave. */
   override setStave(stave: Stave): this {
     this.stave = stave;
+    this.config = stave.getConfig() ?? this.config;
     return this;
   }
 

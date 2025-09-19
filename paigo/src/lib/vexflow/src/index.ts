@@ -13,6 +13,7 @@ export * from './canvascontext';
 export * from './chordsymbol';
 export * from './clef';
 export * from './clefnote';
+export * from './config';
 export * from './crescendo';
 export * from './curve';
 export * from './dot';

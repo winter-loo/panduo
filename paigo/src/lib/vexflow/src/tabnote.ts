@@ -216,7 +216,8 @@ export class TabNote extends StemmableNote {
       return this.stemExtensionOverride;
     }
 
-    return this.flag.getHeight() > Stem.HEIGHT ? this.flag.getHeight() - Stem.HEIGHT : 0;
+    const baseHeight = this.getStem()?.getBaseHeight() ?? Stem.HEIGHT;
+    return this.flag.getHeight() > baseHeight ? this.flag.getHeight() - baseHeight : 0;
   }
 
   static tabToElement(fret: string): Element {
@@ -396,7 +397,8 @@ export class TabNote extends StemmableNote {
         this.getStemDirection(),
       );
 
-      ctx.setLineWidth(Stem.WIDTH);
+      const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
+      ctx.setLineWidth(stemWidth);
       stemLines.forEach((bounds) => {
         if (bounds.length === 0) return;
 

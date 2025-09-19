@@ -5,6 +5,7 @@
 import { BoundingBox } from './boundingbox';
 import { Font, FontInfo } from './font';
 import { Metrics } from './metrics';
+import { NoteHead } from './notehead';
 import { Registry } from './registry';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
@@ -537,7 +538,6 @@ export class Element {
   }
 
   get width(): number {
-    // if (!this.metricsValid) this.measureText().then(textMetrics => console.log(`font width: ${textMetrics.width}`));
     if (!this.metricsValid) this.measureText();
     return this._width;
   }
@@ -619,6 +619,7 @@ export class Element {
   /** Render the element text. */
   renderText(ctx: RenderContext, xPos: number, yPos: number, props?: any): void {
     ctx.setFont(this._fontInfo);
+      console.log(`fontInfo: `, this._fontInfo);
     ctx.fillText(this._text, xPos + this.x + this.xShift, yPos + this.y + this.yShift, props);
     this.children.forEach((child) => {
       // changed -- do not look at private attributes of children.

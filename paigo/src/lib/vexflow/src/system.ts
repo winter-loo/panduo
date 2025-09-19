@@ -5,6 +5,8 @@ import { BoundingBox } from './boundingbox';
 import { Element } from './element';
 import { Factory } from './factory';
 import { FormatParams, Formatter, FormatterOptions } from './formatter';
+import type { VexflowConfigInstance } from './config';
+import { VexflowConfig } from './config';
 import { Note } from './note';
 import { RenderContext } from './rendercontext';
 import { Stave, StaveOptions } from './stave';
@@ -15,6 +17,7 @@ import { Voice } from './voice';
 
 export interface SystemFormatterOptions extends FormatterOptions {
   alpha?: number;
+  config?: VexflowConfigInstance;
 }
 
 export interface SystemStave {
@@ -195,7 +198,7 @@ export class System extends Element {
    * `]});`
    */
   addStave(params: SystemStave): Stave {
-    const staveOptions: StaveOptions = { leftBar: false, ...params.options };
+    const staveOptions: StaveOptions = { ...params.options };
 
     const stave =
       params.stave ??
@@ -244,8 +247,17 @@ export class System extends Element {
   /** Format the system. */
   format(): void {
     const optionsDetails = this.options.details;
+    const formatterConfig =
+      optionsDetails?.config ??
+      this.options.formatOptions?.config ??
+      this.partStaves[0]?.getConfig() ??
+      VexflowConfig.defaults();
+    const formatterOptions = {
+      ...optionsDetails,
+      config: formatterConfig,
+    };
     let justifyWidth = 0;
-    const formatter = new Formatter(optionsDetails);
+    const formatter = new Formatter(formatterOptions);
     this.formatter = formatter;
 
     let y = this.options.y;
@@ -289,10 +301,14 @@ export class System extends Element {
         : this.options.width - (startX - this.options.x) - Stave.defaultPadding;
     }
     if (this.partVoices.length > 0) {
+      const formatOptions = {
+        ...this.options.formatOptions,
+        config: formatterConfig,
+      };
       formatter.format(
         this.partVoices,
         this.options.noJustification ? 0 : justifyWidth,
-        this.options.formatOptions,
+        formatOptions,
       );
     }
     formatter.postFormat();

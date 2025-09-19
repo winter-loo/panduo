@@ -7,6 +7,7 @@
 import { Flag } from './flag';
 import { Glyphs } from './glyphs';
 import { GlyphProps, Note, NoteStruct } from './note';
+import { Stave } from './stave';
 import { Stem, StemOptions } from './stem';
 import { Tables } from './tables';
 import { Category } from './typeguard';
@@ -27,6 +28,16 @@ export abstract class StemmableNote extends Note {
     super(noteStruct);
   }
 
+  protected getBaseStemHeight(): number {
+    return this.getStem()?.getBaseHeight() ?? Stem.HEIGHT;
+  }
+
+  override setStave(stave: Stave): this {
+    super.setStave(stave);
+    this.getStem()?.setConfig(stave.getConfig());
+    return this;
+  }
+
   // Get and set the note's `Stem`
   getStem(): Stem | undefined {
     return this.stem;
@@ -41,13 +52,14 @@ export abstract class StemmableNote extends Note {
 
   setStem(stem: Stem): this {
     this.stem = stem;
+    this.stem.setConfig(this.getStave()?.getConfig());
     this.addChild(stem);
     return this;
   }
 
   // Builds and sets a new stem
   buildStem(): this {
-    const stem = new Stem();
+    const stem = new Stem({ config: this.getStave()?.getConfig() });
     this.setStem(stem);
     return this;
   }
@@ -79,7 +91,7 @@ export abstract class StemmableNote extends Note {
 
   // Get the full length of stem
   getStemLength(): number {
-    return Stem.HEIGHT + this.getStemExtension();
+    return this.getBaseStemHeight() + this.getStemExtension();
   }
 
   // Get the number of beams for this duration
@@ -190,12 +202,13 @@ export abstract class StemmableNote extends Note {
     }
 
     // If the flag is longer than the stem, extend the stem by the difference.
-    return flagHeight > Stem.HEIGHT * scale ? flagHeight - Stem.HEIGHT * scale : 0;
+    const baseHeight = this.getBaseStemHeight();
+    return flagHeight > baseHeight * scale ? flagHeight - baseHeight * scale : 0;
   }
 
   // Set the stem length to a specific. Will override the default length.
   setStemLength(height: number): this {
-    this.stemExtensionOverride = height - Stem.HEIGHT;
+    this.stemExtensionOverride = height - this.getBaseStemHeight();
     return this;
   }
 
@@ -253,6 +266,10 @@ export abstract class StemmableNote extends Note {
     this.checkContext();
     this.setRendered();
 
+    stemOptions = {
+      ...stemOptions,
+      config: stemOptions?.config ?? this.getStave()?.getConfig(),
+    };
     this.setStem(new Stem(stemOptions));
     this.stem?.setContext(this.getContext()).drawWithStyle();
   }

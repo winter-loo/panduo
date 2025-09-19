@@ -2,6 +2,8 @@
 
 import { ElementStyle } from './element';
 import { FontInfo } from './font';
+import { VexflowConfig } from './config';
+import type { StaveConfigValues } from './config';
 
 export class Metrics {
   protected static cacheStyle = new Map<string, ElementStyle>();
@@ -20,12 +22,14 @@ export class Metrics {
   static getFontInfo(key: string): Required<FontInfo> {
     let font = this.cacheFont.get(key);
     if (!font) {
+      console.log('get font info for ', key);
       font = {
         family: Metrics.get(`${key}.fontFamily`),
         size: Metrics.get(`${key}.fontSize`) * Metrics.get(`${key}.fontScale`),
         weight: Metrics.get(`${key}.fontWeight`),
         style: Metrics.get(`${key}.fontStyle`),
       };
+      console.log('key=', key, ' font size=', font.size);
       this.cacheFont.set(key, font);
     }
     return structuredClone(font);
@@ -166,14 +170,7 @@ export const MetricsDefaults: Record<string, any> = {
     },
   },
 
-  Stave: {
-    strokeStyle: '#999999',
-    fontSize: 8,
-    padding: 0,
-    endPaddingMax: 0,
-    endPaddingMin: 0,
-    unalignedNotePadding: 10,
-  },
+  Stave: { ...VexflowConfig.defaults().stave().metrics },
 
   StaveConnector: {
     text: {

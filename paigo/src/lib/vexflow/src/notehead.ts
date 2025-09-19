@@ -173,7 +173,6 @@ export class NoteHead extends Note {
     let { x, y, w: width, h: height } = this.getBoundingBox();
     console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);
 
-    L("Drawing note head '", this.noteType, this.duration, "' at", this.x, this.y);
     this.x = this.getAbsoluteX();
     this.renderText(ctx, 0, 0);
     (this.parent as StaveNote)?.drawModifiers(this);

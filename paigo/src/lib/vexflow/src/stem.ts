@@ -7,7 +7,8 @@
 import { BoundingBox } from './boundingbox';
 import { Element } from './element';
 import { Metrics } from './metrics';
-import { Tables } from './tables';
+import type { VexflowConfigInstance } from './config';
+import { VexflowConfig } from './config';
 import { Category } from './typeguard';
 import { log, RuntimeError } from './util';
 
@@ -30,6 +31,7 @@ export interface StemOptions {
   yTop?: number;
   xEnd?: number;
   xBegin?: number;
+  config?: VexflowConfigInstance;
 }
 
 export class Stem extends Element {
@@ -49,11 +51,13 @@ export class Stem extends Element {
   }
 
   // Theme
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get WIDTH(): number {
-    return Tables.STEM_WIDTH;
+    return VexflowConfig.defaults().stem().width;
   }
+  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get HEIGHT(): number {
-    return Tables.STEM_HEIGHT;
+    return VexflowConfig.defaults().stem().height;
   }
 
   protected hide: boolean;
@@ -70,9 +74,11 @@ export class Stem extends Element {
   protected stemDirection: number;
   protected stemExtension: number;
   protected renderHeightAdjustment: number;
+  protected config: VexflowConfigInstance;
 
   constructor(options?: StemOptions) {
     super();
+    this.config = options?.config ?? VexflowConfig.defaults();
 
     // Default notehead x bounds
     this.xBegin = options?.xBegin ?? 0;
@@ -138,7 +144,8 @@ export class Stem extends Element {
   // Gets the entire height for the stem
   override getHeight(): number {
     const yOffset = this.stemDirection === Stem.UP ? this.stemUpYOffset : this.stemDownYOffset;
-    const unsignedHeight = this.yBottom - this.yTop + (Stem.HEIGHT - yOffset + this.stemExtension); // parentheses just for grouping.
+    const unsignedHeight =
+      this.yBottom - this.yTop + (this.getBaseHeight() - yOffset + this.stemExtension);
     return unsignedHeight * this.stemDirection;
   }
 
@@ -151,13 +158,26 @@ export class Stem extends Element {
   getExtents(): { topY: number; baseY: number } {
     const isStemUp = this.stemDirection === Stem.UP;
     const ys = [this.yTop, this.yBottom];
-    const stemHeight = Stem.HEIGHT + this.stemExtension;
+    const stemHeight = this.getBaseHeight() + this.stemExtension;
 
     const innerMostNoteheadY = (isStemUp ? Math.min : Math.max)(...ys);
     const outerMostNoteheadY = (isStemUp ? Math.max : Math.min)(...ys);
     const stemTipY = innerMostNoteheadY + stemHeight * -this.stemDirection;
 
     return { topY: stemTipY, baseY: outerMostNoteheadY };
+  }
+
+  getBaseHeight(): number {
+    return this.config.stem().height;
+  }
+
+  override getWidth(): number {
+    return this.config.stem().width;
+  }
+
+  setConfig(config?: VexflowConfigInstance): void {
+    this.config = config ?? VexflowConfig.defaults();
+    this.renderHeightAdjustment = -this.getWidth() / 2;
   }
 
   setVisibility(isVisible: boolean): this {
@@ -176,7 +196,7 @@ export class Stem extends Element {
   }
 
   adjustHeightForBeam(): void {
-    this.renderHeightAdjustment = -Stem.WIDTH / 2;
+    this.renderHeightAdjustment = -this.getWidth() / 2;
   }
 
   // Render the stem onto the canvas
@@ -222,7 +242,7 @@ export class Stem extends Element {
     // Draw the stem
     ctx.openGroup('stem', this.getAttribute('id'));
     ctx.beginPath();
-    ctx.setLineWidth(Stem.WIDTH);
+    ctx.setLineWidth(this.getWidth());
     ctx.moveTo(stemX, stemY - stemletYOffset + yBaseOffset);
     ctx.lineTo(stemX, stemY - stemHeight - this.renderHeightAdjustment * stemDirection);
     ctx.stroke();

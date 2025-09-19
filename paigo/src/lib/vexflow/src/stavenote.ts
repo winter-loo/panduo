@@ -485,7 +485,7 @@ export class StaveNote extends StemmableNote {
 
   // Builds a `Stem` for the note
   override buildStem(): this {
-    this.setStem(new Stem({ hide: this.isRest() }));
+    this.setStem(new Stem({ hide: this.isRest(), config: this.getStave()?.getConfig() }));
     return this;
   }
 
@@ -729,7 +729,8 @@ export class StaveNote extends StemmableNote {
     } else {
       // We adjust the origin of the stem because we want the stem left-aligned
       // with the notehead if stemmed-down, and right-aligned if stemmed-up
-      return super.getStemX() + (this.stemDirection ? Stem.WIDTH / (2 * -this.stemDirection) : 0);
+      const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
+      return super.getStemX() + (this.stemDirection ? stemWidth / (2 * -this.stemDirection) : 0);
     }
   }
 
@@ -1083,7 +1084,8 @@ export class StaveNote extends StemmableNote {
     } = this;
     const ctx = this.checkContext();
     const width = this.getGlyphWidth() + strokePx * 2;
-    const doubleWidth = 2 * (this.getGlyphWidth() + strokePx) - Stem.WIDTH / 2;
+    const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
+    const doubleWidth = 2 * (this.getGlyphWidth() + strokePx) - stemWidth / 2;
 
     if (this.isRest()) return;
     if (!ctx) {
@@ -1175,7 +1177,8 @@ export class StaveNote extends StemmableNote {
       const { yTop, yBottom } = this.getNoteHeadBounds();
 
       const noteStemHeight = this.stem!.getHeight();
-      const flagX = this.getStemX() - Tables.STEM_WIDTH / 2;
+      const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
+      const flagX = this.getStemX() - stemWidth / 2;
       const flagY =
         this.getStemDirection() === Stem.DOWN
           ? // Down stems are below the note head and have flags on the right.
@@ -1211,7 +1214,12 @@ export class StaveNote extends StemmableNote {
     const ctx = this.checkContext();
 
     if (stemOptions) {
-      this.setStem(new Stem(stemOptions));
+      this.setStem(
+        new Stem({
+          ...stemOptions,
+          config: stemOptions?.config ?? this.getStave()?.getConfig(),
+        }),
+      );
     }
 
     // If we will render a flag, we shorten the stem so that the tip

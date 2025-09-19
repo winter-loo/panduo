@@ -849,7 +849,8 @@ export class Beam extends Element {
       }
       const noteGetsBeam = note.getIntrinsicTicks() < tickOfDuration;
 
-      const stemX = note.getStemX() - Stem.WIDTH / 2;
+      const stemWidth = note.getStem()?.getWidth() ?? Stem.WIDTH;
+      const stemX = note.getStemX() - stemWidth / 2;
 
       // Check to see if the next note in the group will get a beam at this
       //  level. This will help to inform the partial beam logic below.
