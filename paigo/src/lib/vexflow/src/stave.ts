@@ -934,6 +934,6 @@ export class Stave extends Element {
   }
 
   getJustifyWidth(): number {
-    return this.getNoteEndX() - this.getNoteStartX() - this.defaultPadding;
+    return this.getNoteEndX() - this.getNoteStartX();
   }
 }

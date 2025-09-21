@@ -337,7 +337,7 @@ export class SVGContext extends RenderContext {
         continue;
       }
       if (
-        attributes[attrName] &&
+        attributes[attrName] != null &&
         (this.groupAttributes.length === 0 ||
           attributes[attrName] != this.groupAttributes[this.groupAttributes.length - 1][attrName])
       )

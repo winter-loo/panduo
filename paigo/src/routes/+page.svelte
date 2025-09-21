@@ -79,7 +79,7 @@
           fillStyle: '#dadada',
         },
       },
-      paddingLeft: 7,
+      paddingLeft: 7, // 4 + 3
     },
     Clef: {
       defaults: {
@@ -112,7 +112,7 @@
       this.clefElement = clefElement as HTMLDivElement;
       this.notesElement = notesElement as HTMLDivElement;
 
-      this.drawClef();
+      // this.drawClef();
       this.prepareForRedraw();
     }
 

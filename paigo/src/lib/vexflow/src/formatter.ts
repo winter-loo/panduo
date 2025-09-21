@@ -940,7 +940,7 @@ export class Formatter {
       options.config = stave.getConfig() ?? VexflowConfig.defaults();
     }
 
-    const justifyWidth = stave.getNoteEndX() - stave.getNoteStartX() - stave.defaultPadding;
+    const justifyWidth = stave.getJustifyWidth();
     L('Formatting voices to width: ', justifyWidth);
     return this.format(voices, justifyWidth, options);
   }

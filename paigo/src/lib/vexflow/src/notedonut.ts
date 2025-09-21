@@ -161,7 +161,8 @@ export class NoteDonut extends Note {
     const ctx = this.checkContext();
     let { x, y, w: width, h: height } = this.getBoundingBox();
     const staffLineWidth = this.config.get('Stave.style.lineWidth');
-    console.log(`draw notedonut, x=${x} y=${y} width=${width}, height=${height}`);
+    const padding = this.config.get('Stave.paddingLeft');
+    console.log(`draw notedonut, staffLineWidth=${staffLineWidth} padding=${padding} x=${x} y=${y} width=${width}, height=${height}`);
 
     ctx.openGroup('donut');
     ctx.fillRect(x, y, 0, height, {
@@ -170,12 +171,13 @@ export class NoteDonut extends Note {
       ry: height / 2,
       opacity: 0.5,
     });
+    ctx.rect(x, y + height / 2, width, 1);
     const outWidth = width;
     const outHeight = height + staffLineWidth * 4;
     console.log(`draw notedonut, outWidth: ${outWidth}, outHeight: ${outHeight}`);
-    ctx.rect(x - staffLineWidth * 2, y - staffLineWidth * 2, outWidth, outHeight, {
-      rx: outHeight / 2,
-      ry: outHeight / 2,
+    ctx.rect(x - padding, y - staffLineWidth * 2, outWidth, outHeight, {
+      // rx: outHeight / 2,
+      // ry: outHeight / 2,
       fill: 'none',
       'stroke-width': staffLineWidth,
       stroke: 'currentColor',
