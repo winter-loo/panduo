@@ -10,6 +10,7 @@
 
 import { Beam } from './beam';
 import { BoundingBox } from './boundingbox';
+import { VexflowConfigInstance } from './config';
 import { ElementStyle } from './element';
 import { Glyphs } from './glyphs';
 import { Metrics } from './metrics';
@@ -408,8 +409,8 @@ export class StaveNote extends StemmableNote {
   // Sorted variant of keyProps used internally.
   private sortedKeyProps: { keyProps: KeyProps; index: number }[] = [];
 
-  constructor(noteStruct: StaveNoteStruct) {
-    super(noteStruct);
+  constructor(config: VexflowConfigInstance, noteStruct: StaveNoteStruct) {
+    super(config, noteStruct);
 
     this.ledgerLineStyle = {};
 
@@ -485,7 +486,7 @@ export class StaveNote extends StemmableNote {
 
   // Builds a `Stem` for the note
   override buildStem(): this {
-    this.setStem(new Stem({ hide: this.isRest(), config: this.getStave()?.getConfig() }));
+    this.setStem(new Stem(this.config, { hide: this.isRest() }));
     return this;
   }
 
@@ -550,7 +551,7 @@ export class StaveNote extends StemmableNote {
       }
       lastLine = line;
 
-      const notehead = new NoteHead({
+      const notehead = new NoteHead(this.config, {
         pitch: keys[i],
         duration: this.duration,
         noteType: this.noteType,
@@ -567,7 +568,7 @@ export class StaveNote extends StemmableNote {
       this._noteHeads[this.sortedKeyProps[i].index] = notehead;
 
       /* build NoteDonut */
-      const notedonut = new NoteDonut({
+      const notedonut = new NoteDonut(this.config, {
         duration: this.duration,
         noteType: this.noteType,
         line: noteProps.line,
@@ -662,11 +663,11 @@ export class StaveNote extends StemmableNote {
       const noteStemHeight = this.stem!.getHeight();
       const stemY =
         this.getStemDirection() === Stem.DOWN
-          ? yTop - noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
-          : yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
+          ? yTop - noteStemHeight - (this.flag ? this.flag.getTextMetrics().actualBoundingBoxDescent : 0)
+          : yBottom - noteStemHeight + (this.flag ? this.flag.getTextMetrics().actualBoundingBoxAscent : 0);
       boundingBox.mergeWith(new BoundingBox(this.getAbsoluteX(), stemY, 0, 0));
     }
-    if (this.hasFlag()) {
+    if (this.flag && this.hasFlag()) {
       const bbFlag = this.flag.getBoundingBox();
       boundingBox.mergeWith(bbFlag);
     }
@@ -844,7 +845,8 @@ export class StaveNote extends StemmableNote {
       if (
         this.stemDirection === Stem.UP &&
         this.hasFlag() &&
-        (options.forceFlagRight || isInnerNoteIndex(this, index))
+        (options.forceFlagRight || isInnerNoteIndex(this, index)) &&
+        this.flag
       ) {
         x += this.flag.getWidth();
       }
@@ -910,10 +912,10 @@ export class StaveNote extends StemmableNote {
   }
 
   setFlagStyle(style: ElementStyle): void {
-    this.flag.setStyle(style);
+    this.flag?.setStyle(style);
   }
   getFlagStyle(): ElementStyle | undefined {
-    return this.flag.getStyle();
+    return this.flag?.getStyle();
   }
 
   /** Get the glyph width. */
@@ -1173,7 +1175,7 @@ export class StaveNote extends StemmableNote {
       throw new RuntimeError('NoCanvasContext', "Can't draw without a canvas context.");
     }
 
-    if (this.shouldDrawFlag()) {
+    if (this.shouldDrawFlag() && this.flag) {
       const { yTop, yBottom } = this.getNoteHeadBounds();
 
       const noteStemHeight = this.stem!.getHeight();
@@ -1215,9 +1217,8 @@ export class StaveNote extends StemmableNote {
 
     if (stemOptions) {
       this.setStem(
-        new Stem({
+        new Stem(this.config, {
           ...stemOptions,
-          config: stemOptions?.config ?? this.getStave()?.getConfig(),
         }),
       );
     }

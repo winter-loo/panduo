@@ -170,7 +170,7 @@ export const MetricsDefaults: Record<string, any> = {
     },
   },
 
-  Stave: { ...VexflowConfig.defaults().stave().metrics },
+  Stave: { ...VexflowConfig.defaults().stave() },
 
   StaveConnector: {
     text: {

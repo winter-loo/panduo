@@ -4,6 +4,7 @@
 import { Accidental } from './accidental';
 import { Articulation } from './articulation';
 import { PartialBeamDirection } from './beam';
+import { VexflowConfigInstance } from './config';
 import { Dot } from './dot';
 import { Factory } from './factory';
 import { FretHandFinger } from './frethandfinger';
@@ -257,9 +258,11 @@ export class Builder {
   piece!: Piece;
   commitHooks: CommitHook[] = [];
   rollingDuration!: string;
+  config: VexflowConfigInstance;
 
-  constructor(factory: Factory) {
+  constructor(config: VexflowConfigInstance, factory: Factory) {
     this.factory = factory;
+    this.config = config;
     this.reset();
   }
 
@@ -371,7 +374,7 @@ export class Builder {
     const note =
       type?.toLowerCase() === 'g'
         ? factory.GhostNote({ duration, dots })
-        : factory.StaveNote({ keys, duration, dots, type, clef, autoStem });
+        : factory.StaveNote(this.config, { keys, duration, dots, type, clef, autoStem });
     if (!autoStem) note.setStemDirection(stem === 'up' ? Stem.UP : Stem.DOWN);
 
     // Attach accidentals.
@@ -388,7 +391,7 @@ export class Builder {
     });
 
     // Attach dots.
-    for (let i = 0; i < dots; i++) Dot.buildAndAttach([note], { all: true });
+    for (let i = 0; i < dots; i++) Dot.buildAndAttach([note], this.config, { all: true });
 
     this.commitHooks.forEach((commitHook) => commitHook(options, note, this));
 
@@ -451,8 +454,10 @@ export class EasyScore {
   builder!: Builder;
   grammar!: EasyScoreGrammar;
   parser!: Parser;
+  config: VexflowConfigInstance;
 
-  constructor(options: EasyScoreOptions = {}) {
+  constructor(config: VexflowConfigInstance, options: EasyScoreOptions = {}) {
+    this.config = config;
     this.setOptions(options);
   }
 
@@ -475,7 +480,7 @@ export class EasyScore {
    */
   setOptions(options: EasyScoreOptions): this {
     const factory = options.factory!; // ! operator, because options.factory was set in Factory.EasyScore().
-    const builder = options.builder ?? new Builder(factory);
+    const builder = options.builder ?? new Builder(this.config, factory);
 
     this.options = {
       commitHooks: [setId, setClass, Articulation.easyScoreHook, FretHandFinger.easyScoreHook],

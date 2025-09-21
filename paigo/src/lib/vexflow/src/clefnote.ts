@@ -4,6 +4,7 @@
 
 import { BoundingBox } from './boundingbox';
 import { Clef } from './clef';
+import { VexflowConfigInstance } from './config';
 import { Note } from './note';
 import { Category } from './typeguard';
 
@@ -15,15 +16,15 @@ export class ClefNote extends Note {
 
   protected clef!: Clef;
 
-  constructor(type: string, size: string = 'default', annotation?: string) {
-    super({ duration: 'b' });
-    this.setType(type, size, annotation);
+  constructor(type: string, config: VexflowConfigInstance, annotation?: string) {
+    super(config, { duration: 'b' });
+    this.setType(type, annotation);
     this.ignoreTicks = true;
   }
 
   /** Set clef type, size and annotation. */
-  setType(type: string, size: string, annotation?: string): this {
-    this.clef = new Clef(type, size, annotation);
+  setType(type: string, annotation?: string): this {
+    this.clef = new Clef(type, this.config, { annotation });
     this.setWidth(this.clef.getWidth());
 
     return this;

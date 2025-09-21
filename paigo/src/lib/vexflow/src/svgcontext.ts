@@ -8,6 +8,7 @@ import { Metrics } from './metrics';
 import { RenderContext, TextMeasure } from './rendercontext';
 import { Tables } from './tables';
 import { normalizeAngle, prefix, RuntimeError } from './util';
+import { VexflowConfig, VexflowConfigInstance } from './config';
 
 export type Attributes = {
   [name: string]: string | number | undefined;
@@ -60,7 +61,7 @@ export interface State {
  * SVG rendering context with an API similar to CanvasRenderingContext2D.
  */
 export class SVGContext extends RenderContext {
-  protected static measureTextElement = new Element();
+  protected static measureTextElement = new Element(VexflowConfig.defaults());
 
   element: HTMLElement; // the parent DOM object
   svg: SVGSVGElement;
@@ -87,15 +88,15 @@ export class SVGContext extends RenderContext {
   /** Formatted as CSS font shorthand (e.g., 'italic bold 12pt Arial') */
   protected fontCSSString: string = '';
 
-  constructor(element: HTMLElement) {
+  constructor(config: VexflowConfigInstance, element: HTMLElement) {
     super();
     this.element = element;
+    SVGContext.measureTextElement = new Element(config);
 
     this.precision = Math.pow(10, Tables.RENDER_PRECISION_PLACES);
 
     // Create an SVG element and add it to the container element.
     const svg = this.create('svg');
-    svg.setAttribute('pointer-events', 'none');
     this.element.appendChild(svg);
     this.svg = svg;
 
@@ -404,7 +405,6 @@ export class SVGContext extends RenderContext {
       fill: 'none',
       'stroke-width': 1.0,
       stroke: 'currentColor',
-      'pointer-events': 'auto',
     };
     this.rect(x, y, width, height, attributes);
     return this;

@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { ModifierContext } from './modifiercontext';
 import { Note } from './note';
@@ -64,8 +65,8 @@ export class Modifier extends Element {
   protected spacingFromNextModifier: number;
   protected modifierContext?: ModifierContext;
 
-  constructor() {
-    super();
+  constructor(config: VexflowConfigInstance) {
+    super(config);
 
     this.width = 0;
 

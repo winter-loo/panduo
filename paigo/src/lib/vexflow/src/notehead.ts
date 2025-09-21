@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { ElementStyle } from './element';
 import { Note, NoteStruct } from './note';
 import { Stave } from './stave';
@@ -57,8 +58,8 @@ export class NoteHead extends Note {
     '\ue4e4' /*restHalf*/: '\ue4f5' /*restHalfLegerLine*/,
   };
 
-  constructor(noteStruct: NoteHeadStruct) {
-    super(noteStruct);
+  constructor(config: VexflowConfigInstance, noteStruct: NoteHeadStruct) {
+    super(config, noteStruct);
 
     this.index = noteStruct.index;
     this.x = noteStruct.x || 0;

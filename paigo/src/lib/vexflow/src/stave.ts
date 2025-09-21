@@ -3,11 +3,9 @@
 
 import { BoundingBox, Bounds } from './boundingbox';
 import { Clef } from './clef';
-import { VexflowConfig } from './config';
 import type { DeepPartial, StaveConfigValues, VexflowConfigInstance } from './config';
 import { Element, ElementStyle } from './element';
 import { KeySignature } from './keysignature';
-import { Metrics } from './metrics';
 import { Barline, BarlineOptions, BarlineType } from './stavebarline';
 import { StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Repetition } from './staverepetition';
@@ -37,24 +35,23 @@ export interface StaveOptions {
   numLines?: number;
   stillCursor?: boolean;
   style?: ElementStyle;
-  config?: VexflowConfigInstance;
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
 // The keys (computed property names) match the CATEGORY property in the
 // Barline, Clef, KeySignature, TimeSignature classes.
 const SORT_ORDER_BEG_MODIFIERS = {
-  [Barline.CATEGORY]: 0,
-  [Clef.CATEGORY]: 1,
-  [KeySignature.CATEGORY]: 2,
-  [TimeSignature.CATEGORY]: 3,
+  [Category.Barline]: 0,
+  [Category.Clef]: 1,
+  [Category.KeySignature]: 2,
+  [Category.TimeSignature]: 3,
 };
 
 const SORT_ORDER_END_MODIFIERS = {
-  [TimeSignature.CATEGORY]: 0,
-  [KeySignature.CATEGORY]: 1,
-  [Barline.CATEGORY]: 2,
-  [Clef.CATEGORY]: 3,
+  [Category.TimeSignature]: 0,
+  [Category.KeySignature]: 1,
+  [Category.Barline]: 2,
+  [Category.Clef]: 3,
 };
 
 export class Stave extends Element {
@@ -74,23 +71,21 @@ export class Stave extends Element {
   protected bounds: Bounds;
   protected readonly modifiers: StaveModifier[];
 
-  protected config: VexflowConfigInstance;
-
   protected defaultLedgerLineStyle: ElementStyle;
 
   // This is the sum of the padding that normally goes on left + right of a stave during
   // drawing. Used to size staves correctly with content width.
-  static get defaultPadding(): number {
-    return Metrics.get('Stave.padding') + Metrics.get('Stave.endPaddingMax');
+  get defaultPadding(): number {
+    return this.config.get('Stave.paddingLeft') + this.config.get('Stave.paddingRight') + this.config.get('Stave.endPaddingMax');
   }
 
   // Right padding, used by system if startX is already determined.
-  static get rightPadding(): number {
-    return Metrics.get('Stave.endPaddingMax');
+  get rightPadding(): number {
+    return this.config.get('Stave.endPaddingMax');
   }
 
-  constructor(x: number, y: number, width: number, options?: StaveOptions) {
-    super();
+  constructor(x: number, y: number, width: number, config: VexflowConfigInstance, options?: StaveOptions) {
+    super(config);
 
     this.x = x;
     this.y = y;
@@ -103,16 +98,13 @@ export class Stave extends Element {
     this.clef = 'treble';
     this.endClef = undefined;
 
-    const { config: providedConfig, ...optionOverrides } = options ?? {};
-    const configInstance = providedConfig ?? VexflowConfig.defaults();
-    this.config = configInstance;
-    const resolvedOptions = configInstance.stave(
+    const { ...optionOverrides } = options ?? {};
+    const resolvedOptions = this.config.stave(
       optionOverrides as DeepPartial<StaveConfigValues>,
     );
 
     this.options = {
       ...resolvedOptions,
-      config: configInstance,
     };
     this.bounds = { x: this.x, y: this.y, w: this.width, h: 0 };
     this.defaultLedgerLineStyle = { strokeStyle: '#444', lineWidth: 3 };
@@ -124,6 +116,7 @@ export class Stave extends Element {
     // beg bar
     this.addModifier(
       new Barline(
+        this.config,
         this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE,
         this.options.leftBar,
       ),
@@ -131,14 +124,11 @@ export class Stave extends Element {
     // end bar
     this.addEndModifier(
       new Barline(
+        this.config,
         this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE,
         this.options.rightBar,
       ),
     );
-  }
-
-  getConfig(): VexflowConfigInstance {
-    return this.config;
   }
 
   /** Set default style for ledger lines. */
@@ -423,7 +413,7 @@ export class Stave extends Element {
     return this;
   }
 
-  setClef(clefSpec: string, size?: string, annotation?: string, position?: number): this {
+  setClef(clefSpec: string, annotation?: string, position?: number): this {
     if (position === undefined) {
       position = StaveModifierPosition.BEGIN;
     }
@@ -436,9 +426,9 @@ export class Stave extends Element {
 
     const clefs = this.getModifiers(position, Clef.CATEGORY) as Clef[];
     if (clefs.length === 0) {
-      this.addClef(clefSpec, { size, annotation, position });
+      this.addClef(clefSpec, { annotation, position });
     } else {
-      clefs[0].setType(clefSpec, size, annotation);
+      clefs[0].setType(clefSpec, annotation);
     }
 
     return this;
@@ -448,8 +438,8 @@ export class Stave extends Element {
     return this.clef;
   }
 
-  setEndClef(clefSpec: string, size?: string, annotation?: string): this {
-    this.setClef(clefSpec, size, annotation, StaveModifierPosition.END);
+  setEndClef(clefSpec: string, annotation?: string): this {
+    this.setClef(clefSpec, annotation, StaveModifierPosition.END);
     return this;
   }
 
@@ -531,7 +521,6 @@ export class Stave extends Element {
     clef: string,
     options?: {
       style?: ElementStyle;
-      size?: string;
       annotation?: string;
       position?: number;
     },
@@ -543,19 +532,17 @@ export class Stave extends Element {
     }
 
     this.addModifier(
-      new Clef(clef, {
+      new Clef(clef, this.config, {
         style: options?.style,
-        size: options?.size,
         annotation: options?.annotation,
-        config: this.config,
       }),
       options?.position,
     );
     return this;
   }
 
-  addEndClef(clef: string, size?: string, annotation?: string): this {
-    this.addClef(clef, { size, annotation, position: StaveModifierPosition.END });
+  addEndClef(clef: string, annotation?: string): this {
+    this.addClef(clef, { annotation, position: StaveModifierPosition.END });
     return this;
   }
 
@@ -638,11 +625,11 @@ export class Stave extends Element {
 
     if (begModifiers.length > 1 && begBarline.getType() === BarlineType.REPEAT_BEGIN) {
       begModifiers.push(begModifiers.splice(0, 1)[0]);
-      begModifiers.splice(0, 0, new Barline(BarlineType.SINGLE));
+      begModifiers.splice(0, 0, new Barline(this.config, BarlineType.SINGLE));
     }
 
     if (endModifiers.indexOf(endBarline) > 0) {
-      endModifiers.splice(0, 0, new Barline(BarlineType.NONE));
+      endModifiers.splice(0, 0, new Barline(this.config, BarlineType.NONE));
     }
 
     let width;
@@ -653,6 +640,7 @@ export class Stave extends Element {
     for (let i = 0; i < begModifiers.length; i++) {
       modifier = begModifiers[i];
       padding = modifier.getPadding(i + offset);
+      console.log(`modifier padding=${padding}`);
       width = modifier.getWidth();
 
       x += padding;
@@ -946,6 +934,6 @@ export class Stave extends Element {
   }
 
   getJustifyWidth(): number {
-    return this.getNoteEndX() - this.getNoteStartX() - Stave.defaultPadding;
+    return this.getNoteEndX() - this.getNoteStartX() - this.defaultPadding;
   }
 }

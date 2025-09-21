@@ -31,7 +31,6 @@ export interface StemOptions {
   yTop?: number;
   xEnd?: number;
   xBegin?: number;
-  config?: VexflowConfigInstance;
 }
 
 export class Stem extends Element {
@@ -74,11 +73,9 @@ export class Stem extends Element {
   protected stemDirection: number;
   protected stemExtension: number;
   protected renderHeightAdjustment: number;
-  protected config: VexflowConfigInstance;
 
-  constructor(options?: StemOptions) {
-    super();
-    this.config = options?.config ?? VexflowConfig.defaults();
+  constructor(config: VexflowConfigInstance, options?: StemOptions) {
+    super(config);
 
     // Default notehead x bounds
     this.xBegin = options?.xBegin ?? 0;
@@ -173,11 +170,6 @@ export class Stem extends Element {
 
   override getWidth(): number {
     return this.config.stem().width;
-  }
-
-  setConfig(config?: VexflowConfigInstance): void {
-    this.config = config ?? VexflowConfig.defaults();
-    this.renderHeightAdjustment = -this.getWidth() / 2;
   }
 
   setVisibility(isVisible: boolean): this {

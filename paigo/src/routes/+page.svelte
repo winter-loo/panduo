@@ -35,7 +35,7 @@
   VexFlow.ModifierContext.DEBUG = true;
 
   const layout = {
-    measureWidth: 288,
+    measureWidth: 448,
     staveHeight: 180,
     clefWidth: 120,
     rendererWidth: 30000,
@@ -55,11 +55,11 @@
 
   const configInstance = VexFlow.Config.create({
     fontSize: 60,
-    stem: {
+    Stem: {
       width: 3,
       height: 70,
     },
-    stave: {
+    Stave: {
       spacingBetweenLinesPx: layout.spacingBetweenLinesPx,
       spaceAboveStaffLn: derivedPadding,
       spaceBelowStaffLn: derivedPadding,
@@ -79,13 +79,9 @@
           fillStyle: '#dadada',
         },
       },
-      metrics: {
-        strokeStyle: '#999999',
-        padding: 0,
-        fontSize: 60,
-      },
+      paddingLeft: 7,
     },
-    clef: {
+    Clef: {
       defaults: {
         style: {
           fillStyle: '#afafaf',
@@ -122,11 +118,10 @@
 
     private drawClef() {
       this.clefElement.innerHTML = '';
-      this.clefRenderer = new VexFlow.Renderer(this.clefElement, VexFlow.Renderer.Backends.SVG);
+      this.clefRenderer = new VexFlow.Renderer(this.config, this.clefElement, VexFlow.Renderer.Backends.SVG);
       this.clefRenderer.resize(layout.clefWidth, layout.staveHeight);
-      const clefStave = new Stave(0, 0, layout.clefWidth, {
-        config: this.config,
-        stillCursor: true,
+      const clefStave = new Stave(0, 0, layout.clefWidth, this.config, {
+        stillCursor: false,
       });
       clefStave.addClef('treble');
       clefStave.setContext(this.clefRenderer.getContext()).draw();
@@ -134,7 +129,7 @@
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
-      this.renderer = new VexFlow.Renderer(this.notesElement, VexFlow.Renderer.Backends.SVG);
+      this.renderer = new VexFlow.Renderer(this.config, this.notesElement, VexFlow.Renderer.Backends.SVG);
       this.renderer.resize(layout.rendererWidth, layout.staveHeight);
       this.context = this.renderer.getContext();
       this.staveX = 0;
@@ -142,16 +137,14 @@
     }
 
     addMeasure(notes: StaveNoteStruct[]) {
-      const measureStave = new Stave(this.staveX, 0, layout.measureWidth, {
-        config: this.config,
-      });
+      const measureStave = new Stave(this.staveX, 0, layout.measureWidth, this.config);
       this.staveX += layout.measureWidth;
       measureStave.setContext(this.context).draw();
 
       const staveNotes = notes.map((note) => {
-        const staveNote = new VexFlow.StaveNote(note);
+        const staveNote = new VexFlow.StaveNote(this.config, note);
         if (note.duration.includes('d')) {
-          const dot = new VexFlow.Dot();
+          const dot = new VexFlow.Dot(this.config);
           staveNote.addModifier(dot, 0);
         }
         this.notes.push(staveNote);
@@ -159,7 +152,7 @@
       });
 
       if (staveNotes.length > 0) {
-        VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes);
+        VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes, this.config);
       }
     }
   }
@@ -204,8 +197,8 @@
   </div>
 {/if}
 
-<!-- 1015=285*3+120+40 -->
-<div id="moving-staff" class="w-[1015px] mx-auto">
+<!-- 1016=448*2+120 -->
+<div id="moving-staff" class="w-[1016px] mx-auto">
   <div bind:this={BindingDom.fixedClef}></div>
   <div id="notes-viewport">
     <div

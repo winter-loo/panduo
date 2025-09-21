@@ -90,14 +90,14 @@
       {#if borderWidth == 4}
         <!-- 32 + 32 + 16 -->
         <div
-          class="outeer absolute {duration.baseNoteValue == 8
+          class="outer absolute {duration.baseNoteValue == 8
             ? 'w-80'
             : 'w-full'} h-42 -top-8 -right-8 -bottom-8 -left-8 border-4 rounded-full border-cyan-400"
         ></div>
       {:else if borderWidth == 9}
         <!-- 180 = 72 + 72 + 36 -->
         <div
-          class="outeer absolute {duration.baseNoteValue == 8
+          class="outer absolute {duration.baseNoteValue == 8
             ? 'w-180'
             : 'w-full'} h-102 -top-18 -right-18 -bottom-18 -left-18 border-9 rounded-full border-cyan-400"
         ></div>

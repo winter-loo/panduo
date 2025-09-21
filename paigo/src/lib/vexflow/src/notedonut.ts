@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { ElementStyle } from './element';
 import { Note, NoteStruct } from './note';
 import { Stave } from './stave';
@@ -50,8 +51,8 @@ export class NoteDonut extends Note {
     '\ue4e4' /*restHalf*/: '\ue4f5' /*restHalfLegerLine*/,
   };
 
-  constructor(noteStruct: NoteDonutStruct) {
-    super(noteStruct);
+  constructor(config: VexflowConfigInstance, noteStruct: NoteDonutStruct) {
+    super(config, noteStruct);
 
     this.fullExpanded = false;
     this.donutWidth = 0;
@@ -159,11 +160,11 @@ export class NoteDonut extends Note {
   drawDonut(): this {
     const ctx = this.checkContext();
     let { x, y, w: width, h: height } = this.getBoundingBox();
-    const staffLineWidth = 3;
+    const staffLineWidth = this.config.get('Stave.style.lineWidth');
     console.log(`draw notedonut, x=${x} y=${y} width=${width}, height=${height}`);
 
     ctx.openGroup('donut');
-    ctx.fillRect(x + staffLineWidth * 2, y, 0, height, {
+    ctx.fillRect(x, y, 0, height, {
       class: 'inner',
       rx: height / 2,
       ry: height / 2,
@@ -172,13 +173,12 @@ export class NoteDonut extends Note {
     const outWidth = width;
     const outHeight = height + staffLineWidth * 4;
     console.log(`draw notedonut, outWidth: ${outWidth}, outHeight: ${outHeight}`);
-    ctx.rect(x, y - staffLineWidth * 2, outWidth, outHeight, {
+    ctx.rect(x - staffLineWidth * 2, y - staffLineWidth * 2, outWidth, outHeight, {
       rx: outHeight / 2,
       ry: outHeight / 2,
       fill: 'none',
       'stroke-width': staffLineWidth,
       stroke: 'currentColor',
-      'pointer-events': 'auto',
       opacity: 0.3,
     });
     ctx.closeGroup();

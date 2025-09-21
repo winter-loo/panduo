@@ -4,8 +4,7 @@
 
 import { BoundingBox } from './boundingbox';
 import { Font, FontInfo } from './font';
-import { Metrics } from './metrics';
-import { NoteHead } from './notehead';
+import { type VexflowConfigInstance } from './config';
 import { Registry } from './registry';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
@@ -121,6 +120,7 @@ export class Element {
   protected rendered: boolean;
   protected style: ElementStyle = {};
   protected registry?: Registry;
+  protected config: VexflowConfigInstance;
 
   protected _fontInfo: Required<FontInfo>;
   protected fontScale: number;
@@ -148,18 +148,19 @@ export class Element {
   protected x: number = 0;
   protected y: number = 0;
 
-  constructor(category?: string) {
+  constructor(config: VexflowConfigInstance, category?: string) {
     this.attrs = {
       id: Element.newID(),
       type: category ?? (<typeof Element>this.constructor).CATEGORY,
       class: '',
     };
 
+    this.config = config;
     this.rendered = false;
-    this._fontInfo = Metrics.getFontInfo(this.attrs.type);
-    this.style = Metrics.getStyle(this.attrs.type);
-    this.fontScale = Metrics.get(`${this.attrs.type}.fontScale`);
-    this.shouldDrawPointerRect = Metrics.get(`${this.attrs.type}.pointerRect`);
+    this._fontInfo = this.config.getFontInfo(this.attrs.type);
+    this.style = this.config.getStyle(this.attrs.type);
+    this.fontScale = this.config.get(`${this.attrs.type}.fontScale`);
+    this.shouldDrawPointerRect = this.config.get(`${this.attrs.type}.pointerRect`);
 
     // If a default registry exist, then register with it right away.
     Registry.getDefaultRegistry()?.register(this);
@@ -183,6 +184,10 @@ export class Element {
 
   getCategory(): string {
     return this.attrs.type;
+  }
+
+  getConfig(): VexflowConfigInstance {
+    return this.config;
   }
 
   /**
@@ -412,7 +417,7 @@ export class Element {
     weight?: string | number,
     style?: string,
   ): this {
-    const defaultTextFont: Required<FontInfo> = Metrics.getFontInfo(this.attrs.type);
+    const defaultTextFont: Required<FontInfo> = this.config.getFontInfo(this.attrs.type);
 
     const fontIsObject = typeof font === 'object';
     const fontIsString = typeof font === 'string';
@@ -653,18 +658,6 @@ export class Element {
     }
 
     return this._textMetrics;
-  }
-
-  /** Measure the text using the FontInfo related with key. */
-  static measureWidth(text: string, key = ''): number {
-    const context = Element.getTextMeasurementCanvas()?.getContext('2d');
-    if (!context) {
-      // eslint-disable-next-line no-console
-      console.warn('Element: No context for txtCanvas. Returning empty text metrics.');
-      return 0;
-    }
-    context.font = Font.toCSSString(Metrics.getFontInfo(key));
-    return context.measureText(text).width;
   }
 
   /** Get the text metrics. */

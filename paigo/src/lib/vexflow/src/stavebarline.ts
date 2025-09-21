@@ -7,6 +7,7 @@ import { Stave } from './stave';
 import { LayoutMetrics, StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Tables } from './tables';
 import { Category } from './typeguard';
+import { VexflowConfigInstance } from './config';
 
 export enum BarlineType {
   SINGLE = 1,
@@ -53,8 +54,8 @@ export class Barline extends StaveModifier {
     };
   }
 
-  constructor(type: BarlineType | string, options?: BarlineOptions) {
-    super();
+  constructor(config: VexflowConfigInstance, type: BarlineType | string, options?: BarlineOptions) {
+    super(config);
     this.thickness = Tables.STAVE_LINE_THICKNESS;
     this.options = options;
 

@@ -10,6 +10,7 @@ import { BarNote } from './barnote';
 import { Beam, PartialBeamDirection } from './beam';
 import { ChordSymbol } from './chordsymbol';
 import { ClefNote } from './clefnote';
+import { VexflowConfigInstance } from './config';
 import { Curve, CurveOptions } from './curve';
 import { EasyScore, EasyScoreOptions } from './easyscore';
 import { Element } from './element';
@@ -86,8 +87,8 @@ export class Factory {
    *
    * `const vf: Factory = VexFlow.Factory.newFromElementId('boo', 1200, 600 );`
    */
-  static newFromElementId(elementId: string | null, width = 500, height = 200): Factory {
-    return new Factory({ renderer: { elementId, width, height } });
+  static newFromElementId(config: VexflowConfigInstance, elementId: string | null, width = 500, height = 200): Factory {
+    return new Factory(config, { renderer: { elementId, width, height } });
   }
 
   protected options: Required<FactoryOptions>;
@@ -98,6 +99,7 @@ export class Factory {
   protected voices!: Voice[];
   protected renderQ!: Element[];
   protected systems!: System[];
+  protected config: VexflowConfigInstance;
 
   /**
    * Example:
@@ -106,7 +108,8 @@ export class Factory {
    *
    * `const vf: Factory = new VexFlow.Factory({renderer: { elementId: 'boo', width: 1200, height: 600 }});`
    */
-  constructor(options: FactoryOptions = {}) {
+  constructor(config: VexflowConfigInstance, options: FactoryOptions = {}) {
+    this.config = config;
     L('New factory: ', options);
     this.options = {
       stave: {
@@ -184,7 +187,7 @@ export class Factory {
 
   /** Return pixels from current stave spacing. */
 
-  Stave(params?: { x?: number; y?: number; width?: number; options?: StaveOptions }): Stave {
+  Stave(config: VexflowConfigInstance, params?: { x?: number; y?: number; width?: number; options?: StaveOptions }): Stave {
     const staveSpace = this.options.stave.space;
     const p = {
       x: 0,
@@ -194,7 +197,7 @@ export class Factory {
       ...params,
     };
 
-    const stave: Stave = new Stave(p.x, p.y, p.width, p.options);
+    const stave: Stave = new Stave(p.x, p.y, p.width, config, p.options);
     this.staves.push(stave);
     stave.setContext(this.context);
     this.stave = stave;
@@ -218,8 +221,8 @@ export class Factory {
     return stave;
   }
 
-  StaveNote(noteStruct: StaveNoteStruct): StaveNote {
-    const note = new StaveNote(noteStruct);
+  StaveNote(config: VexflowConfigInstance, noteStruct: StaveNoteStruct): StaveNote {
+    const note = new StaveNote(config, noteStruct);
     if (this.stave) note.setStave(this.stave);
     note.setContext(this.context);
     this.renderQ.push(note);
@@ -266,7 +269,7 @@ export class Factory {
     return barNote;
   }
 
-  ClefNote(params?: { type?: string; options?: { size?: string; annotation?: string } }): ClefNote {
+  ClefNote(config: VexflowConfigInstance, params?: { type?: string; options?: { size?: string; annotation?: string } }): ClefNote {
     const p = {
       type: 'treble',
       options: {
@@ -276,7 +279,7 @@ export class Factory {
       ...params,
     };
 
-    const clefNote = new ClefNote(p.type, p.options.size, p.options.annotation);
+    const clefNote = new ClefNote(p.type, config, p.options.annotation);
     if (this.stave) clefNote.setStave(this.stave);
     clefNote.setContext(this.context);
     this.renderQ.push(clefNote);
@@ -668,7 +671,7 @@ export class Factory {
    */
   EasyScore(options: EasyScoreOptions = {}): EasyScore {
     options.factory = this;
-    return new EasyScore(options);
+    return new EasyScore(this.config, options);
   }
 
   PedalMarking(params?: { notes?: StaveNote[]; options?: { style: string } }): PedalMarking {

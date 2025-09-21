@@ -10,6 +10,7 @@ import { Tables } from './tables';
 import { Tickable } from './tickable';
 import { Category } from './typeguard';
 import { defined, RuntimeError, sumArray } from './util';
+import { VexflowConfigInstance } from './config';
 
 export interface VoiceTime {
   numBeats: number;
@@ -56,8 +57,8 @@ export class Voice extends Element {
   protected readonly tickables: Tickable[] = [];
   protected readonly time: Required<VoiceTime>;
 
-  constructor(time?: VoiceTime | string) {
-    super();
+  constructor(config: VexflowConfigInstance, time?: VoiceTime | string) {
+    super(config);
 
     this.options = {
       softmaxFactor: Tables.SOFTMAX_FACTOR,

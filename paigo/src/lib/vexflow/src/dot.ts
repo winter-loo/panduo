@@ -2,6 +2,7 @@
 //
 // This class implements dot modifiers for notes.
 
+import { VexflowConfigInstance } from './config';
 import { Glyphs } from './glyphs';
 import { Modifier } from './modifier';
 import { ModifierContextState } from './modifiercontext';
@@ -22,18 +23,18 @@ export class Dot extends Modifier {
   }
 
   /** Add a dot on the specified keys to the notes. */
-  static buildAndAttach(notes: Note[], options?: { index?: number; all?: boolean }): void {
+  static buildAndAttach(notes: Note[], config: VexflowConfigInstance, options?: { index?: number; all?: boolean }): void {
     for (const note of notes) {
       if (options?.all) {
         for (let i = 0; i < note.keys.length; i++) {
-          const dot = new Dot();
+          const dot = new Dot(config);
           note.addModifier(dot, i);
         }
       } else if (options?.index !== undefined) {
-        const dot = new Dot();
+        const dot = new Dot(config);
         note.addModifier(dot, options?.index);
       } else {
-        const dot = new Dot();
+        const dot = new Dot(config);
         note.addModifier(dot, 0);
       }
     }
@@ -133,8 +134,8 @@ export class Dot extends Modifier {
     return true;
   }
 
-  constructor() {
-    super();
+  constructor(config: VexflowConfigInstance) {
+    super(config);
 
     this.position = Modifier.Position.RIGHT;
 

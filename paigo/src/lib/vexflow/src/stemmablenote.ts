@@ -4,6 +4,7 @@
 // `StemmableNote` is an abstract interface for notes with optional stems.
 // Examples of stemmable notes are `StaveNote` and `TabNote`
 
+import { VexflowConfigInstance } from './config';
 import { Flag } from './flag';
 import { Glyphs } from './glyphs';
 import { GlyphProps, Note, NoteStruct } from './note';
@@ -21,11 +22,12 @@ export abstract class StemmableNote extends Note {
   stemDirection?: number;
   stem?: Stem;
 
-  protected flag = new Flag();
+  protected flag?: Flag;
   protected stemExtensionOverride?: number;
 
-  constructor(noteStruct: NoteStruct) {
-    super(noteStruct);
+  constructor(config: VexflowConfigInstance, noteStruct: NoteStruct) {
+    super(config, noteStruct);
+    this.flag = new Flag(config);
   }
 
   protected getBaseStemHeight(): number {
@@ -34,7 +36,6 @@ export abstract class StemmableNote extends Note {
 
   override setStave(stave: Stave): this {
     super.setStave(stave);
-    this.getStem()?.setConfig(stave.getConfig());
     return this;
   }
 
@@ -52,14 +53,13 @@ export abstract class StemmableNote extends Note {
 
   setStem(stem: Stem): this {
     this.stem = stem;
-    this.stem.setConfig(this.getStave()?.getConfig());
     this.addChild(stem);
     return this;
   }
 
   // Builds and sets a new stem
   buildStem(): this {
-    const stem = new Stem({ config: this.getStave()?.getConfig() });
+    const stem = new Stem(this.config);
     this.setStem(stem);
     return this;
   }
@@ -75,8 +75,8 @@ export abstract class StemmableNote extends Note {
           ? String.fromCodePoint((glyphProps.codeFlagUp?.codePointAt(0) ?? -1) + 1)
           : (glyphProps.codeFlagUp ?? Glyphs.null);
 
-      this.flag.setText(flagCode);
-      this.flag.fontInfo = this.fontInfo;
+      this.flag?.setText(flagCode);
+      if (this.flag) this.flag.fontInfo = this.fontInfo;
     }
   }
 
@@ -188,6 +188,9 @@ export abstract class StemmableNote extends Note {
 
   // Get the stem extension for the current duration
   getStemExtension(): number {
+    if (!this.flag) {
+      return 0;
+    }
     const glyphProps = this.getGlyphProps();
     const flagHeight = this.flag.getHeight();
     const scale = this.getFontScale();
@@ -268,9 +271,8 @@ export abstract class StemmableNote extends Note {
 
     stemOptions = {
       ...stemOptions,
-      config: stemOptions?.config ?? this.getStave()?.getConfig(),
     };
-    this.setStem(new Stem(stemOptions));
+    this.setStem(new Stem(this.config, stemOptions));
     this.stem?.setContext(this.getContext()).drawWithStyle();
   }
 }

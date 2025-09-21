@@ -3,6 +3,7 @@
 
 import { Beam } from './beam';
 import { BoundingBox } from './boundingbox';
+import { VexflowConfigInstance } from './config';
 import { Fraction } from './fraction';
 import { Glyphs } from './glyphs';
 import { Metrics } from './metrics';
@@ -274,8 +275,8 @@ export abstract class Note extends Tickable {
    *
    * @param noteStruct To create a new note you need to provide a `noteStruct`.
    */
-  constructor(noteStruct: NoteStruct) {
-    super();
+  constructor(config: VexflowConfigInstance, noteStruct: NoteStruct) {
+    super(config);
 
     if (!noteStruct) {
       throw new RuntimeError(
@@ -652,7 +653,7 @@ export abstract class Note extends Tickable {
     // Position note to left edge of tick context.
     let x = tickContext.getX();
     if (this.stave) {
-      x += this.stave.getNoteStartX() + Metrics.get('Stave.padding', 0);
+      x += this.stave.getNoteStartX() + this.config.get('Stave.padding', 0);
     }
     if (this.isCenterAligned()) {
       x += this.getCenterXShift();
