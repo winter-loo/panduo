@@ -183,6 +183,7 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
+    const staffLineWidth = this.config.get('Stave.style.lineWidth');
 
     const width = this.options?.width ?? 1;
     const fillStyle = this.options?.style?.fillStyle ?? 'currentColor';
@@ -195,7 +196,9 @@ export class Barline extends StaveModifier {
         stroke: 'none',
       });
     }
-    staveCtx.fillRect(x, topY, width, botY - topY, {
+    // the top line is drawn with 'stroke-width'. By default, the stroke is
+    // drawn centered on the shape’s edge: half of it goes outward, half inward.
+    staveCtx.fillRect(x, topY - staffLineWidth / 2,  width, botY - topY, {
       rx: 0,
       ry: 0,
       fill: fillStyle,
