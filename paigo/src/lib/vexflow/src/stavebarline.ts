@@ -189,7 +189,7 @@ export class Barline extends StaveModifier {
     const fillStyle = this.options?.style?.fillStyle ?? 'currentColor';
 
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, width, botY - topY, {
+      staveCtx.fillRect(x - 3, topY - staffLineWidth, width, botY - topY, {
         rx: 0,
         ry: 0,
         fill: fillStyle,

@@ -121,7 +121,11 @@
 
     private drawClef() {
       this.clefElement.innerHTML = '';
-      this.clefRenderer = new VexFlow.Renderer(this.config, this.clefElement, VexFlow.Renderer.Backends.SVG);
+      this.clefRenderer = new VexFlow.Renderer(
+        this.config,
+        this.clefElement,
+        VexFlow.Renderer.Backends.SVG,
+      );
       this.clefRenderer.resize(layout.clefWidth, layout.staveHeight);
       const clefStave = new Stave(0, 0, layout.clefWidth, this.config, {
         stillCursor: false,
@@ -132,7 +136,11 @@
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
-      this.renderer = new VexFlow.Renderer(this.config, this.notesElement, VexFlow.Renderer.Backends.SVG);
+      this.renderer = new VexFlow.Renderer(
+        this.config,
+        this.notesElement,
+        VexFlow.Renderer.Backends.SVG,
+      );
       this.renderer.resize(layout.rendererWidth, layout.staveHeight);
       this.context = this.renderer.getContext();
       this.staveX = 0;
@@ -155,7 +163,9 @@
       });
 
       if (staveNotes.length > 0) {
-        VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes, this.config);
+        VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes, this.config, {
+          autoBeam: true,
+        });
       }
     }
   }

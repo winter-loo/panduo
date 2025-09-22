@@ -245,7 +245,7 @@ export class Formatter {
     const voice = new Voice(config, Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(notes);
 
     // Then create beams, if requested.
-    const beams = options.autoBeam ? Beam.applyAndGetBeams(voice) : [];
+    const beams = options.autoBeam ? Beam.applyAndGetBeams(voice, config) : [];
 
     // Instantiate a `Formatter` and format the notes.
     new Formatter(config, { softmaxFactor: 1 })
@@ -306,7 +306,7 @@ export class Formatter {
     const tabvoice = new Voice(config, Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(tabnotes);
 
     // Then create beams, if requested.
-    const beams = opts.autoBeam ? Beam.applyAndGetBeams(notevoice) : [];
+    const beams = opts.autoBeam ? Beam.applyAndGetBeams(notevoice, config) : [];
 
     // Instantiate a `Formatter` and align tab and stave notes.
     new Formatter(config)

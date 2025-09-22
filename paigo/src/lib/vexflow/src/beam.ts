@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Fraction } from './fraction';
 import { Note } from './note';
@@ -154,8 +155,8 @@ export class Beam extends Element {
    * @param stemDirection a stem direction to apply to the entire voice
    * @param groups an array of `Fraction` representing beat groupings for the beam
    */
-  static applyAndGetBeams(voice: Voice, stemDirection?: number, groups?: Fraction[]): Beam[] {
-    return Beam.generateBeams(voice.getTickables() as StemmableNote[], { groups, stemDirection });
+  static applyAndGetBeams(voice: Voice, guc: VexflowConfigInstance, stemDirection?: number, groups?: Fraction[]): Beam[] {
+    return Beam.generateBeams(voice.getTickables() as StemmableNote[], guc, { groups, stemDirection });
   }
 
   /**
@@ -185,6 +186,7 @@ export class Beam extends Element {
    */
   static generateBeams(
     notes: StemmableNote[],
+    guc: VexflowConfigInstance,
     config: {
       flatBeamOffset?: number;
       flatBeams?: boolean;
@@ -419,7 +421,7 @@ export class Beam extends Element {
     // Create a VexFlow.Beam from each group of notes to be beamed
     const beams: Beam[] = [];
     beamedNoteGroups.forEach((group) => {
-      const beam = new Beam(group);
+      const beam = new Beam(guc, group);
 
       if (config.showStemlets) {
         beam.renderOptions.showStemlets = true;
@@ -458,8 +460,8 @@ export class Beam extends Element {
     return beams;
   }
 
-  constructor(notes: StemmableNote[], autoStem: boolean = false) {
-    super();
+  constructor(config: VexflowConfigInstance, notes: StemmableNote[], autoStem: boolean = false) {
+    super(config);
 
     if (!notes || notes.length === 0) {
       throw new RuntimeError('BadArguments', 'No notes provided for beam.');
@@ -849,8 +851,7 @@ export class Beam extends Element {
       }
       const noteGetsBeam = note.getIntrinsicTicks() < tickOfDuration;
 
-      const stemWidth = note.getStem()?.getWidth() ?? Stem.WIDTH;
-      const stemX = note.getStemX() - stemWidth / 2;
+      const stemX = note.getStemX();
 
       // Check to see if the next note in the group will get a beam at this
       //  level. This will help to inform the partial beam logic below.
@@ -966,6 +967,10 @@ export class Beam extends Element {
         if (lastBeamX) {
           const lastBeamY = this.getSlopeY(lastBeamX, firstStemX, beamY, this.slope);
 
+          const midBeamX = startBeamX + (lastBeamX - startBeamX) / 2;
+          const midBeamY = this.getSlopeY(midBeamX, firstStemX, beamY, this.slope);
+
+          // original beam line
           ctx.beginPath();
           ctx.moveTo(startBeamX, startBeamY);
           ctx.lineTo(startBeamX, startBeamY + beamThickness);
@@ -973,6 +978,24 @@ export class Beam extends Element {
           ctx.lineTo(lastBeamX + 1, lastBeamY);
           ctx.closePath();
           ctx.fill();
+
+          // draw left half
+          ctx.beginPath();
+          ctx.moveTo(startBeamX, startBeamY);
+          ctx.lineTo(startBeamX, startBeamY + beamThickness);
+          ctx.lineTo(midBeamX, midBeamY + beamThickness);
+          ctx.lineTo(midBeamX, midBeamY);
+          ctx.closePath();
+          ctx.fill({stroke: 'none', fill: 'red'});
+
+          // draw the right half
+          ctx.beginPath();
+          ctx.moveTo(midBeamX, midBeamY);
+          ctx.lineTo(midBeamX, midBeamY + beamThickness);
+          ctx.lineTo(lastBeamX, lastBeamY + beamThickness);
+          ctx.lineTo(lastBeamX, lastBeamY);
+          ctx.closePath();
+          ctx.fill({stroke: 'none', fill: 'blue'});
         } else {
           throw new RuntimeError('NoLastBeamX', 'lastBeamX undefined.');
         }
