@@ -56,30 +56,33 @@
   const configInstance = VexFlow.Config.create({
     fontSize: 60,
     Stem: {
-      width: 3,
+      width: 4,
       height: 70,
+    },
+    NoteHead: {
+      pointerRect: false,
     },
     Stave: {
       spacingBetweenLinesPx: layout.spacingBetweenLinesPx,
       spaceAboveStaffLn: derivedPadding,
       spaceBelowStaffLn: derivedPadding,
       style: {
-        lineWidth: 3,
+        lineWidth: 4,
         strokeStyle: '#dadada',
       },
       leftBar: {
-        width: 3,
+        width: 4,
         style: {
           fillStyle: '#dadada',
         },
       },
       rightBar: {
-        width: 3,
+        width: 4,
         style: {
           fillStyle: '#dadada',
         },
       },
-      paddingLeft: 7, // 4 + 3
+      paddingLeft: 8, // 4 + 4
     },
     Clef: {
       defaults: {

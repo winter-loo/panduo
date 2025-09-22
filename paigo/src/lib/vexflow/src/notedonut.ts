@@ -161,8 +161,7 @@ export class NoteDonut extends Note {
     const ctx = this.checkContext();
     let { x, y, w: width, h: height } = this.getBoundingBox();
     const staffLineWidth = this.config.get('Stave.style.lineWidth');
-    const padding = this.config.get('Stave.paddingLeft');
-    console.log(`draw notedonut, staffLineWidth=${staffLineWidth} padding=${padding} x=${x} y=${y} width=${width}, height=${height}`);
+    console.log(`draw notedonut, staffLineWidth=${staffLineWidth} x=${x} y=${y} width=${width}, height=${height}`);
 
     ctx.openGroup('donut');
     ctx.fillRect(x, y, 0, height, {
@@ -171,18 +170,42 @@ export class NoteDonut extends Note {
       ry: height / 2,
       opacity: 0.5,
     });
-    ctx.rect(x, y + height / 2, width, 1);
-    const outWidth = width;
-    const outHeight = height + staffLineWidth * 4;
-    console.log(`draw notedonut, outWidth: ${outWidth}, outHeight: ${outHeight}`);
-    ctx.rect(x - padding, y - staffLineWidth * 2, outWidth, outHeight, {
-      // rx: outHeight / 2,
-      // ry: outHeight / 2,
+
+    if (NoteDonut.DEBUG) {
+      ctx.beginPath();
+      ctx.moveTo(x, y + height / 2);
+      ctx.lineTo(x + width, y + height / 2);
+      ctx.stroke({
+        'stroke-width': 4,
+      });
+    }
+
+    // In SVG, a rectangle’s width and height describe only the fill box, not
+    // the stroke. By default, the stroke is drawn centered on the shape’s
+    // edge: half of it goes outward, half inward.
+    //
+    // So the general fix: subtract the stroke width from your intended width
+    // and height, and add half the stroke width to x and y. That way, the full
+    // painted box (fill + stroke) matches your expected dimensions.
+    const outWidth = width - staffLineWidth;
+    const outHeight = height + staffLineWidth * 4 - staffLineWidth;
+    ctx.rect(x - staffLineWidth * 2 + staffLineWidth / 2, y - staffLineWidth * 2 + staffLineWidth / 2, outWidth, outHeight, {
+      rx: outHeight / 2,
+      ry: outHeight / 2,
       fill: 'none',
       'stroke-width': staffLineWidth,
       stroke: 'currentColor',
       opacity: 0.3,
     });
+    if (NoteDonut.DEBUG) {
+      ctx.beginPath();
+      ctx.moveTo(x - staffLineWidth * 2 + staffLineWidth / 2, y - staffLineWidth * 2 + staffLineWidth / 2);
+      ctx.lineTo(x - staffLineWidth * 2 + staffLineWidth / 2 + outWidth, y - staffLineWidth * 2 + staffLineWidth / 2);
+      ctx.lineTo(x - staffLineWidth * 2 + staffLineWidth / 2 + outWidth, y - staffLineWidth * 2 + staffLineWidth / 2 + outHeight);
+      ctx.lineTo(x - staffLineWidth * 2 + staffLineWidth / 2, y - staffLineWidth * 2 + staffLineWidth / 2 + outHeight);
+      ctx.lineTo(x - staffLineWidth * 2 + staffLineWidth / 2, y - staffLineWidth * 2 + staffLineWidth / 2);
+      ctx.stroke({ fill: 'none' });
+    }
     ctx.closeGroup();
     return this;
   }
