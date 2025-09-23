@@ -11,4 +11,5 @@
   <Button variant="link" href={`${PagePath}/transcribe`}>transcribe</Button>
   <Button variant="link" href={`${PagePath}/shadcn`}>shadcn</Button>
   <Button variant="link" href={`${PagePath}/navbar`}>navbar</Button>
+  <Button variant="link" href={`${PagePath}/abcjs`}>abcjs</Button>
 </nav>
