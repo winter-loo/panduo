@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { Button } from '$lib/components/ui/button';
   import abcjs from 'abcjs';
   import 'abcjs/abcjs-audio.css';
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
+  const PagePath = page.url.pathname;
 
   onMount(() => {
     abcjs.renderAbc('s1-paper', "L:1/4\n | CDEF | GABc |\n defg | abc'z | ", {
@@ -11,7 +14,6 @@
     });
     abcjs.renderAbc('s2-paper', 'L:1/4\n z/2 A,/2 | C2 B,2 | A, zz', {
       lineThickness: 0.3,
-      responsive: 'resize',
       scale: 2,
       add_classes: true,
     });
@@ -24,6 +26,10 @@
     });
   });
 </script>
+
+<section class="subpages mt-5 ml-4 underline">
+  <Button variant="link" href="{PagePath}/animation">animation</Button>
+</section>
 
 <section>
   <h3 class="mt-10 ml-4 text-lg font-bold">music scale</h3>
@@ -51,11 +57,10 @@
 <style>
   :global {
     #s2-paper {
-      .abcjs-clef {
-        fill: '#dadada';
-      }
-      .abcjs-staff {
-        fill: '#dadada';
+      .abcjs-clef,
+      .abcjs-bar,
+      .abcjs-staff * {
+        fill: #dadada;
       }
     }
   }

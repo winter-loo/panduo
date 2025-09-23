@@ -42,4 +42,13 @@
     <path d="M10 70L110 70" stroke="blue" />
     <path d="M110 70L110 10" stroke="blue" />
   </svg>
+
+  <svg width="200" height="200" class="ml-20">
+    <path d="M10 10L110 10" stroke="blue" stroke-width="20" />
+    <path d="M10 10L110 10" stroke="red" />
+
+    <!-- alternative drawing method -->
+    <path d="M10 30L110 30L110 50L10 50Z" stroke="none" fill="blue" />
+    <path d="M10 30L110 30" stroke="red" />
+  </svg>
 </section>
