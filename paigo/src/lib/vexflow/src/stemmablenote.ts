@@ -19,6 +19,7 @@ export abstract class StemmableNote extends Note {
     return Category.StemmableNote;
   }
 
+  // see Stem.DOWN/Stem.UP
   stemDirection?: number;
   stem?: Stem;
 
@@ -59,7 +60,7 @@ export abstract class StemmableNote extends Note {
 
   // Builds and sets a new stem
   buildStem(): this {
-    const stem = new Stem(this.config);
+    const stem = new Stem(this, this.config);
     this.setStem(stem);
     return this;
   }
@@ -272,7 +273,7 @@ export abstract class StemmableNote extends Note {
     stemOptions = {
       ...stemOptions,
     };
-    this.setStem(new Stem(this.config, stemOptions));
+    this.setStem(new Stem(this, this.config, stemOptions));
     this.stem?.setContext(this.getContext()).drawWithStyle();
   }
 }

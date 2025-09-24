@@ -961,25 +961,29 @@ export class Beam extends Element {
 
       for (let j = 0; j < beamLines.length; ++j) {
         const beamLine = beamLines[j];
-        const startBeamX = beamLine.start - stemLineWidth / 2;
+        const startBeamX = beamLine.start;
 
         const startBeamY = this.getSlopeY(startBeamX, firstStemX, beamY, this.slope);
-        let lastBeamX = beamLine.end;
+        let lastBeamX = beamLine.end + stemLineWidth;
         if (lastBeamX) {
-          lastBeamX += stemLineWidth / 2;
           const lastBeamY = this.getSlopeY(lastBeamX, firstStemX, beamY, this.slope);
 
           const midBeamX = startBeamX + (lastBeamX - startBeamX) / 2;
           const midBeamY = this.getSlopeY(midBeamX, firstStemX, beamY, this.slope);
 
+          // ctx.beginPath();
+          // ctx.moveTo(midBeamX, midBeamY - 40);
+          // ctx.lineTo(midBeamX, midBeamY + 40);
+          // ctx.stroke({ stroke: 'red', 'stroke-width': '0.5', 'stroke-opacity': '0.7' });
+
           // original beam line
-          ctx.beginPath();
-          ctx.moveTo(startBeamX, startBeamY);
-          ctx.lineTo(startBeamX, startBeamY + beamThickness);
-          ctx.lineTo(lastBeamX + 1, lastBeamY + beamThickness);
-          ctx.lineTo(lastBeamX + 1, lastBeamY);
-          ctx.closePath();
-          ctx.fill();
+          // ctx.beginPath();
+          // ctx.moveTo(startBeamX, startBeamY);
+          // ctx.lineTo(startBeamX, startBeamY + beamThickness);
+          // ctx.lineTo(lastBeamX + 1, lastBeamY + beamThickness);
+          // ctx.lineTo(lastBeamX + 1, lastBeamY);
+          // ctx.closePath();
+          // ctx.fill();
 
           // draw left half
           ctx.beginPath();
@@ -988,7 +992,7 @@ export class Beam extends Element {
           ctx.lineTo(midBeamX, midBeamY + beamThickness);
           ctx.lineTo(midBeamX, midBeamY);
           ctx.closePath();
-          ctx.fill({ stroke: 'none', fill: 'red' });
+          ctx.fill({ stroke: 'none', fill: 'var(--note-f)' });
 
           // draw the right half
           ctx.beginPath();
@@ -997,7 +1001,7 @@ export class Beam extends Element {
           ctx.lineTo(lastBeamX, lastBeamY + beamThickness);
           ctx.lineTo(lastBeamX, lastBeamY);
           ctx.closePath();
-          ctx.fill({ stroke: 'none', fill: 'blue' });
+          ctx.fill({ stroke: 'none', opacity: 1, fill: 'var(--note-g)' });
         } else {
           throw new RuntimeError('NoLastBeamX', 'lastBeamX undefined.');
         }

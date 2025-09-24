@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { ModifierContext } from './modifiercontext';
 import { Note } from './note';
 import { Barline, BarlineType } from './stavebarline';
@@ -31,8 +32,8 @@ export class BarNote extends Note {
   // Initialized by the constructor via this.setType(type)
   protected type!: BarlineType;
 
-  constructor(type: string | BarlineType = BarlineType.SINGLE) {
-    super({ duration: 'b' });
+  constructor(config: VexflowConfigInstance, type: string | BarlineType = BarlineType.SINGLE) {
+    super(config, { duration: 'b' });
 
     this.metrics = {
       widths: {},
@@ -85,7 +86,7 @@ export class BarNote extends Note {
   override draw(): void {
     const ctx = this.checkContext();
     L('Rendering bar line at: ', this.getAbsoluteX());
-    const barline = new Barline(this.type);
+    const barline = new Barline(this.config, this.type);
     barline.setX(this.getAbsoluteX());
     barline.setStave(this.checkStave());
     barline.setContext(ctx);

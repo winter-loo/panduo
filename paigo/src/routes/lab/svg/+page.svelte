@@ -23,6 +23,8 @@
 
     outputContainer.appendChild(svg);
   });
+
+  let showWhich = $state(3);
 </script>
 
 <main class="flex flex-wrap mt-10 mb-20 ml-5 gap-2">
@@ -121,5 +123,43 @@
     </svg>
 
     <p class="mt-5">arrows are created in Figma</p>
+  </section>
+
+  <section class="p-10 border-4 border-dashed">
+    <h3 class="text-lg font-bold">click me</h3>
+
+    <svg
+      width="200"
+      height="180"
+      viewBox="0 0 200 180"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="180" width="20" height="180" fill="#333333" />
+      <rect width="20" height="180" fill="#333333" />
+
+      <rect
+        width="200"
+        height="70"
+        fill="#F3F3F3"
+        onclick={() => (showWhich = (showWhich + 1) % 4)}
+      />
+      {#if showWhich & 0x01}
+        <path
+          d="M0 0L0 70L100 70L100 0z"
+          fill="#2CA900"
+          stroke="none"
+          onclick={() => (showWhich = (showWhich + 1) % 4)}
+        />
+      {/if}
+      {#if showWhich & 0x02}
+        <path
+          d="M100 0L100 70L200 70L200 0z"
+          fill="#FFBB59"
+          stroke="none"
+          onclick={() => (showWhich = (showWhich + 1) % 4)}
+        />
+      {/if}
+    </svg>
   </section>
 </main>

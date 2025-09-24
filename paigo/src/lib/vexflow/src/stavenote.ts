@@ -486,7 +486,7 @@ export class StaveNote extends StemmableNote {
 
   // Builds a `Stem` for the note
   override buildStem(): this {
-    this.setStem(new Stem(this.config, { hide: this.isRest() }));
+    this.setStem(new Stem(this, this.config, { hide: this.isRest() }));
     return this;
   }
 
@@ -728,10 +728,10 @@ export class StaveNote extends StemmableNote {
     if (this.noteType === 'r') {
       return this.getCenterGlyphX();
     } else {
-      // We adjust the origin of the stem because we want the stem left-aligned
-      // with the notehead if stemmed-down, and right-aligned if stemmed-up
+      // We adjust the origin of the stem because we want the stem
+      // right-aligned if stemmed-up
       const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
-      return super.getStemX() + (this.stemDirection ? stemWidth / (2 * -this.stemDirection) : 0);
+      return super.getStemX() + ((this.stemDirection == Stem.UP) ? -stemWidth : 0);
     }
   }
 
@@ -1217,7 +1217,7 @@ export class StaveNote extends StemmableNote {
 
     if (stemOptions) {
       this.setStem(
-        new Stem(this.config, {
+        new Stem(this, this.config, {
           ...stemOptions,
         }),
       );
