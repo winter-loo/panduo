@@ -58,6 +58,7 @@
     Stem: {
       width: 4,
       height: 70,
+      lineWidth: 4,
     },
     NoteHead: {
       pointerRect: false,

@@ -948,9 +948,10 @@ export class Beam extends Element {
   protected drawBeamLines(ctx: RenderContext): void {
     const validBeamDurations = ['4', '8', '16', '32', '64', '128', '256', '512', '1024'];
 
+    const stemLineWidth = this.config.get("Stem.lineWidth");
     const firstNote = this.notes[0];
     let beamY = this.getBeamYToDraw();
-    const firstStemX = firstNote.getStemX();
+    const firstStemX = firstNote.getStemX() - stemLineWidth / 2;
     const beamThickness = this.renderOptions.beamWidth * this._stemDirection;
 
     // Draw the beams.
@@ -960,11 +961,12 @@ export class Beam extends Element {
 
       for (let j = 0; j < beamLines.length; ++j) {
         const beamLine = beamLines[j];
-        const startBeamX = beamLine.start;
+        const startBeamX = beamLine.start - stemLineWidth / 2;
 
         const startBeamY = this.getSlopeY(startBeamX, firstStemX, beamY, this.slope);
-        const lastBeamX = beamLine.end;
+        let lastBeamX = beamLine.end;
         if (lastBeamX) {
+          lastBeamX += stemLineWidth / 2;
           const lastBeamY = this.getSlopeY(lastBeamX, firstStemX, beamY, this.slope);
 
           const midBeamX = startBeamX + (lastBeamX - startBeamX) / 2;
@@ -986,7 +988,7 @@ export class Beam extends Element {
           ctx.lineTo(midBeamX, midBeamY + beamThickness);
           ctx.lineTo(midBeamX, midBeamY);
           ctx.closePath();
-          ctx.fill({stroke: 'none', fill: 'red'});
+          ctx.fill({ stroke: 'none', fill: 'red' });
 
           // draw the right half
           ctx.beginPath();
@@ -995,7 +997,7 @@ export class Beam extends Element {
           ctx.lineTo(lastBeamX, lastBeamY + beamThickness);
           ctx.lineTo(lastBeamX, lastBeamY);
           ctx.closePath();
-          ctx.fill({stroke: 'none', fill: 'blue'});
+          ctx.fill({ stroke: 'none', fill: 'blue' });
         } else {
           throw new RuntimeError('NoLastBeamX', 'lastBeamX undefined.');
         }
