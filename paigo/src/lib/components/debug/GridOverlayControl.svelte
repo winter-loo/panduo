@@ -4,7 +4,6 @@
   import type { DebugGridOptions } from '$lib/vexflow/vexflow-core';
 
   interface GridOverlayControlProps {
-    enabled: boolean;
     options: DebugGridOptions;
     baseOptions: DebugGridOptions;
     minSpacing?: number;
@@ -12,7 +11,7 @@
     onOptionsChange?: (detail: { options: DebugGridOptions }) => void;
   }
 
-  const props: GridOverlayControlProps = $props();
+  let { enabled = $bindable(false), ...props } = $props();
 
   const minSpacing = $derived(props.minSpacing ?? 2);
 
@@ -30,7 +29,8 @@
   }
 
   function toggleGrid() {
-    props.onToggle?.({ enabled: !props.enabled });
+    enabled = !enabled;
+    props.onToggle?.({ enabled: enabled });
     menuOpen = false;
   }
 
@@ -44,7 +44,7 @@
     const rawValue = Number.parseFloat(target.value);
     const spacing = Number.isFinite(rawValue)
       ? Math.max(minSpacing, rawValue)
-      : editingOptions.spacing ?? minSpacing;
+      : (editingOptions.spacing ?? minSpacing);
     target.value = spacing.toString();
     const majorSpacing = Math.max(spacing, editingOptions.majorSpacing ?? spacing);
     emitOptions({
@@ -60,7 +60,7 @@
     const baseSpacing = editingOptions.spacing ?? minSpacing;
     const majorSpacing = Number.isFinite(rawValue)
       ? Math.max(baseSpacing, rawValue)
-      : editingOptions.majorSpacing ?? baseSpacing;
+      : (editingOptions.majorSpacing ?? baseSpacing);
     target.value = majorSpacing.toString();
     emitOptions({
       ...editingOptions,
@@ -111,7 +111,7 @@
 
 <div class="grid-toggle" bind:this={container}>
   <Button id="gridButton" type="button" onclick={toggleGrid}>
-    {props.enabled ? 'hide grid' : 'show grid'}
+    {enabled ? 'hide grid' : 'show grid'}
   </Button>
   <Button
     id="gridMenuButton"
@@ -125,12 +125,7 @@
     <span class="sr-only">Configure grid overlay</span>
   </Button>
   {#if menuOpen}
-    <div
-      class="grid-toggle__menu"
-      role="menu"
-      on:click|stopPropagation
-      on:change|stopPropagation
-    >
+    <div class="grid-toggle__menu" role="menu" on:click|stopPropagation on:change|stopPropagation>
       <label>
         <span>Spacing (px)</span>
         <input
@@ -145,9 +140,15 @@
         <span>Major spacing (px)</span>
         <input
           type="number"
-          min={Math.max(minSpacing, editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing)}
+          min={Math.max(
+            minSpacing,
+            editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing,
+          )}
           step="1"
-          value={editingOptions.majorSpacing ?? editingOptions.spacing ?? props.baseOptions.majorSpacing ?? minSpacing}
+          value={editingOptions.majorSpacing ??
+            editingOptions.spacing ??
+            props.baseOptions.majorSpacing ??
+            minSpacing}
           on:change={handleMajorSpacingInput}
         />
       </label>
@@ -164,7 +165,9 @@
         <input
           id="label-major"
           type="checkbox"
-          checked={editingOptions.labelMajorLinesOnly ?? props.baseOptions.labelMajorLinesOnly ?? false}
+          checked={editingOptions.labelMajorLinesOnly ??
+            props.baseOptions.labelMajorLinesOnly ??
+            false}
           on:change={handleMajorOnlyChange}
         />
         <label for="label-major">Labels on major lines only</label>
@@ -173,15 +176,15 @@
         <input
           id="origin-labels"
           type="checkbox"
-          checked={editingOptions.includeOriginLabels ?? props.baseOptions.includeOriginLabels ?? true}
+          checked={editingOptions.includeOriginLabels ??
+            props.baseOptions.includeOriginLabels ??
+            true}
           on:change={handleOriginLabelsChange}
         />
         <label for="origin-labels">Include origin labels</label>
       </div>
       <footer>
-        <Button variant="outline" type="button" onclick={resetToDefaults}>
-          Reset defaults
-        </Button>
+        <Button type="button" onclick={resetToDefaults}>Reset defaults</Button>
       </footer>
     </div>
   {/if}

@@ -211,7 +211,6 @@
       ...gridBaseOptions,
       ...gridOptions,
     });
-    debugGrid.draw();
   };
   const redrawDebugGrid = () => {
     if (!movingStaff) return;
@@ -258,7 +257,7 @@
 
 <div class="controls-row">
   <GridOverlayControl
-    enabled={debugGridEnabled}
+    bind:enabled={debugGridEnabled}
     options={gridOptions}
     baseOptions={gridBaseOptions}
     onToggle={redrawDebugGrid}
