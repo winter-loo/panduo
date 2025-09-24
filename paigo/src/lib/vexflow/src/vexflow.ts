@@ -18,6 +18,7 @@ import { ClefNote } from './clefnote';
 import { Crescendo } from './crescendo';
 import { Curve, CurvePosition } from './curve';
 import { Dot } from './dot';
+import { DebugGrid } from './debuggrid';
 import { EasyScore } from './easyscore';
 import { Element } from './element';
 import { Factory } from './factory';
@@ -117,6 +118,7 @@ export class VexFlow {
   static Crescendo = Crescendo;
   static Curve = Curve;
   static Dot = Dot;
+  static DebugGrid = DebugGrid;
   static EasyScore = EasyScore;
   static Element = Element;
   static Factory = Factory;

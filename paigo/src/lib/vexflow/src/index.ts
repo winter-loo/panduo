@@ -17,6 +17,7 @@ export * from './config';
 export * from './crescendo';
 export * from './curve';
 export * from './dot';
+export * from './debuggrid';
 export * from './easyscore';
 export * from './element';
 export * from './factory';

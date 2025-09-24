@@ -1,0 +1,254 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { Button } from '$lib/components/ui/button/index';
+  import type { DebugGridOptions } from '$lib/vexflow/vexflow-core';
+
+  interface GridOverlayControlProps {
+    enabled: boolean;
+    options: DebugGridOptions;
+    baseOptions: DebugGridOptions;
+    minSpacing?: number;
+    onToggle?: (detail: { enabled: boolean }) => void;
+    onOptionsChange?: (detail: { options: DebugGridOptions }) => void;
+  }
+
+  const props: GridOverlayControlProps = $props();
+
+  const minSpacing = $derived(props.minSpacing ?? 2);
+
+  let menuOpen = $state(false);
+  let container: HTMLDivElement | null = null;
+  let editingOptions = $state<DebugGridOptions>({ ...props.options });
+
+  $effect(() => {
+    editingOptions = { ...props.options };
+  });
+
+  function emitOptions(next: DebugGridOptions) {
+    editingOptions = { ...next };
+    props.onOptionsChange?.({ options: { ...editingOptions } });
+  }
+
+  function toggleGrid() {
+    props.onToggle?.({ enabled: !props.enabled });
+    menuOpen = false;
+  }
+
+  function toggleMenu(event: MouseEvent) {
+    event.stopPropagation();
+    menuOpen = !menuOpen;
+  }
+
+  function handleSpacingInput(event: Event) {
+    const target = event.currentTarget as HTMLInputElement;
+    const rawValue = Number.parseFloat(target.value);
+    const spacing = Number.isFinite(rawValue)
+      ? Math.max(minSpacing, rawValue)
+      : editingOptions.spacing ?? minSpacing;
+    target.value = spacing.toString();
+    const majorSpacing = Math.max(spacing, editingOptions.majorSpacing ?? spacing);
+    emitOptions({
+      ...editingOptions,
+      spacing,
+      majorSpacing,
+    });
+  }
+
+  function handleMajorSpacingInput(event: Event) {
+    const target = event.currentTarget as HTMLInputElement;
+    const rawValue = Number.parseFloat(target.value);
+    const baseSpacing = editingOptions.spacing ?? minSpacing;
+    const majorSpacing = Number.isFinite(rawValue)
+      ? Math.max(baseSpacing, rawValue)
+      : editingOptions.majorSpacing ?? baseSpacing;
+    target.value = majorSpacing.toString();
+    emitOptions({
+      ...editingOptions,
+      majorSpacing,
+    });
+  }
+
+  function handleShowLabelsChange(event: Event) {
+    const target = event.currentTarget as HTMLInputElement;
+    emitOptions({
+      ...editingOptions,
+      showLabels: target.checked,
+    });
+  }
+
+  function handleMajorOnlyChange(event: Event) {
+    const target = event.currentTarget as HTMLInputElement;
+    emitOptions({
+      ...editingOptions,
+      labelMajorLinesOnly: target.checked,
+    });
+  }
+
+  function handleOriginLabelsChange(event: Event) {
+    const target = event.currentTarget as HTMLInputElement;
+    emitOptions({
+      ...editingOptions,
+      includeOriginLabels: target.checked,
+    });
+  }
+
+  function resetToDefaults() {
+    emitOptions({ ...props.baseOptions });
+  }
+
+  onMount(() => {
+    function handleWindowClick(event: MouseEvent) {
+      if (!menuOpen) return;
+      const target = event.target as Node | null;
+      if (container && target && container.contains(target)) return;
+      menuOpen = false;
+    }
+
+    window.addEventListener('click', handleWindowClick);
+    return () => window.removeEventListener('click', handleWindowClick);
+  });
+</script>
+
+<div class="grid-toggle" bind:this={container}>
+  <Button id="gridButton" type="button" onclick={toggleGrid}>
+    {props.enabled ? 'hide grid' : 'show grid'}
+  </Button>
+  <Button
+    id="gridMenuButton"
+    class="grid-toggle__caret"
+    type="button"
+    aria-haspopup="true"
+    aria-expanded={menuOpen}
+    onclick={toggleMenu}
+  >
+    <span aria-hidden="true">▾</span>
+    <span class="sr-only">Configure grid overlay</span>
+  </Button>
+  {#if menuOpen}
+    <div
+      class="grid-toggle__menu"
+      role="menu"
+      on:click|stopPropagation
+      on:change|stopPropagation
+    >
+      <label>
+        <span>Spacing (px)</span>
+        <input
+          type="number"
+          min={minSpacing}
+          step="1"
+          value={editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing}
+          on:change={handleSpacingInput}
+        />
+      </label>
+      <label>
+        <span>Major spacing (px)</span>
+        <input
+          type="number"
+          min={Math.max(minSpacing, editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing)}
+          step="1"
+          value={editingOptions.majorSpacing ?? editingOptions.spacing ?? props.baseOptions.majorSpacing ?? minSpacing}
+          on:change={handleMajorSpacingInput}
+        />
+      </label>
+      <div class="checkbox-row">
+        <input
+          id="show-labels"
+          type="checkbox"
+          checked={editingOptions.showLabels ?? props.baseOptions.showLabels ?? true}
+          on:change={handleShowLabelsChange}
+        />
+        <label for="show-labels">Show labels</label>
+      </div>
+      <div class="checkbox-row">
+        <input
+          id="label-major"
+          type="checkbox"
+          checked={editingOptions.labelMajorLinesOnly ?? props.baseOptions.labelMajorLinesOnly ?? false}
+          on:change={handleMajorOnlyChange}
+        />
+        <label for="label-major">Labels on major lines only</label>
+      </div>
+      <div class="checkbox-row">
+        <input
+          id="origin-labels"
+          type="checkbox"
+          checked={editingOptions.includeOriginLabels ?? props.baseOptions.includeOriginLabels ?? true}
+          on:change={handleOriginLabelsChange}
+        />
+        <label for="origin-labels">Include origin labels</label>
+      </div>
+      <footer>
+        <Button variant="outline" type="button" onclick={resetToDefaults}>
+          Reset defaults
+        </Button>
+      </footer>
+    </div>
+  {/if}
+</div>
+
+<style>
+  .grid-toggle {
+    position: relative;
+    display: flex;
+    gap: 0.25rem;
+    align-items: stretch;
+  }
+
+  .grid-toggle__caret {
+    padding: 0 0.6rem;
+  }
+
+  .grid-toggle__menu {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    min-width: 220px;
+    padding: 0.75rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    z-index: 5;
+  }
+
+  .grid-toggle__menu label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .grid-toggle__menu input[type='number'] {
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #c0c0c0;
+    border-radius: 0.3rem;
+    font-size: 0.9rem;
+  }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .grid-toggle__menu footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>

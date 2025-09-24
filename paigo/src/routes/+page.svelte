@@ -1,15 +1,19 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import {
+    DebugGrid,
+    RenderContext,
     Renderer,
     Stave,
     StemmableNote,
     VexFlow,
+    type DebugGridOptions,
     type StaveNoteStruct,
   } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
   import { Button } from '$lib/components/ui/button/index';
+  import GridOverlayControl from '$lib/components/debug/GridOverlayControl.svelte';
 
   const { data }: PageProps = $props();
 
@@ -101,7 +105,7 @@
     private notesElement: HTMLDivElement;
     private clefRenderer: Renderer | null = null;
     renderer!: Renderer;
-    context!: ReturnType<Renderer['getContext']>;
+    context!: RenderContext;
     staveX = 0;
     notes: StemmableNote[] = [];
 
@@ -154,7 +158,7 @@
       measureStave.setContext(this.context).draw();
 
       const staveNotes = notes.map((note) => {
-        const staveNote = new VexFlow.StaveNote(this.config, note);
+        const staveNote = new VexFlow.StaveNote(this.config, { ...note, autoStem: true });
         if (note.duration.includes('d')) {
           const dot = new VexFlow.Dot(this.config);
           staveNote.addModifier(dot, 0);
@@ -185,12 +189,41 @@
       );
     }
 
-    movingStaff?.prepareForRedraw();
+    movingStaff.prepareForRedraw();
 
     data.song.measures.forEach((measure) => {
       movingStaff?.addMeasure(measure.notes);
     });
   }
+
+  let debugGridEnabled = $state(false);
+  let debugGrid: DebugGrid;
+  const gridBaseOptions: DebugGridOptions = {
+    spacing: layout.spacingBetweenLinesPx,
+    majorSpacing: layout.spacingBetweenLinesPx * 4,
+    includeOriginLabels: true,
+    showLabels: true,
+  };
+  let gridOptions = $state<DebugGridOptions>({ ...gridBaseOptions });
+
+  const createDebugGrid = (context: RenderContext) => {
+    debugGrid = new VexFlow.DebugGrid(context, {
+      ...gridBaseOptions,
+      ...gridOptions,
+    });
+    debugGrid.draw();
+  };
+  const redrawDebugGrid = () => {
+    if (!movingStaff) return;
+    if (!debugGrid) {
+      createDebugGrid(movingStaff.context);
+    } else {
+      debugGrid.clear();
+    }
+    if (debugGridEnabled) {
+      debugGrid?.draw();
+    }
+  };
 
   onMount(() => {
     renderSong();
@@ -223,10 +256,19 @@
   </div>
 </div>
 
-<Button id="renderButton" onclick={renderSong}>rerender</Button>
-<Button id="pauseButton" onclick={movingStaff?.stop}>pause</Button>
-<Button id="resumeButton" onclick={movingStaff?.move}>resume</Button>
-<Button id="resetButton" onclick={movingStaff?.reset}>reset</Button>
+<div class="controls-row">
+  <GridOverlayControl
+    enabled={debugGridEnabled}
+    options={gridOptions}
+    baseOptions={gridBaseOptions}
+    onToggle={redrawDebugGrid}
+    onOptionsChange={redrawDebugGrid}
+  />
+  <Button id="renderButton" type="button" onclick={renderSong}>rerender</Button>
+  <Button id="pauseButton" type="button" onclick={movingStaff?.stop}>pause</Button>
+  <Button id="resumeButton" type="button" onclick={movingStaff?.move}>resume</Button>
+  <Button id="resetButton" type="button" onclick={movingStaff?.reset}>reset</Button>
+</div>
 
 <style>
   #moving-staff {
@@ -250,5 +292,13 @@
     /* the distance we need offset to keep whole notes area visible */
     /* the above 40px - 5px(the width of the still cursor line) */
     padding-left: 35px;
+  }
+
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    align-items: center;
   }
 </style>
