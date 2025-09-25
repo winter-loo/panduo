@@ -815,11 +815,11 @@ export class Beam extends Element {
     return this.lookupBeamDirection(lookupDuration, prevTick, tick, nextTick, noteIndex);
   }
 
-  getBeamLines(duration: string): { start: number; end?: number }[] {
+  getBeamLines(duration: string): { start: number; startNote?: number; end?: number; endNote?: number }[] {
     const tickOfDuration = Tables.durationToTicks(duration);
     let beamStarted = false;
 
-    type BeamInfo = { start: number; end?: number };
+    type BeamInfo = { start: number; startNote?: number; end?: number; endNote?: number };
     const beamLines: BeamInfo[] = [];
     let currentBeam: BeamInfo | undefined = undefined;
     let previousShouldBreak = false;
@@ -867,6 +867,7 @@ export class Beam extends Element {
           // the stem X of the current note.
           currentBeam = beamLines[beamLines.length - 1];
           currentBeam.end = stemX;
+          currentBeam.endNote = i;
 
           // If a secondary beam break is set up, end the beam right now.
           if (shouldBreak) {
@@ -877,11 +878,14 @@ export class Beam extends Element {
               let beamLength = (stemX - prevNote.getStemX()) / 2;
               currentBeam.end = currentBeam.start;
               currentBeam.start = currentBeam.end - beamLength;
+              let t = currentBeam.startNote;
+              currentBeam.startNote = currentBeam.endNote;
+              currentBeam.endNote = t;
             }
           }
         } else {
           // No beam started yet. Start a new one.
-          currentBeam = { start: stemX, end: undefined };
+          currentBeam = { start: stemX, startNote: i, end: undefined, endNote: undefined };
           beamStarted = true;
 
           if (beamAlone) {
@@ -895,9 +899,13 @@ export class Beam extends Element {
               let beamLength = (note.getStemX() - prevNote.getStemX()) / 2;
               currentBeam.end = currentBeam.start;
               currentBeam.start = currentBeam.end - beamLength;
+              let t = currentBeam.startNote;
+              currentBeam.startNote = currentBeam.endNote;
+              currentBeam.endNote = t;
             } else {
               let beamLength = (nextNote.getStemX() - note.getStemX()) / 2;
               currentBeam.end = currentBeam.start + beamLength;
+              currentBeam.endNote = i;
             }
           } else if (!nextNoteGetsBeam) {
             // The next note doesn't get a beam. Draw a partial.
@@ -906,11 +914,15 @@ export class Beam extends Element {
               //  following a secondary break. Draw a partial to the right.
               let beamLength = (nextNote.getStemX() - note.getStemX()) / 2;
               currentBeam.end = currentBeam.start + beamLength;
+              currentBeam.endNote = i;
             } else {
               // By default, draw a partial to the left.
               let beamLength = (note.getStemX() - prevNote.getStemX()) / 2;
               currentBeam.end = currentBeam.start;
               currentBeam.start = currentBeam.end - beamLength;
+              let t = currentBeam.startNote;
+              currentBeam.startNote = currentBeam.endNote;
+              currentBeam.endNote = t;
             }
           } else if (shouldBreak) {
             // This note should have a secondary break after it. Even though
@@ -918,6 +930,9 @@ export class Beam extends Element {
             let beamLength = (note.getStemX() - prevNote.getStemX()) / 2;
             currentBeam.end = currentBeam.start;
             currentBeam.start = currentBeam.end - beamLength;
+            let t = currentBeam.startNote;
+            currentBeam.startNote = currentBeam.endNote;
+            currentBeam.endNote = t;
             beamStarted = false;
           }
           beamLines.push(currentBeam);
@@ -940,6 +955,9 @@ export class Beam extends Element {
       let beamLength = (lastNote.getStemX() - secondToLastNote.getStemX()) / 2;
       lastBeam.end = lastBeam.start;
       lastBeam.start = lastBeam.end - beamLength;
+      let t = lastBeam.startNote;
+      lastBeam.startNote = lastBeam.endNote;
+      lastBeam.endNote = t;
     }
     return beamLines;
   }
@@ -1001,12 +1019,15 @@ export class Beam extends Element {
             midBeamX, midBeamY + beamThickness,
             midBeamX, midBeamY,
           ];
+          let notename = this.notes[beamLine.startNote!].keyProps[0].key;
+          ctx.openGroup(`vf-note-${notename}`);
           ctx.polygon(points.join(" "), {
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
             stroke: 'none',
-            fill: 'red',
+            fill: 'currentColor',
           });
+          ctx.closeGroup();
 
           if (j + 1 == beamLines.length) {
             points = [
@@ -1015,12 +1036,15 @@ export class Beam extends Element {
               lastBeamX, lastBeamY + beamThickness,
               lastBeamX, lastBeamY,
             ];
+            let notename = this.notes[beamLine.endNote!].keyProps[0].key;
+            ctx.openGroup(`vf-note-${notename}`);
             ctx.polygon(points.join(" "), {
               'stroke-linecap': 'round',
               'stroke-linejoin': 'round',
               stroke: 'none',
-              fill: 'blue',
+              fill: 'currentColor',
             });
+            ctx.closeGroup();
           }
         } else {
           throw new RuntimeError('NoLastBeamX', 'lastBeamX undefined.');
