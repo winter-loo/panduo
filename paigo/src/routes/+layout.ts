@@ -7,8 +7,9 @@ export const load: LayoutLoad = () => {
     measures: [
       {
         notes: [
-          { keys: ['c/5'], duration: '8', fingering: 2 },
-          { keys: ['c/4'], duration: '8', fingering: 2 },
+          { keys: ['b/4'], duration: '16', fingering: 2 },
+          { keys: ['g/4'], duration: '16', fingering: 2 },
+          { keys: ['a/3'], duration: '8', fingering: 2 },
           // { keys: ['f/4'], duration: '4', fingering: 2 },
           // { keys: ['f/4'], duration: '8', fingering: 2 },
           // { keys: ['g/4'], duration: '8', fingering: 2 },

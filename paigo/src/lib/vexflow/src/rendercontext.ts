@@ -51,6 +51,7 @@ export abstract class RenderContext {
     endAngle: number,
     counterclockwise: boolean,
   ): this;
+  abstract polygon(points: string, props?: any): this;
   // eslint-disable-next-line
   abstract fill(attributes?: any): this;
   abstract stroke(props?: any): this;

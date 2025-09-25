@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
+  import { fly, fade } from 'svelte/transition';
 
   let length = $state(50);
 
@@ -150,6 +151,7 @@
           fill="#2CA900"
           stroke="none"
           onclick={() => (showWhich = (showWhich + 1) % 4)}
+          transition:fly={{y: 20, duration: 500}}
         />
       {/if}
       {#if showWhich & 0x02}
@@ -158,6 +160,7 @@
           fill="#FFBB59"
           stroke="none"
           onclick={() => (showWhich = (showWhich + 1) % 4)}
+          transition:fade
         />
       {/if}
     </svg>
