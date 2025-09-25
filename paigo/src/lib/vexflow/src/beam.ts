@@ -994,6 +994,11 @@ export class Beam extends Element {
           ctx.closePath();
           ctx.fill({ stroke: 'none', fill: 'var(--note-f)' });
 
+          ctx.beginPath();
+          ctx.moveTo(startBeamX, beamY);
+          ctx.lineTo(startBeamX + 100, beamY);
+          ctx.stroke({ stroke: 'red' });
+
           // draw the right half
           ctx.beginPath();
           ctx.moveTo(midBeamX, midBeamY);

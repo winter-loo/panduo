@@ -175,7 +175,7 @@ export class NoteHead extends Note {
     console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);
 
     this.x = this.getAbsoluteX();
-    this.renderText(ctx, 0, 0);
+    this.renderText(ctx, 0, 0, { fill: 'currentColor' });
     (this.parent as StaveNote)?.drawModifiers(this);
     console.log('current notehead width: ', this.width);
     this.drawPointerRect();

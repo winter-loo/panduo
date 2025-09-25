@@ -1300,8 +1300,8 @@ export class StaveNote extends StemmableNote {
     L('Rendering ', this.isChord() ? 'chord :' : 'note :', this.keys);
 
     // Apply the overall style -- may be contradicted by local settings:
-    const pitch = `pitch-${this.keyProps[0].key}`;
-    ctx.openGroup(['stavenote', pitch], this.getAttribute('id'));
+    const notename = `note-${this.keyProps[0].key}`;
+    ctx.openGroup(['stavenote', notename], this.getAttribute('id'));
     this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();

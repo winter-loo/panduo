@@ -236,13 +236,13 @@ export class Stem extends Element {
       ? stemHeight - this.stemletHeight * this.stemDirection
       : 0;
 
-    ctx.beginPath();
-    ctx.moveTo(stemX, stemY - 120);
-    ctx.lineTo(stemX, stemY + 80);
-    ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
-
-    const pitch = `pitch-${this.note.keyProps[0].key}`;
-    ctx.openGroup([pitch]);
+    // ctx.beginPath();
+    // ctx.moveTo(stemX, stemY - 120);
+    // ctx.lineTo(stemX, stemY + 80);
+    // ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
+    //
+    const notename = `note-${this.note.keyProps[0].key}`;
+    ctx.openGroup([notename]);
     ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight);
     ctx.closeGroup();
   }

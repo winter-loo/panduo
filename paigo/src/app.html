@@ -24,48 +24,32 @@
       }
 
       /* apply css styles to vexflow generated elements */
-      /* Use *= (contains) instead of ^= (starts with) */
-      /* will match '.vf-pitch-C/.vf-pitch-C#/.vf-pitch-CB' */
-      [class*='vf-pitch-C'] {
-        color: #ce82ff;
-        stroke: #ce82ff;
-        fill: #ce82ff;
+      .vf-note-C {
+        color: var(--note-c);
       }
 
-      [class*='vf-pitch-D'] {
-        color: #ff9600;
-        stroke: #ff9600;
-        fill: #ff9600;
+      .vf-note-D {
+        color: var(--note-d);
       }
 
-      [class*='vf-pitch-E'] {
-        color: #58cc02;
-        stroke: #58cc02;
-        fill: #58cc02;
+      .vf-note-E {
+        color: var(--note-e);
       }
 
-      [class*='vf-pitch-F'] {
-        color: #cc348d;
-        stroke: #cc348d;
-        fill: #cc348d;
+      .vf-note-F {
+        color: var(--note-f);
       }
 
-      [class*='vf-pitch-G'] {
-        color: #708fff;
-        stroke: #708fff;
-        fill: #708fff;
+      .vf-note-G {
+        color: var(--note-g);
       }
 
-      [class*='vf-pitch-A'] {
-        color: #ff86d0;
-        stroke: #ff86d0;
-        fill: #ff86d0;
+      .vf-note-A {
+        color: var(--note-a);
       }
 
-      [class*='vf-pitch-B'] {
-        color: #00ce9f;
-        stroke: #00ce9f;
-        fill: #00ce9f;
+      .vf-note-B {
+        color: var(--note-b);
       }
     </style>
     %sveltekit.head%

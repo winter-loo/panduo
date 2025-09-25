@@ -162,4 +162,39 @@
       {/if}
     </svg>
   </section>
+
+  <section class="p-10 border-4 border-dashed">
+    <div class="text-red-500">
+      <svg
+        width="200"
+        height="180"
+        viewBox="0 0 200 180"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <text class="note" x="10" y="50" stroke="none" fill="currentColor"
+          >This is colored by css</text
+        >
+        <text class="note" x="10" y="80" stroke="none" fill="currentColor"
+          >'color' property and</text
+        >
+        <text class="note" x="10" y="110" stroke="none" fill="currentColor"
+          >fill="currentColor"</text
+        >
+      </svg>
+    </div>
+  </section>
+
+  <section class="p-10 border-4 border-dashed">
+    <h3 class="text-lg font-bold">polygon demo</h3>
+    <svg
+      width="200"
+      height="180"
+      viewBox="0 0 200 180"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <polygon points="40,60 40,90 120,140 120,110" stroke="none" fill="cyan" />
+    </svg>
+  </section>
 </main>

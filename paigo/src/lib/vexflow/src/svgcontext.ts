@@ -533,6 +533,17 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
+  polygon(points: string, props?: any): this {
+    const shape = this.create('polygon');
+    const attributes = {
+      points,
+      ...props,
+    };
+    this.applyAttributes(shape, attributes);
+    this.add(shape);
+    return this;
+  }
+
   closePath(): this {
     this.path += 'Z';
     return this;
