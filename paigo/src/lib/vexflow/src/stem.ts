@@ -241,7 +241,7 @@ export class Stem extends Element {
     // ctx.lineTo(stemX, stemY + 80);
     // ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
     //
-    const notename = `note-${this.note.keyProps[0].key}`;
+    const notename = `note-${this.note.getPrimaryNoteName()}`;
     ctx.openGroup([notename]);
     ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight);
     ctx.closeGroup();

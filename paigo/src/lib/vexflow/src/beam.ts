@@ -1019,8 +1019,8 @@ export class Beam extends Element {
             midBeamX, midBeamY + beamThickness,
             midBeamX, midBeamY,
           ];
-          let notename = this.notes[beamLine.startNote!].keyProps[0].key;
-          ctx.openGroup(`vf-note-${notename}`);
+          let notename = this.notes[beamLine.startNote!].getPrimaryNoteName();
+          ctx.openGroup(`note-${notename}`);
           ctx.polygon(points.join(" "), {
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
@@ -1036,8 +1036,8 @@ export class Beam extends Element {
               lastBeamX, lastBeamY + beamThickness,
               lastBeamX, lastBeamY,
             ];
-            let notename = this.notes[beamLine.endNote!].keyProps[0].key;
-            ctx.openGroup(`vf-note-${notename}`);
+            let notename = this.notes[beamLine.endNote!].getPrimaryNoteName();
+            ctx.openGroup(`note-${notename}`);
             ctx.polygon(points.join(" "), {
               'stroke-linecap': 'round',
               'stroke-linejoin': 'round',

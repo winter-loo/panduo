@@ -493,6 +493,7 @@ export class StaveNote extends StemmableNote {
   override setVoice(voice: Voice): this {
     this.voice = voice;
 
+    console.log('notedonut setVoice', this);
     this._noteDonuts.forEach((donut) => donut.setVoice(voice));
     this.preFormatted = false;
     return this;
@@ -506,7 +507,14 @@ export class StaveNote extends StemmableNote {
   }
 
   // Builds a `NoteHead` for each key in the note
-  buildNoteHeads(): NoteHead[] {
+  buildNoteHeads() {
+    // FIXME:
+    // buildNoteHeads will be called several times:
+    // - auto_stem() in constructor
+    // - reset() in constructor
+    // - setStemDirection
+    //
+    // if (this._noteHeads.length > 0) return;
     this._noteHeads = [];
     const stemDirection = this.getStemDirection();
     const keys = this.getKeys();
@@ -568,7 +576,7 @@ export class StaveNote extends StemmableNote {
       this._noteHeads[this.sortedKeyProps[i].index] = notehead;
 
       /* build NoteDonut */
-      const notedonut = new NoteDonut(this.config, {
+      const notedonut = new NoteDonut(this.config, this, {
         duration: this.duration,
         noteType: this.noteType,
         line: noteProps.line,
@@ -579,7 +587,7 @@ export class StaveNote extends StemmableNote {
 
       this._noteDonuts[this.sortedKeyProps[i].index] = notedonut;
     }
-    return this._noteHeads;
+    return;
   }
 
   // Automatically sets the stem direction based on the keys in the note
@@ -1179,12 +1187,11 @@ export class StaveNote extends StemmableNote {
       const { yTop, yBottom } = this.getNoteHeadBounds();
 
       const noteStemHeight = this.stem!.getHeight();
-      const stemWidth = this.getStem()?.getWidth() ?? Stem.WIDTH;
-      const flagX = this.getStemX() - stemWidth / 2;
+      const flagX = this.getStemX();
       const flagY =
         this.getStemDirection() === Stem.DOWN
           ? // Down stems are below the note head and have flags on the right.
-            yTop - noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
+            yTop + noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
           : // Up stems are above the note head and have flags on the right.
             yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
 
@@ -1300,7 +1307,7 @@ export class StaveNote extends StemmableNote {
     L('Rendering ', this.isChord() ? 'chord :' : 'note :', this.keys);
 
     // Apply the overall style -- may be contradicted by local settings:
-    const notename = `note-${this.keyProps[0].key}`;
+    const notename = `note-${this.getPrimaryNoteName()}`;
     ctx.openGroup(['stavenote', notename], this.getAttribute('id'));
     this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();

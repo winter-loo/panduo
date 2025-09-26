@@ -122,7 +122,7 @@ export class SVGContext extends RenderContext {
     this.attributes = {
       'stroke-width': 1.0,
       'stroke-dasharray': 'none',
-      fill: 'black',
+      fill: 'currentColor',
       stroke: 'black',
       shadowBlur: 0,
       shadowColor: 'black',
@@ -167,7 +167,7 @@ export class SVGContext extends RenderContext {
       if (classList instanceof Array) {
         classNames = classList.map((cls) => prefix(cls)).join(' ');
       } else {
-        classNames = classList;
+        classNames = prefix(classList);
       }
       group.setAttribute('class', classNames);
     }

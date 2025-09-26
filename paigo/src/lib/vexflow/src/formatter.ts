@@ -29,6 +29,11 @@ interface Distance {
   fromTickablePx?: number;
 }
 
+export interface MusicMeasure {
+  timeSignature: string;
+  notes: Note[];
+}
+
 export interface FormatterOptions {
   /** Defaults to Tables.SOFTMAX_FACTOR. */
   softmaxFactor?: number;
@@ -225,7 +230,7 @@ export class Formatter {
   static FormatAndDraw(
     ctx: RenderContext,
     stave: Stave,
-    notes: Note[],
+    mm: MusicMeasure,
     config: VexflowConfigInstance,
     params?: FormatParams | boolean,
   ): BoundingBox | undefined {
@@ -242,7 +247,7 @@ export class Formatter {
     };
 
     // Start by creating a voice and adding all the notes to it.
-    const voice = new Voice(config, Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(notes);
+    const voice = new Voice(config, mm.timeSignature).setMode(Voice.Mode.SOFT).addTickables(mm.notes);
 
     // Then create beams, if requested.
     const beams = options.autoBeam ? Beam.applyAndGetBeams(voice, config) : [];

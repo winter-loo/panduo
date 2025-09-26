@@ -4,17 +4,18 @@ export const load: LayoutLoad = () => {
   const song_data = {
     title: 'Different Colors',
     artist: 'Walk the Moon',
+    timeSignature: '3/4',
     measures: [
       {
         notes: [
-          { keys: ['b/4'], duration: '8', fingering: 2 },
-          { keys: ['g/4'], duration: '8', fingering: 2 },
-          { keys: ['e/4'], duration: '8', fingering: 2 },
-          { keys: ['c/4'], duration: '8', fingering: 2 },
-          { keys: ['e/4'], duration: '8', fingering: 2 },
-          { keys: ['f/4'], duration: '8', fingering: 2 },
-          { keys: ['g/4'], duration: '8', fingering: 2 },
-          { keys: ['e/5'], duration: '8', fingering: 2 },
+          { keys: ['f/4'], duration: '4', fingering: 2 },
+          { keys: ['f/4'], duration: '4', fingering: 2 },
+          { keys: ['f/4'], duration: '4', fingering: 2 },
+          // { keys: ['e/4'], duration: '8', fingering: 2 },
+          // { keys: ['e/4'], duration: '8', fingering: 2 },
+          // { keys: ['f/4'], duration: '8', fingering: 2 },
+          // { keys: ['g/4'], duration: '8', fingering: 2 },
+          // { keys: ['e/5'], duration: '8', fingering: 2 },
           // { keys: ['a/4'], duration: '8', fingering: 2 },
           // { keys: ['b/4'], duration: '8', fingering: 2 },
           // { keys: ['e/5'], duration: '4', fingering: 4 },
@@ -23,7 +24,10 @@ export const load: LayoutLoad = () => {
         ],
       },
       {
-        notes: [{ keys: ['b/4'], duration: '1', fingering: 5 }],
+        notes: [
+          { keys: ['b/4'], duration: '2d', fingering: 5 },
+          // { keys: ['b/4'], duration: '4', fingering: 5 },
+        ],
       },
     ],
   };

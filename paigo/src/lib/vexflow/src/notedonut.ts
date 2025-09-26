@@ -44,6 +44,7 @@ export class NoteDonut extends Note {
   private dom?: Element;
   private fullExpanded: boolean;
   private donutWidth: number;
+  private bindingNote: Note;
 
   // map notehead SMuFL codes to the corresponding SMuFL code with ledger line
   protected ledger: Record<string, string> = {
@@ -51,11 +52,12 @@ export class NoteDonut extends Note {
     '\ue4e4' /*restHalf*/: '\ue4f5' /*restHalfLegerLine*/,
   };
 
-  constructor(config: VexflowConfigInstance, noteStruct: NoteDonutStruct) {
+  constructor(config: VexflowConfigInstance, bindingNote: Note, noteStruct: NoteDonutStruct) {
     super(config, noteStruct);
 
     this.fullExpanded = false;
     this.donutWidth = 0;
+    this.bindingNote = bindingNote;
 
     this.x = noteStruct.x || 0;
     this.y = noteStruct.y || 0;
@@ -137,7 +139,7 @@ export class NoteDonut extends Note {
       if (stave) {
         const justifyWidth = stave.getJustifyWidth();
         const totalTicks = voice.getTotalTicks().value();
-        const noteTicks = this.getTicks().value();
+        const noteTicks = this.bindingNote.getTicks().value();
         this.setWidth((noteTicks / totalTicks) * justifyWidth);
       }
     }

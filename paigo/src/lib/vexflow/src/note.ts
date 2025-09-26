@@ -343,6 +343,10 @@ export abstract class Note extends Tickable {
     };
   }
 
+  getPrimaryNoteName(): string {
+    return this.keyProps[0].key;
+  }
+
   /**
    * Get the play note, which is arbitrary data that can be used by an
    * audio player.

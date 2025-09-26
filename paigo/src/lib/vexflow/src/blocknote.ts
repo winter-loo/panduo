@@ -1074,7 +1074,7 @@ export class BlockNote extends Note {
     L('Rendering ', this.isChord() ? 'chord :' : 'note :', this.keys);
 
     // Apply the overall style -- may be contradicted by local settings:
-    const pitch = `pitch-${this.keyProps[0].key}`;
+    const pitch = `pitch-${this.getPrimaryNoteName()}`;
     ctx.openGroup(['blocknote', pitch], this.getAttribute('id'));
     this.drawLedgerLines();
     this.drawNoteHeads();

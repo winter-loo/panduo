@@ -152,7 +152,7 @@
       this.notes = [];
     }
 
-    addMeasure(notes: StaveNoteStruct[]) {
+    addMeasure(timeSignature: string, notes: StaveNoteStruct[]) {
       const measureStave = new Stave(this.staveX, 0, layout.measureWidth, this.config);
       this.staveX += layout.measureWidth;
       measureStave.setContext(this.context).draw();
@@ -168,9 +168,15 @@
       });
 
       if (staveNotes.length > 0) {
-        VexFlow.Formatter.FormatAndDraw(this.context, measureStave, staveNotes, this.config, {
-          autoBeam: true,
-        });
+        VexFlow.Formatter.FormatAndDraw(
+          this.context,
+          measureStave,
+          { timeSignature, notes: staveNotes },
+          this.config,
+          {
+            autoBeam: true,
+          },
+        );
       }
     }
   }
@@ -192,7 +198,7 @@
     movingStaff.prepareForRedraw();
 
     data.song.measures.forEach((measure) => {
-      movingStaff?.addMeasure(measure.notes);
+      movingStaff?.addMeasure(data.song.timeSignature, measure.notes);
     });
   }
 
