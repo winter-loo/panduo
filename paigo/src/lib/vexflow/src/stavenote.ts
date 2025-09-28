@@ -1210,6 +1210,7 @@ export class StaveNote extends StemmableNote {
 
   // Draw the NoteHeads
   drawNoteDonuts(): void {
+    if (this.isRest()) return;
     const ctx = this.checkContext();
     this._noteDonuts.forEach((notedonut) => {
       notedonut.setContext(ctx).drawWithStyle();
