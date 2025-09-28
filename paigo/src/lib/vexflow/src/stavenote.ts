@@ -587,7 +587,7 @@ export class StaveNote extends StemmableNote {
 
       this._noteDonuts[this.sortedKeyProps[i].index] = notedonut;
     }
-    return;
+    return this._noteHeads;
   }
 
   // Automatically sets the stem direction based on the keys in the note
