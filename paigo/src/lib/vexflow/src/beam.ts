@@ -997,6 +997,7 @@ export class Beam extends Element {
         if (lastBeamX) {
           const lastBeamY = this.getSlopeY(lastBeamX, firstStemX, beamY, this.slope);
 
+          // build whole beam line
           let points = [
             startBeamX, startBeamY,
             startBeamX, startBeamY + beamThickness,
@@ -1011,6 +1012,7 @@ export class Beam extends Element {
             fill: 'currentColor',
           });
 
+          // build note's part beamline
           let midBeamX = startBeamX + (lastBeamX - startBeamX) / 2;
           let midBeamY = this.getSlopeY(midBeamX, firstStemX, beamY, this.slope);
           points = [
