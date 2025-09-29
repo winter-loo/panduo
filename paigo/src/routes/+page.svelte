@@ -14,6 +14,7 @@
   import { MovableElement } from '$lib/movable';
   import { Button } from '$lib/components/ui/button/index';
   import GridOverlayControl from '$lib/components/debug/GridOverlayControl.svelte';
+  import TempoSlider from '$lib/components/ui/TempoSlider.svelte';
 
   const { data }: PageProps = $props();
 
@@ -109,6 +110,9 @@
     staveX = 0;
     notes: StaveNote[] = [];
     private noteSpanAllVisible = false;
+    private tempo: number = 60;
+    private beatsPerMeasure: number = 4;
+    private pixelsPerBeat: number = layout.measureWidth / 4;
 
     private readonly handleNoteClick = (note: StaveNote) => {
       const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
@@ -124,11 +128,15 @@
       notesElement: HTMLElement,
       maxOffsetX: number,
       config: ConfigInstance,
+      tempo: number,
+      timeSignature: string,
     ) {
       super(maxOffsetX);
       this.config = config;
       this.clefElement = clefElement as HTMLDivElement;
       this.notesElement = notesElement as HTMLDivElement;
+      this.setTiming(tempo, timeSignature);
+      this.getPixelsPerSecond = () => this.computePixelsPerSecond();
 
       // this.drawClef();
       this.prepareForRedraw();
@@ -201,6 +209,28 @@
       this.notes.forEach((note) => (visible ? note.showNoteSpan() : note.hideNoteSpan()));
     }
 
+    setTiming(tempo: number, timeSignature: string) {
+      this.tempo = tempo > 0 ? tempo : 60;
+      this.beatsPerMeasure = this.parseBeatsPerMeasure(timeSignature);
+      this.pixelsPerBeat = layout.measureWidth / this.beatsPerMeasure;
+    }
+
+    getTempo(): number {
+      return this.tempo;
+    }
+
+    private parseBeatsPerMeasure(timeSig: string): number {
+      const [beats] = timeSig.split('/');
+      const parsed = Number.parseInt(beats ?? '4', 10);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 4;
+    }
+
+    private computePixelsPerSecond(): number {
+      if (this.tempo <= 0) return 0;
+      const beatsPerSecond = this.tempo / 60;
+      return this.pixelsPerBeat * beatsPerSecond;
+    }
+
     private registerNoteInteractions(notes: StaveNote[]) {
       notes.forEach((note) => {
         const group = note.getSVGElement() as SVGGElement | null;
@@ -215,6 +245,7 @@
   let movingStaff = $state<MovingStaff | null>(null);
 
   let noteSpanVisible = $state(false);
+  let tempo = $state(data.song.tempo ?? 60);
 
   function renderSong() {
     if (!BindingDom.fixedClef || !BindingDom.notesContainer) return;
@@ -224,11 +255,16 @@
         BindingDom.notesContainer,
         maxOffsetX,
         configInstance,
+        tempo,
+        data.song.timeSignature,
       );
+    } else {
+      movingStaff.setTiming(tempo, data.song.timeSignature);
     }
 
     movingStaff.prepareForRedraw();
     movingStaff.setNoteSpanVisible(noteSpanVisible);
+    tempo = movingStaff.getTempo();
 
     data.song.measures.forEach((measure) => {
       movingStaff?.addMeasure(data.song.timeSignature, measure.notes);
@@ -239,6 +275,11 @@
     noteSpanVisible = !noteSpanVisible;
     movingStaff?.setNoteSpanVisible(noteSpanVisible);
   }
+
+  $effect(() => {
+    if (!movingStaff) return;
+    movingStaff.setTiming(tempo, data.song.timeSignature);
+  });
 
   let debugGridEnabled = $state(false);
   let debugGrid: DebugGrid;
@@ -314,6 +355,9 @@
   <Button type="button" onclick={toggleNoteSpan}>
     {noteSpanVisible ? 'hide span' : 'show span'}
   </Button>
+  <div class="tempo-control">
+    <TempoSlider bind:value={tempo} min={40} max={200} step={5} />
+  </div>
 </div>
 
 <style>
@@ -346,6 +390,13 @@
     gap: 0.75rem;
     margin-top: 1rem;
     align-items: center;
+  }
+
+  .tempo-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 220px;
   }
 
   :global(.notespan-click-target) {

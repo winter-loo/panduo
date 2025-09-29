@@ -1,0 +1,1 @@
+Professional vector logo, brand name 'PANDUO', organic and energetic look, rounded yet bold typography, integrated a music eigth note or the note sprout replacing a letter, flat vector design, earthy green and natural brown palette, simple and powerful composition, scalable vector, strong natural identity, perfect for organic beverage branding

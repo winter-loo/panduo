@@ -16,14 +16,17 @@ export class MovableElement {
   moveAnimationId: number | null;
   currentPosComp: any;
   clampPlugin: any;
+  protected getPixelsPerSecond?: () => number;
+  private lastFrameTime?: number;
   onMove?: (offsetX: number) => void; // positive leftward distance
   onDragStart?: () => void;
   onDragEnd?: () => void;
 
-  constructor(maxOffsetX: number) {
+  constructor(maxOffsetX: number, getPixelsPerSecond?: () => number) {
     this.maxOffsetX = maxOffsetX;
     this.currentOffsetX = 0;
-    this.moveAnimationId = 0;
+    this.moveAnimationId = null;
+    this.getPixelsPerSecond = getPixelsPerSecond;
     // position() plugin controls the element's translate when NOT actively dragging.
     // We wrap it in a Compartment so we can change the current position reactively
     // from imperative methods like move()/reset().
@@ -75,17 +78,37 @@ export class MovableElement {
   };
 
   move = () => {
-    const moveLeft = () => {
-      this.currentOffsetX = Math.min(this.currentOffsetX + 1, this.maxOffsetX);
+    if (this.moveAnimationId) return;
+
+    const moveLeft = (timestamp: number) => {
+      if (this.lastFrameTime === undefined) {
+        this.lastFrameTime = timestamp;
+      }
+
+      const deltaMs = timestamp - this.lastFrameTime;
+      this.lastFrameTime = timestamp;
+
+      const pixelsPerSecond = this.getPixelsPerSecond ? this.getPixelsPerSecond() : 60;
+      if (!Number.isFinite(pixelsPerSecond) || pixelsPerSecond <= 0) {
+        this.moveAnimationId = null;
+        this.lastFrameTime = undefined;
+        return;
+      }
+      const step = (pixelsPerSecond * deltaMs) / 1000;
+      this.currentOffsetX = Math.min(this.currentOffsetX + step, this.maxOffsetX);
       this.currentPosComp.current = position({
         current: { x: -this.currentOffsetX, y: 0 },
       });
       this.onMove?.(this.currentOffsetX);
-      if (this.currentOffsetX != this.maxOffsetX) {
+      if (this.currentOffsetX < this.maxOffsetX) {
         this.moveAnimationId = requestAnimationFrame(moveLeft);
+      } else {
+        this.moveAnimationId = null;
+        this.lastFrameTime = undefined;
       }
     };
-    if (!this.moveAnimationId) moveLeft();
+
+    this.moveAnimationId = requestAnimationFrame(moveLeft);
   };
 
   stop = () => {
@@ -93,6 +116,7 @@ export class MovableElement {
       cancelAnimationFrame(this.moveAnimationId);
       this.moveAnimationId = null;
     }
+    this.lastFrameTime = undefined;
   };
 
   reset = () => {

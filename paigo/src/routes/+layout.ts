@@ -1,10 +1,11 @@
 import type { LayoutLoad } from './$types';
 
 export const load: LayoutLoad = () => {
-  const song_data = {
+  let song_data = {
     title: 'Different Colors',
     artist: 'Walk the Moon',
     timeSignature: '4/4',
+    tempo: 60,
     measures: [
       {
         notes: [
