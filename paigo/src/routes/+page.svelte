@@ -5,7 +5,7 @@
     RenderContext,
     Renderer,
     Stave,
-    StemmableNote,
+    StaveNote,
     VexFlow,
     type DebugGridOptions,
     type StaveNoteStruct,
@@ -107,7 +107,8 @@
     renderer!: Renderer;
     context!: RenderContext;
     staveX = 0;
-    notes: StemmableNote[] = [];
+    notes: StaveNote[] = [];
+    private noteSpanVisible = true;
 
     constructor(
       clefElement: HTMLElement,
@@ -159,6 +160,11 @@
 
       const staveNotes = notes.map((note) => {
         const staveNote = new VexFlow.StaveNote(this.config, { ...note, autoStem: true });
+        if (this.noteSpanVisible) {
+          staveNote.showNoteSpan();
+        } else {
+          staveNote.hideNoteSpan();
+        }
         if (note.duration.includes('d')) {
           const dot = new VexFlow.Dot(this.config);
           staveNote.addModifier(dot, 0);
@@ -179,10 +185,17 @@
         );
       }
     }
+
+    setNoteSpanVisible(visible: boolean) {
+      this.noteSpanVisible = visible;
+      this.notes.forEach((note) => (visible ? note.showNoteSpan() : note.hideNoteSpan()));
+    }
   }
 
   const maxOffsetX = data.song.measures.length * layout.measureWidth;
   let movingStaff = $state<MovingStaff | null>(null);
+
+  let noteSpanVisible = $state(true);
 
   function renderSong() {
     if (!BindingDom.fixedClef || !BindingDom.notesContainer) return;
@@ -196,10 +209,16 @@
     }
 
     movingStaff.prepareForRedraw();
+    movingStaff.setNoteSpanVisible(noteSpanVisible);
 
     data.song.measures.forEach((measure) => {
       movingStaff?.addMeasure(data.song.timeSignature, measure.notes);
     });
+  }
+
+  function toggleNoteSpan() {
+    noteSpanVisible = !noteSpanVisible;
+    movingStaff?.setNoteSpanVisible(noteSpanVisible);
   }
 
   let debugGridEnabled = $state(false);
@@ -273,6 +292,9 @@
   <Button id="pauseButton" type="button" onclick={movingStaff?.stop}>pause</Button>
   <Button id="resumeButton" type="button" onclick={movingStaff?.move}>resume</Button>
   <Button id="resetButton" type="button" onclick={movingStaff?.reset}>reset</Button>
+  <Button type="button" onclick={toggleNoteSpan}>
+    {noteSpanVisible ? 'hide span' : 'show span'}
+  </Button>
 </div>
 
 <style>

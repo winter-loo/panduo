@@ -105,7 +105,7 @@ export const enum Category {
   Modifier = 'Modifier',
   MultiMeasureRest = 'MultiMeasureRest',
   Note = 'Note',
-  NoteDonut = 'NoteDonut',
+  NoteSpan = 'NoteSpan',
   NoteHead = 'NoteHead',
   NoteRect = 'NoteRect',
   NoteSubGroup = 'NoteSubGroup',

@@ -13,7 +13,7 @@
   function showNote(noteNames: string[]) {
     VexFlow.Clef.DEBUG = true;
     VexFlow.NoteHead.DEBUG = true;
-    VexFlow.NoteDonut.DEBUG = true;
+    VexFlow.NoteSpan.DEBUG = true;
 
     const renderer = new VexFlow.Renderer(outputContainer, VexFlow.Renderer.Backends.SVG);
     const width = 160;
@@ -107,7 +107,7 @@
     }
   }
 
-  .keyboard :global(.notedonut) {
+  .keyboard :global(.notespan) {
     display: none;
   }
 </style>

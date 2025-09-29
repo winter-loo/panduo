@@ -17,13 +17,12 @@ import { Metrics } from './metrics';
 import { Modifier } from './modifier';
 import { ModifierContextState } from './modifiercontext';
 import { KeyProps, Note, NoteStruct } from './note';
-import { NoteDonut } from './notedonut';
+import { NoteSpan } from './notespan';
 import { NoteHead } from './notehead';
 import { Stave } from './stave';
 import { Stem, StemOptions } from './stem';
 import { StemmableNote } from './stemmablenote';
 import { Tables } from './tables';
-import { TickContext } from './tickcontext';
 import { Category } from './typeguard';
 import { defined, log, midLine, RuntimeError } from './util';
 import { Voice } from './voice';
@@ -404,7 +403,8 @@ export class StaveNote extends StemmableNote {
   protected ledgerLineStyle: ElementStyle;
 
   private _noteHeads: NoteHead[];
-  private _noteDonuts: NoteDonut[];
+  private _noteSpans: NoteSpan[];
+  private noteSpanVisible: boolean;
 
   // Sorted variant of keyProps used internally.
   private sortedKeyProps: { keyProps: KeyProps; index: number }[] = [];
@@ -433,7 +433,8 @@ export class StaveNote extends StemmableNote {
 
     // Drawing
     this._noteHeads = [];
-    this._noteDonuts = [];
+    this._noteSpans = [];
+    this.noteSpanVisible = true;
     this.modifiers = [];
 
     this.renderOptions = {
@@ -490,22 +491,6 @@ export class StaveNote extends StemmableNote {
     return this;
   }
 
-  override setVoice(voice: Voice): this {
-    this.voice = voice;
-
-    console.log('notedonut setVoice', this);
-    this._noteDonuts.forEach((donut) => donut.setVoice(voice));
-    this.preFormatted = false;
-    return this;
-  }
-
-  override setTickContext(tc: TickContext): this {
-    this.tickContext = tc;
-    this._noteDonuts.forEach((donut) => donut.setTickContext(tc));
-    this.preFormatted = false;
-    return this;
-  }
-
   // Builds a `NoteHead` for each key in the note
   buildNoteHeads() {
     // FIXME:
@@ -516,6 +501,7 @@ export class StaveNote extends StemmableNote {
     //
     // if (this._noteHeads.length > 0) return;
     this._noteHeads = [];
+    this._noteSpans = [];
     const stemDirection = this.getStemDirection();
     const keys = this.getKeys();
 
@@ -575,17 +561,18 @@ export class StaveNote extends StemmableNote {
       this.addChild(notehead);
       this._noteHeads[this.sortedKeyProps[i].index] = notehead;
 
-      /* build NoteDonut */
-      const notedonut = new NoteDonut(this.config, this, {
-        duration: this.duration,
-        noteType: this.noteType,
-        line: noteProps.line,
-      });
+      /* build NoteSpan */
+      const noteSpan = new NoteSpan(this.config);
+      noteSpan.fontInfo = this.fontInfo;
+      if (this.noteSpanVisible) {
+        noteSpan.show();
+      } else {
+        noteSpan.hide();
+      }
+      console.log(`notespan is built, line=${line}`);
 
-      notedonut.fontInfo = this.fontInfo;
-      console.log(`notedonut is built, line=${line}, width=${notedonut.width}`);
-
-      this._noteDonuts[this.sortedKeyProps[i].index] = notedonut;
+      this.addChild(noteSpan);
+      this._noteSpans[this.sortedKeyProps[i].index] = noteSpan;
     }
     return this._noteHeads;
   }
@@ -768,10 +755,6 @@ export class StaveNote extends StemmableNote {
     const ys = this._noteHeads.map((notehead) => {
       notehead.setStave(stave);
       return notehead.getY();
-    });
-
-    this._noteDonuts.forEach((notedonut) => {
-      notedonut.setStave(stave);
     });
 
     this.setYs(ys);
@@ -1002,7 +985,6 @@ export class StaveNote extends StemmableNote {
 
     this.setWidth(width);
 
-    this._noteDonuts.forEach((donut) => donut.preFormat());
     this.preFormatted = true;
   }
 
@@ -1082,8 +1064,8 @@ export class StaveNote extends StemmableNote {
     return this._noteHeads.slice();
   }
 
-  get noteDonus(): NoteDonut[] {
-    return this._noteDonuts.slice();
+  get noteSpans(): NoteSpan[] {
+    return this._noteSpans.slice();
   }
 
   // Draw the ledger lines between the stave and the highest/lowest keys
@@ -1208,13 +1190,55 @@ export class StaveNote extends StemmableNote {
     });
   }
 
-  // Draw the NoteHeads
-  drawNoteDonuts(): void {
-    if (this.isRest()) return;
+  // Draw the highlight spans when enabled.
+  drawNoteSpans(): void {
+    if (!this.noteSpanVisible || this.isRest()) return;
+
     const ctx = this.checkContext();
-    this._noteDonuts.forEach((notedonut) => {
-      notedonut.setContext(ctx).drawWithStyle();
+    const staffLineWidth = this.config.get('Stave.style.lineWidth');
+    const spanWidth = this.computeNoteSpanWidth();
+
+    this._noteSpans.forEach((span, index) => {
+      const noteHead = this._noteHeads[index];
+      if (!noteHead) return;
+
+      const bbox = noteHead.getBoundingBox();
+      span
+        .setContext(ctx)
+        .setGeometry(bbox.getX(), bbox.getY(), spanWidth, bbox.getH(), staffLineWidth)
+        .show()
+        .drawWithStyle();
     });
+  }
+
+  showNoteSpan(): this {
+    this.noteSpanVisible = true;
+    this._noteSpans.forEach((span) => span.show().resetAnimation());
+    return this;
+  }
+
+  hideNoteSpan(): this {
+    this.noteSpanVisible = false;
+    this._noteSpans.forEach((span) => span.hide());
+    return this;
+  }
+
+  private computeNoteSpanWidth(): number {
+    const voice = this.getVoice();
+    const stave = voice?.getStave() ?? this.stave;
+    const totalTicks = voice?.getTotalTicks().value() ?? 0;
+    const noteTicks = this.getTicks().value();
+
+    if (!stave || totalTicks === 0) {
+      return this.getGlyphWidth();
+    }
+
+    const justifyWidth = stave.getJustifyWidth();
+    if (!justifyWidth) {
+      return this.getGlyphWidth();
+    }
+
+    return (noteTicks / totalTicks) * justifyWidth;
   }
 
   override drawStem(stemOptions?: StemOptions): void {
@@ -1297,7 +1321,6 @@ export class StaveNote extends StemmableNote {
 
     // Format note head x positions
     this._noteHeads.forEach((notehead) => notehead.setX(xBegin));
-    this._noteDonuts.forEach((notedonut) => notedonut.setX(xBegin));
 
     if (this.stem) {
       // Format stem x positions
@@ -1314,15 +1337,17 @@ export class StaveNote extends StemmableNote {
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
     this.drawFlag();
-    this.drawNoteDonuts();
+    this.drawNoteSpans();
     this.drawPointerRect();
     ctx.closeGroup();
     this.setRendered();
   }
 
   expandToDelta(x: number, timestamp?: DOMHighResTimeStamp): boolean {
+    if (!this.noteSpanVisible) return true;
+
     let allExpanded = true;
-    this._noteDonuts.forEach((donut) => (allExpanded &&= donut.expandToDelta(x, timestamp)));
+    this._noteSpans.forEach((span) => (allExpanded &&= span.expandToDelta(x, timestamp)));
     return allExpanded;
   }
 }

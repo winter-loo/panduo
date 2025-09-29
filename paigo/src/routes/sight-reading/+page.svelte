@@ -259,7 +259,7 @@
     }
   }
 
-  #ani-container :global(.notedonut) {
+  #ani-container :global(.notespan) {
     display: none;
   }
 </style>
