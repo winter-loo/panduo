@@ -434,7 +434,7 @@ export class StaveNote extends StemmableNote {
     // Drawing
     this._noteHeads = [];
     this._noteSpans = [];
-    this.noteSpanVisible = true;
+    this.noteSpanVisible = false;
     this.modifiers = [];
 
     this.renderOptions = {
@@ -1197,6 +1197,7 @@ export class StaveNote extends StemmableNote {
     const ctx = this.checkContext();
     const staffLineWidth = this.config.get('Stave.style.lineWidth');
     const spanWidth = this.computeNoteSpanWidth();
+    const noteGroup = this.getSVGElement() as SVGGElement | null;
 
     this._noteSpans.forEach((span, index) => {
       const noteHead = this._noteHeads[index];
@@ -1206,14 +1207,27 @@ export class StaveNote extends StemmableNote {
       span
         .setContext(ctx)
         .setGeometry(bbox.getX(), bbox.getY(), spanWidth, bbox.getH(), staffLineWidth)
-        .show()
-        .drawWithStyle();
+        .show();
+
+      if (!span.isRendered()) {
+        span.drawWithStyle();
+      }
+
+      if (noteGroup) {
+        const spanGroup = span.getDom();
+        if (spanGroup && spanGroup.parentNode !== noteGroup) {
+          noteGroup.appendChild(spanGroup);
+        }
+      }
     });
   }
 
   showNoteSpan(): this {
     this.noteSpanVisible = true;
     this._noteSpans.forEach((span) => span.show().resetAnimation());
+    if (this.isRendered()) {
+      this.drawNoteSpans();
+    }
     return this;
   }
 

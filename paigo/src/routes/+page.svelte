@@ -108,7 +108,16 @@
     context!: RenderContext;
     staveX = 0;
     notes: StaveNote[] = [];
-    private noteSpanVisible = true;
+    private noteSpanAllVisible = false;
+
+    private readonly handleNoteClick = (note: StaveNote) => {
+      const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
+      if (hasVisibleSpan) {
+        note.hideNoteSpan();
+      } else {
+        note.showNoteSpan();
+      }
+    };
 
     constructor(
       clefElement: HTMLElement,
@@ -160,7 +169,7 @@
 
       const staveNotes = notes.map((note) => {
         const staveNote = new VexFlow.StaveNote(this.config, { ...note, autoStem: true });
-        if (this.noteSpanVisible) {
+        if (this.noteSpanAllVisible) {
           staveNote.showNoteSpan();
         } else {
           staveNote.hideNoteSpan();
@@ -183,19 +192,29 @@
             autoBeam: true,
           },
         );
+        this.registerNoteInteractions(staveNotes);
       }
     }
 
     setNoteSpanVisible(visible: boolean) {
-      this.noteSpanVisible = visible;
+      this.noteSpanAllVisible = visible;
       this.notes.forEach((note) => (visible ? note.showNoteSpan() : note.hideNoteSpan()));
+    }
+
+    private registerNoteInteractions(notes: StaveNote[]) {
+      notes.forEach((note) => {
+        const group = note.getSVGElement() as SVGGElement | null;
+        if (!group) return;
+        group.classList.add('notespan-click-target');
+        group.addEventListener('click', () => this.handleNoteClick(note));
+      });
     }
   }
 
   const maxOffsetX = data.song.measures.length * layout.measureWidth;
   let movingStaff = $state<MovingStaff | null>(null);
 
-  let noteSpanVisible = $state(true);
+  let noteSpanVisible = $state(false);
 
   function renderSong() {
     if (!BindingDom.fixedClef || !BindingDom.notesContainer) return;
@@ -327,5 +346,9 @@
     gap: 0.75rem;
     margin-top: 1rem;
     align-items: center;
+  }
+
+  :global(.notespan-click-target) {
+    cursor: pointer;
   }
 </style>

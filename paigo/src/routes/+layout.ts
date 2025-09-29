@@ -34,8 +34,7 @@ export const load: LayoutLoad = () => {
         notes: [
           { keys: ['f/4'], duration: '2d', fingering: 2 },
           { keys: ['b/4'], duration: '8', fingering: 5 },
-          { keys: ['a/4'], duration: '4', fingering: 5 },
-          { keys: ['f/4'], duration: '4', fingering: 5 },
+          { keys: ['a/4'], duration: '8', fingering: 5 },
         ],
       },
       {
