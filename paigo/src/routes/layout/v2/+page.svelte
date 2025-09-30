@@ -2,7 +2,6 @@
   import Button from '$lib/components/ui/button/button.svelte';
   import { fade } from 'svelte/transition';
   import { NoteDuration, notu } from '$lib/notu';
-  import { duration } from 'happy-dom/lib/PropertySymbol.js';
 
   let showDonut = $state(false);
 
@@ -52,7 +51,7 @@
 <!-- <img src="/image0.png" alt="iPhone screenshot" class="w-[5.51in] h-[2.54in]"/> -->
 <!-- <img src="/image0.png" alt="iPhone screenshot" class="w-[844px] h-[390px]"/> -->
 
-<Button onclick={() => (showDonut = !showDonut)} class="fixed -mt-16">show donut</Button>
+<Button onclick={() => (showDonut = !showDonut)} class="fixed mt-10">show donut</Button>
 
 {#snippet donut(duration: NoteDuration, fullWidth: number, borderWidth: number)}
   {#if showDonut}
