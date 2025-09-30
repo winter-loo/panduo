@@ -355,11 +355,11 @@
   <Button type="button" onclick={toggleNoteSpan}>
     {noteSpanVisible ? 'hide span' : 'show span'}
   </Button>
-  <div class="tempo-control">
-    <TempoSlider bind:value={tempo} min={40} max={200} step={5} />
-  </div>
 </div>
 
+<div class="bg-[#f3f3f3] ml-2 w-42 h-16 flex items-center justify-center rounded-xl">
+  <TempoSlider bind:value={tempo} min={40} max={200} step={5} />
+</div>
 <style>
   #moving-staff {
     display: flex;
@@ -390,13 +390,6 @@
     gap: 0.75rem;
     margin-top: 1rem;
     align-items: center;
-  }
-
-  .tempo-control {
-    display: inline-flex;
-    align-items: center;
-    gap: 1rem;
-    min-width: 220px;
   }
 
   :global(.notespan-click-target) {

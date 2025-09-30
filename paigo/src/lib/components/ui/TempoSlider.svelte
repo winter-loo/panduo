@@ -55,7 +55,7 @@
     value = normalize(value + delta * Math.max(1, step));
   }
 
-  function handleArrowPointerDown(event: PointerEvent, direction: 1 | -1) {
+  function changeTempo(event: PointerEvent, direction: 1 | -1) {
     event.preventDefault();
     handlePointerUp();
     adjust(direction);
@@ -130,7 +130,7 @@
       type="button"
       class="tempo-slider__control-button"
       aria-label="Increase tempo"
-      onpointerdown={(event) => handleArrowPointerDown(event, 1)}
+      onpointerdown={(event) => changeTempo(event, 1)}
     >
       <svg width="18" height="18.75" viewBox="0 0 18 18.75" aria-hidden="true">
         <path d="M9 3 15 9.75 3 9.75Z" fill="#888888" />
@@ -140,7 +140,7 @@
       type="button"
       class="tempo-slider__control-button"
       aria-label="Decrease tempo"
-      onpointerdown={(event) => handleArrowPointerDown(event, -1)}
+      onpointerdown={(event) => changeTempo(event, -1)}
     >
       <svg width="18" height="18.75" viewBox="0 0 18 18.75" aria-hidden="true">
         <path d="M9 15.75 3 9 15 9Z" fill="#888888" />
@@ -156,17 +156,15 @@
   }
 
   .tempo-slider {
+    --button-text-font-size: 24px;
     position: relative;
     display: inline-flex;
-    align-items: stretch;
     background: #f3f3f3;
-    border-radius: 24px;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25), 0 -4px 4px rgba(255, 255, 255, 1);
+    border-radius: var(--button-text-font-size);
     overflow: hidden;
     color: #4d4d4d;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-width: 150px;
-    height: 48px;
+    transition: border-radius 0.15s ease;
   }
 
   .tempo-slider__display {
@@ -175,9 +173,8 @@
     align-items: center;
     gap: 8px;
     padding: 10px 0;
-    padding-left: 24px;
-    padding-right: 8px;
-    font-size: 24px;
+    padding-left: var(--button-text-font-size);
+    font-size: var(--button-text-font-size);
     line-height: 1.2;
     cursor: ns-resize;
     user-select: none;
@@ -186,33 +183,31 @@
   .tempo-slider__controls {
     display: flex;
     flex-direction: column;
-    width: 24px;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: var(--button-text-font-size);
     background: transparent;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.15s ease;
   }
 
   .tempo-slider__control-button {
-    flex: 1;
-    width: 24px;
+    width: calc(var(--button-text-font-size) - 2px);
+    height: calc(var(--button-text-font-size) - 2px);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
+    background: #f3f3f3;
     border: none;
     padding: 0;
     cursor: pointer;
-    box-shadow: inset 0 2px 2px rgba(204, 204, 204, 1), inset 0 -2px 2px rgba(204, 204, 204, 1);
+    box-shadow: inset 0.5px 0.5px 0 rgba(0, 0, 0, 0.5), inset -0.5px -0.5px 0 rgba(255, 255, 255, 1);
     transition: background 0.15s ease;
   }
 
-  .tempo-slider__control-button + .tempo-slider__control-button {
-    border-top: 1px solid rgba(204, 204, 204, 0.5);
-  }
-
   .tempo-slider:hover {
-    border-radius: 24px 0 0 24px;
+    border-radius: var(--button-text-font-size) 0 0 var(--button-text-font-size);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25), 0 -4px 4px rgba(255, 255, 255, 1);
   }
 
   .tempo-slider:hover .tempo-slider__controls {
@@ -220,22 +215,19 @@
     pointer-events: auto;
   }
 
-  .tempo-slider__control-button:first-child {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-  }
-
-  .tempo-slider__control-button:last-child {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-
   .tempo-slider__control-button:hover,
   .tempo-slider__control-button:focus-visible {
-    background: #f7f7f7;
+    background: #fafafa;
+  }
+  .tempo-slider__control-button:active {
+    background: #fefefe;
   }
 
   .tempo-slider__control-button svg {
     pointer-events: none;
+  }
+
+  .tempo-slider__value {
+    min-width: calc(var(--button-text-font-size) * 2);
   }
 </style>
