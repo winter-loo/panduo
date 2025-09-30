@@ -112,6 +112,7 @@ export interface VexflowConfigShape {
   fontScale: number,
   fontWeight: string,
   fontStyle: string,
+  tempo: number,
   Stave: StaveConfigValues;
   Clef: ClefConfigValues;
   Stem: StemConfigValues;
@@ -125,6 +126,7 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
   fontScale: 1.0,
   fontWeight: 'normal',
   fontStyle: 'normal',
+  tempo: 60,
   Stave: {
     spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE,
     spaceAboveStaffLn: 4,
@@ -193,6 +195,19 @@ export class VexflowConfigInstance {
 
   fork(overrides?: DeepPartial<VexflowConfigShape>): VexflowConfigInstance {
     return new VexflowConfigInstance(this, overrides);
+  }
+
+  setTempo(tempo: number): void {
+    const safeTempo = Number.isFinite(tempo) && tempo > 0 ? tempo : DEFAULT_CONFIG.tempo;
+    const overrides =
+      this.overrides && isPlainObject(this.overrides)
+        ? { ...(this.overrides as Record<string, unknown>) }
+        : {};
+    overrides.tempo = safeTempo;
+    this.overrides = overrides as DeepPartial<VexflowConfigShape>;
+    this.cached = undefined;
+    this.cacheStyle.clear();
+    this.cacheFont.clear();
   }
 
   stave(overrides?: DeepPartial<StaveConfigValues>): StaveConfigValues {

@@ -206,13 +206,20 @@
 
     setNoteSpanVisible(visible: boolean) {
       this.noteSpanAllVisible = visible;
-      this.notes.forEach((note) => (visible ? note.showNoteSpan() : note.hideNoteSpan()));
+      this.notes.forEach((note) => {
+        if (visible) {
+          note.showNoteSpan();
+        } else {
+          note.hideNoteSpan();
+        }
+      });
     }
 
     setTiming(tempo: number, timeSignature: string) {
       this.tempo = tempo > 0 ? tempo : 60;
       this.beatsPerMeasure = this.parseBeatsPerMeasure(timeSignature);
       this.pixelsPerBeat = layout.measureWidth / this.beatsPerMeasure;
+      this.config.setTempo(this.tempo);
     }
 
     getTempo(): number {
@@ -360,6 +367,7 @@
 <div class="bg-[#f3f3f3] ml-2 w-42 h-16 flex items-center justify-center rounded-xl">
   <TempoSlider bind:value={tempo} min={40} max={200} step={5} />
 </div>
+
 <style>
   #moving-staff {
     display: flex;

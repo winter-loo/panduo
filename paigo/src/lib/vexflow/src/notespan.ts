@@ -6,12 +6,16 @@ import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
+import { Tables } from './tables';
+import type { Tickable } from './tickable';
 import { log, prefix as cp } from './util';
 
 // eslint-disable-next-line
 function L(...args: any[]) {
   if (NoteSpan.DEBUG) log('VexFlow.NoteSpan', args);
 }
+
+const QUARTER_NOTE_TICKS = Tables.durationToTicks('4');
 
 interface SpanBounds {
   x: number;
@@ -35,7 +39,7 @@ export class NoteSpan extends Element {
   private visible: boolean = false;
   private animationFrame: number | null = null;
   private animationStart: number | null = null;
-  private readonly animationDurationMs: number = 250;
+  private boundNote?: Tickable;
 
   constructor(config: VexflowConfigInstance) {
     super(config);
@@ -207,6 +211,28 @@ export class NoteSpan extends Element {
     return Math.max(0, width - slw);
   }
 
+  bindToNote(note: Tickable): this {
+    this.boundNote = note;
+    return this;
+  }
+
+  private getNoteDurationTicks(): number {
+    if (this.boundNote) {
+      const ticksValue = this.boundNote.getTicks().value();
+      if (Number.isFinite(ticksValue) && ticksValue > 0) {
+        return ticksValue;
+      }
+    }
+    return QUARTER_NOTE_TICKS;
+  }
+
+  private getAnimationDurationMs(): number {
+    const noteTicks = this.getNoteDurationTicks();
+    const ratio = noteTicks > 0 ? noteTicks / QUARTER_NOTE_TICKS : 1;
+    const tempo = this.config.get('tempo', 60);
+    return 60000 / tempo * ratio;
+  }
+
   expandToDelta(delta: number, timestamp?: DOMHighResTimeStamp): boolean {
     if (!this.dom || !this.visible) return true;
     if (this.expanded) return true;
@@ -251,6 +277,7 @@ export class NoteSpan extends Element {
 
     const minInner = this.getMinInnerWidth();
     const maxInner = this.getMaxInnerWidth();
+    const animationDurationMs = this.getAnimationDurationMs();
     if (maxInner <= minInner) {
       this.innerWidth = maxInner;
       this.expanded = true;
@@ -272,7 +299,8 @@ export class NoteSpan extends Element {
       }
 
       const elapsed = timestamp - this.animationStart;
-      const progress = Math.min(1, elapsed / this.animationDurationMs);
+      const duration = animationDurationMs;
+      const progress = Math.min(1, elapsed / duration);
       const nextWidth = minInner + (maxInner - minInner) * progress;
       this.innerWidth = nextWidth;
       this.updateDomDimensions();

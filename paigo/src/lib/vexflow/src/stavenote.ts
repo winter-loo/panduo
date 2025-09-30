@@ -25,7 +25,6 @@ import { StemmableNote } from './stemmablenote';
 import { Tables } from './tables';
 import { Category } from './typeguard';
 import { defined, log, midLine, RuntimeError } from './util';
-import { Voice } from './voice';
 
 export interface StaveNoteHeadBounds {
   yTop: number;
@@ -564,6 +563,7 @@ export class StaveNote extends StemmableNote {
       /* build NoteSpan */
       const noteSpan = new NoteSpan(this.config);
       noteSpan.fontInfo = this.fontInfo;
+      noteSpan.bindToNote(this);
       if (this.noteSpanVisible) {
         noteSpan.show();
       } else {

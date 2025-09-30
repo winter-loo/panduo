@@ -9,6 +9,11 @@ export const load: LayoutLoad = () => {
     measures: [
       {
         notes: [
+          { keys: ['b/4'], duration: '1' },
+        ]
+      },
+      {
+        notes: [
           { keys: ['r/4'], duration: '4r', fingering: 2 },
           { keys: ['c/4'], duration: '4', fingering: 2 },
           { keys: ['d/4'], duration: '4', fingering: 2 },
