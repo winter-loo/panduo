@@ -151,7 +151,7 @@
           fill="#2CA900"
           stroke="none"
           onclick={() => (showWhich = (showWhich + 1) % 4)}
-          transition:fly={{y: 20, duration: 500}}
+          transition:fly={{ y: 20, duration: 500 }}
         />
       {/if}
       {#if showWhich & 0x02}
@@ -199,5 +199,24 @@
     >
       <polygon points="40,60 40,90 120,140 120,110" stroke="none" fill="cyan" />
     </svg>
+  </section>
+
+  <section class="p-10 border-4 border-dashed">
+    <h3 class="text-lg font-bold">rect with stroke-width</h3>
+    <div class="relative">
+      <svg
+        width="200"
+        height="180"
+        viewBox="0 0 200 180"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect x="20" y="20" width="100" height="60" stroke-width="20" stroke="blue" />
+      </svg>
+      <div class="dom-rect absolute w-[100px] h-[60px] left-[20px] top-[20px] bg-teal-500">
+        dom rect
+      </div>
+    </div>
+    <p>the actual visual width of svg rectangle is (100 + 20) = 120px</p>
   </section>
 </main>
