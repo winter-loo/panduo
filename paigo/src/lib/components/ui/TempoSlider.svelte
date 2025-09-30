@@ -201,13 +201,13 @@
     border: none;
     padding: 0;
     cursor: pointer;
-    box-shadow: inset 0.5px 0.5px 0 rgba(0, 0, 0, 0.5), inset -0.5px -0.5px 0 rgba(255, 255, 255, 1);
+    box-shadow: inset 0.5px 0.5px 0 rgba(204, 204, 204, 1), inset -0.5px -0.5px 0 rgba(243, 243, 243, 0.6);
     transition: background 0.15s ease;
   }
 
   .tempo-slider:hover {
     border-radius: var(--button-text-font-size) 0 0 var(--button-text-font-size);
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25), 0 -4px 4px rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 4px rgba(204, 204, 204, 1), 0 -4px 4px rgba(255, 255, 255, 1);
   }
 
   .tempo-slider:hover .tempo-slider__controls {
