@@ -43,7 +43,7 @@ export class StaveModifier extends Element {
   constructor(config: VexflowConfigInstance) {
     super(config);
 
-    this.padding = 10;
+    this.padding = this.config.get('Stave.paddingLeft');
     this.position = StaveModifierPosition.ABOVE;
   }
 
@@ -70,7 +70,7 @@ export class StaveModifier extends Element {
   }
 
   getPadding(index: number): number {
-    return index !== undefined && index < 2 ? 0 : this.padding;
+    return index !== undefined && index < 1 ? 0 : this.padding;
   }
 
   setPadding(padding: number): this {

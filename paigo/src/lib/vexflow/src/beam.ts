@@ -981,7 +981,7 @@ export class Beam extends Element {
     const firstNote = this.notes[0];
     let beamY = this.getBeamYToDraw() - beamThickness / 2;
     const firstStemX = firstNote.getStemX();
-    const stemLineWidth = this.config.get("Stem.lineWidth");
+    const stemLineWidth = this.config.get("Stem.width");
 
     // Draw the beams.
     for (let i = 0; i < validBeamDurations.length; ++i) {

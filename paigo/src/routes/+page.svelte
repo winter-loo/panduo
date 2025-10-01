@@ -43,9 +43,8 @@
   const layout = {
     measureWidth: 448,
     staveHeight: 200,
-    // including clef width and key signature width and paddings
-    // TODO: calculate dynamically this width as key signature width changes
-    fixedStaveWidth: 150,
+    // baseline minimum width for the fixed stave (dynamic width calculated per key signature)
+    fixedStaveMinWidth: 60,
     rendererWidth: 30000,
     spacingBetweenLinesPx: 20,
     numLines: 5,
@@ -66,7 +65,6 @@
     Stem: {
       width: 6,
       height: 70,
-      lineWidth: 4,
     },
     NoteHead: {
       pointerRect: false,
@@ -79,13 +77,17 @@
         lineWidth: 4,
         strokeStyle: '#dadada',
       },
-      rightBar: {
+      // each stave has a beginning barline
+      leftBar: {
         width: 4,
         style: {
           fillStyle: '#dadada',
         },
       },
-      paddingLeft: 8, // 4 + 4
+      // each stave does not have a ending barline excluding the last one
+      rightBar: false,
+      // distance bewteen the right edge of a barline and the left edge of a note
+      paddingLeft: 4,
     },
     Clef: {
       defaults: {
@@ -151,20 +153,14 @@
 
     private drawFixedStave() {
       this.fixedElement.innerHTML = '';
-      let renderer = new VexFlow.Renderer(
+      const renderer = new VexFlow.Renderer(
         this.config,
         this.fixedElement,
         VexFlow.Renderer.Backends.SVG,
       );
-      renderer.resize(layout.fixedStaveWidth, layout.staveHeight);
-      const fixedStave = new Stave(this.config, 0, 0, layout.fixedStaveWidth, {
-        leftBar: {
-          width: 4,
-          style: {
-            fillStyle: '#dadada',
-          },
-        },
-      });
+      const fixedWidth = this.computeFixedStaveWidth();
+      renderer.resize(fixedWidth, layout.staveHeight);
+      const fixedStave = new Stave(this.config, 0, 0, fixedWidth, {});
       fixedStave.addClef('treble');
       if (data.song.keySignature) {
         fixedStave.addKeySignature(data.song.keySignature);
@@ -187,12 +183,13 @@
       this.cursorElement = null;
     }
 
-    addMeasure(timeSignature: string, notes: StaveNoteStruct[]) {
+    addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
       let config = this.config;
       if (this.staves.length == 0) {
         config = this.config.fork({
           Stave: {
-            paddingLeft: 48,
+            paddingLeft: 32,
+            leftBar: false,
           },
         });
       }
@@ -234,6 +231,21 @@
         if (this.staves.length == 1) {
           this.drawCursorAt(this.notes[0].getAbsoluteX());
         }
+      }
+
+      // add more staves to fill the screen
+      if (last) {
+        const extras = 3;
+        for (let i = 0; i < extras - 1; i++) {
+          new Stave(config, this.staveX, 0, layout.measureWidth).setContext(this.context).draw();
+          this.staveX += layout.measureWidth;
+        }
+        new Stave(config, this.staveX, 0, layout.measureWidth, {
+          rightBar: this.config.get('Stave.leftBar'),
+        })
+          .setContext(this.context)
+          .draw();
+        this.staveX += layout.measureWidth;
       }
     }
 
@@ -292,6 +304,25 @@
       return this.context instanceof SVGContext ? (this.context as SVGContext) : null;
     }
 
+    private computeFixedStaveWidth(): number {
+      const scratch = new Stave(this.config, 0, 0, 0, {
+        leftBar: {
+          width: 4,
+        },
+      });
+      scratch.addClef('treble');
+      if (data.song.keySignature) {
+        scratch.addKeySignature(data.song.keySignature);
+      }
+      const noteStartX = scratch.getNoteStartX();
+      const paddingRight = this.config.get('Stave.paddingRight', 0);
+      const endPadding = this.config.get('Stave.endPaddingMax', 0);
+      const paddingLeft = this.config.get('Stave.paddingLeft', 0);
+      const computed = noteStartX + paddingRight + endPadding + paddingLeft;
+      const minWidth = layout.fixedStaveMinWidth;
+      return Math.max(Math.ceil(computed), minWidth);
+    }
+
     private ensureCursorElement(): SVGGElement | null {
       if (this.cursorElement) return this.cursorElement;
       const svgContext = this.getSvgContext();
@@ -347,8 +378,12 @@
     movingStaff.setNoteSpanVisible(noteSpanVisible);
     tempo = movingStaff.getTempo();
 
-    data.song.measures.forEach((measure) => {
-      movingStaff?.addMeasure(data.song.timeSignature, measure.notes);
+    data.song.measures.forEach((measure, index) => {
+      movingStaff?.addMeasure(
+        data.song.timeSignature,
+        measure.notes,
+        index + 1 == data.song.measures.length,
+      );
     });
   }
 

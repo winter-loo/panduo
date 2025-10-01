@@ -219,4 +219,20 @@
     </div>
     <p>the actual visual width of svg rectangle is (100 + 20) = 120px</p>
   </section>
+  <section class="p-10 border-4 border-dashed">
+    <h3 class="text-lg font-bold">rect with stroke-width</h3>
+    <svg
+      width="200"
+      height="180"
+      viewBox="0 0 200 180"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect x="0" y="0" width="1" height="180" stroke="none" fill="blue" />
+      <path d="M10 60L110 60" stroke-width="20" stroke="teal" />
+      <rect x="10" y="60" width="100" height="100" fill="red" opacity="0.6" />
+    </svg>
+
+    <p>open devtool and select <b>path</b> line</p>
+  </section>
 </main>

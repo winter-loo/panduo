@@ -96,7 +96,6 @@ export interface StemConfigValues {
   width: number;
   height: number;
   strokeStyle: string,
-  lineWidth: number,
 }
 
 export interface NoteHeadConfigValues {
@@ -174,7 +173,6 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     width: 1.5,
     height: 35,
     strokeStyle: 'black',
-    lineWidth: 1,
   },
   NoteHead: {
     minPadding: 0,
