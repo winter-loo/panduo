@@ -65,8 +65,8 @@ export class SVGContext extends RenderContext {
 
   element: HTMLElement; // the parent DOM object
   svg: SVGSVGElement;
-  width: number = 0;
-  height: number = 0;
+  _width: number = 0;
+  _height: number = 0;
   path: string;
   pen: { x: number; y: number };
   attributes: Attributes;
@@ -276,8 +276,8 @@ export class SVGContext extends RenderContext {
   // and style.height properties eventually to allow users to
   // apply responsive sizing attributes to the SVG.
   resize(width: number, height: number): this {
-    this.width = width;
-    this.height = height;
+    this._width = width;
+    this._height = height;
     this.element.style.width = width.toString();
 
     this.svg.style.width = width.toString();
@@ -308,8 +308,8 @@ export class SVGContext extends RenderContext {
 
     this.state.scaleX = this.state.scaleX ? this.state.scaleX * x : x;
     this.state.scaleY = this.state.scaleY ? this.state.scaleY * y : y;
-    const visibleWidth = this.width / this.state.scaleX;
-    const visibleHeight = this.height / this.state.scaleY;
+    const visibleWidth = this._width / this.state.scaleX;
+    const visibleHeight = this._height / this.state.scaleY;
     this.setViewBox(0, 0, visibleWidth, visibleHeight);
 
     return this;
@@ -688,5 +688,13 @@ export class SVGContext extends RenderContext {
   /** Return a string of the form `'italic bold 15pt Arial'` */
   getFont(): string {
     return this.fontCSSString;
+  }
+
+  override get height(): number {
+    return this._height;
+  }
+
+  override get width(): number {
+    return this._width;
   }
 }

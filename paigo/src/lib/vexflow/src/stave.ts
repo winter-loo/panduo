@@ -33,7 +33,6 @@ export interface StaveOptions {
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
-  stillCursor?: boolean;
   style?: ElementStyle;
 }
 
@@ -760,27 +759,6 @@ export class Stave extends Element {
       y = this.getYForTopText(0) + 3;
       ctx.fillText('' + this.measure, this.x - textWidth / 2, y);
     }
-  }
-
-  drawStillCursor() {
-    const ctx = this.checkContext();
-    const width = 5;
-    const offset = this.width - width;
-    const paddingTop = 5;
-    const paddingBottom = 5;
-    (<SVGContext>ctx).rect(
-      this.x + offset,
-      paddingTop,
-      width,
-      (<SVGContext>ctx).height - paddingBottom - paddingTop,
-      {
-        stroke: 'none',
-        rx: width / 2,
-        ry: width / 2,
-        fill: '#cccccc',
-        opacity: 0.9,
-      },
-    );
   }
 
   getVerticalBarWidth(): number {

@@ -16,6 +16,8 @@ export abstract class RenderContext {
     return Category.RenderContext;
   }
 
+  abstract get height(): number;
+  abstract get width(): number;
   abstract clear(): void;
   abstract setFillStyle(style: string): this;
   abstract setBackgroundFillStyle(style: string): this;

@@ -68,10 +68,9 @@ export interface StaveConfigValues {
   bottomTextPosition: number;
   verticalBarWidth: number;
   numLines: number;
-  stillCursor: boolean;
   lineConfig: StaveLineConfig[];
-  leftBar?: BarlineOptions | boolean;
-  rightBar?: BarlineOptions | boolean;
+  leftBar: BarlineOptions | boolean;
+  rightBar: BarlineOptions | boolean;
   style: ElementStyle;
   fontSize: number;
   padding: number;
@@ -144,8 +143,9 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     bottomTextPosition: 4,
     verticalBarWidth: 10,
     numLines: 5,
-    stillCursor: false,
     lineConfig: [],
+    leftBar: false,
+    rightBar: false,
     style: {
       shadowColor: 'black',
       shadowBlur: 0,

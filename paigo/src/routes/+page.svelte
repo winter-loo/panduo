@@ -41,7 +41,7 @@
 
   const layout = {
     measureWidth: 448,
-    staveHeight: 180,
+    staveHeight: 200,
     // including clef width and key signature width and paddings
     // TODO: calculate dynamically this width as key signature width changes
     fixedStaveWidth: 150,
@@ -110,6 +110,7 @@
     context!: RenderContext;
     staveX = 0;
     notes: StaveNote[] = [];
+    staves: Stave[] = [];
     private noteSpanAllVisible = false;
     private tempo: number = 60;
     private beatsPerMeasure: number = 4;
@@ -152,7 +153,6 @@
       );
       renderer.resize(layout.fixedStaveWidth, layout.staveHeight);
       const fixedStave = new Stave(this.config, 0, 0, layout.fixedStaveWidth, {
-        stillCursor: false,
         leftBar: {
           width: 4,
           style: {
@@ -182,7 +182,7 @@
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[]) {
       let config = this.config;
-      if (this.notes.length == 0) {
+      if (this.staves.length == 0) {
         config = this.config.fork({
           Stave: {
             paddingLeft: 48,
@@ -190,8 +190,9 @@
         });
       }
       const measureStave = new Stave(config, this.staveX, 0, layout.measureWidth);
+      this.staves.push(measureStave);
       this.staveX += layout.measureWidth;
-      if (this.notes.length == 0) {
+      if (this.staves.length == 1) {
         measureStave.addTimeSignature('4/4');
       }
       measureStave.setContext(this.context).draw();
@@ -222,7 +223,25 @@
           },
         );
         this.registerNoteInteractions(staveNotes);
+
+        if (this.staves.length == 1) {
+          this.drawCursorAt(this.notes[0].getAbsoluteX());
+        }
       }
+    }
+
+    drawCursorAt(x: number) {
+      if (this.staves.length == 0) return;
+      let renderContextHeight = this.context.height;
+
+      const width = this.config.get('Stem.width');
+      this.context.fillRect(x, 0, width, renderContextHeight, {
+        stroke: 'none',
+        rx: width / 2,
+        ry: width / 2,
+        fill: '#e0e0e0',
+        opacity: 0.8,
+      });
     }
 
     setNoteSpanVisible(visible: boolean) {
