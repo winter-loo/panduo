@@ -445,7 +445,7 @@
 {/if}
 
 <!-- 1016=448*2+120 -->
-<div id="moving-staff" class="w-[1016px] mx-auto">
+<div id="moving-staff" class="w-[1016px] mx-auto mt-6 mb-10 p-8">
   <div bind:this={BindingDom.fixedClef}></div>
   <div id="notes-viewport">
     <div
@@ -484,6 +484,9 @@
     flex-direction: row;
     position: relative;
     z-index: 2;
+    box-shadow:
+      inset 2px 2px 4px rgba(243, 243, 243, 1),
+      inset -2px -2px 4px rgba(0, 0, 0, 0.25);
   }
 
   #notes-viewport {
