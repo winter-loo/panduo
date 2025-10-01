@@ -3,6 +3,7 @@
   import {
     DebugGrid,
     RenderContext,
+    SVGContext,
     Renderer,
     Stave,
     StaveNote,
@@ -115,6 +116,8 @@
     private tempo: number = 60;
     private beatsPerMeasure: number = 4;
     private pixelsPerBeat: number = layout.measureWidth / 4;
+    private cursorAnchorX: number | null = null;
+    private cursorElement: SVGGElement | null = null;
 
     private readonly handleNoteClick = (note: StaveNote) => {
       const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
@@ -142,6 +145,8 @@
 
       this.drawFixedStave();
       this.prepareForRedraw();
+
+      this.onMove = (offsetX) => this.syncCursorPosition(offsetX);
     }
 
     private drawFixedStave() {
@@ -178,6 +183,8 @@
       this.context = this.renderer.getContext();
       this.staveX = 0;
       this.notes = [];
+      this.cursorAnchorX = null;
+      this.cursorElement = null;
     }
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[]) {
@@ -232,16 +239,10 @@
 
     drawCursorAt(x: number) {
       if (this.staves.length == 0) return;
-      let renderContextHeight = this.context.height;
-
-      const width = this.config.get('Stem.width');
-      this.context.fillRect(x, 0, width, renderContextHeight, {
-        stroke: 'none',
-        rx: width / 2,
-        ry: width / 2,
-        fill: '#e0e0e0',
-        opacity: 0.8,
-      });
+      this.cursorAnchorX = x;
+      const element = this.ensureCursorElement();
+      if (!element) return;
+      this.syncCursorPosition();
     }
 
     setNoteSpanVisible(visible: boolean) {
@@ -285,6 +286,39 @@
         group.classList.add('notespan-click-target');
         group.addEventListener('click', () => this.handleNoteClick(note));
       });
+    }
+
+    private getSvgContext(): SVGContext | null {
+      return this.context instanceof SVGContext ? (this.context as SVGContext) : null;
+    }
+
+    private ensureCursorElement(): SVGGElement | null {
+      if (this.cursorElement) return this.cursorElement;
+      const svgContext = this.getSvgContext();
+      if (!svgContext) return null;
+
+      const width = this.config.get('Stem.width');
+      const height = this.context.height;
+      this.cursorElement = svgContext.openGroup('cursor');
+      svgContext.fillRect(0, 0, width, height, {
+        rx: width / 2,
+        ry: width / 2,
+        opacity: 0.8,
+        fill: '#e0e0e0',
+        'pointer-events': 'none',
+      });
+      svgContext.closeGroup();
+      return this.cursorElement;
+    }
+
+    // sync cursor poosition so that it has a fixed position where the first
+    // note is located
+    private syncCursorPosition(offsetX: number = this.currentOffsetX) {
+      if (this.cursorAnchorX === null) return;
+      const cursor = this.ensureCursorElement();
+      if (!cursor) return;
+
+      cursor.setAttribute('transform', `translate(${this.cursorAnchorX + offsetX}, 0)`);
     }
   }
 
