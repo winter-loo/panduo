@@ -7,6 +7,7 @@
 // and indicates the notes with implicit accidentals.
 
 import { BoundingBox } from './boundingbox';
+import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Glyphs } from './glyphs';
 import { Stave } from './stave';
@@ -28,8 +29,8 @@ export class KeySignature extends StaveModifier {
   protected alterKeySpec?: string[];
 
   // Create a new Key Signature based on a `keySpec`
-  constructor(keySpec: string, cancelKeySpec?: string, alterKeySpec?: string[]) {
-    super();
+  constructor(config: VexflowConfigInstance, keySpec: string, cancelKeySpec?: string, alterKeySpec?: string[]) {
+    super(config);
 
     this.setKeySig(keySpec, cancelKeySpec, alterKeySpec);
     this.setPosition(StaveModifierPosition.BEGIN);
@@ -46,7 +47,7 @@ export class KeySignature extends StaveModifier {
     stave: Stave,
   ): void {
     const code = Tables.accidentalCodes(acc.type);
-    const glyph = new Element(Category.KeySignature);
+    const glyph = new Element(this.config, Category.KeySignature);
     glyph.setText(code);
 
     // Determine spacing between current accidental and the next accidental
@@ -258,7 +259,7 @@ export class KeySignature extends StaveModifier {
   format(): void {
     let stave = this.getStave();
     if (!stave) {
-      stave = new Stave(0, 0, 100);
+      stave = new Stave(this.config, 0, 0, 100);
       this.setStave(stave);
     }
 

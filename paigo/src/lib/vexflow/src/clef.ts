@@ -171,7 +171,7 @@ export class Clef extends StaveModifier {
 
     this.y = stave.getYForLine(this.line);
     let fillStyle = this.getStyle().fillStyle ?? 'currentColor';
-    this.renderText(ctx, this.padding, 0, {
+    this.renderText(ctx, 0, 0, {
       fill: fillStyle,
     });
     this.drawPointerRect();

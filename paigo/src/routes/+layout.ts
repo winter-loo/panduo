@@ -5,11 +5,15 @@ export const load: LayoutLoad = () => {
     title: 'Different Colors',
     artist: 'Walk the Moon',
     timeSignature: '4/4',
+    keySignature: 'A',
     tempo: 60,
     measures: [
       {
         notes: [
-          { keys: ['b/4'], duration: '1' },
+          { keys: ['b/4'], duration: '4' },
+          { keys: ['r/4'], duration: '4r' },
+          { keys: ['r/4'], duration: '4r' },
+          { keys: ['r/4'], duration: '4r' },
         ]
       },
       {

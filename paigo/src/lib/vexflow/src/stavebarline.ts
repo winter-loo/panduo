@@ -61,7 +61,7 @@ export class Barline extends StaveModifier {
 
     const TYPE = BarlineType;
     this.widths = {};
-    this.widths[TYPE.SINGLE] = 0;
+    this.widths[TYPE.SINGLE] = 5;
     this.widths[TYPE.DOUBLE] = 5;
     this.widths[TYPE.END] = 5;
     this.widths[TYPE.REPEAT_BEGIN] = 5;

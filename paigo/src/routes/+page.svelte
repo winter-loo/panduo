@@ -42,7 +42,9 @@
   const layout = {
     measureWidth: 448,
     staveHeight: 180,
-    clefWidth: 120,
+    // including clef width and key signature width and paddings
+    // TODO: calculate dynamically this width as key signature width changes
+    fixedStaveWidth: 150,
     rendererWidth: 30000,
     spacingBetweenLinesPx: 20,
     numLines: 5,
@@ -61,7 +63,7 @@
   const configInstance = VexFlow.Config.create({
     fontSize: 60,
     Stem: {
-      width: 4,
+      width: 6,
       height: 70,
       lineWidth: 4,
     },
@@ -75,12 +77,6 @@
       style: {
         lineWidth: 4,
         strokeStyle: '#dadada',
-      },
-      leftBar: {
-        width: 4,
-        style: {
-          fillStyle: '#dadada',
-        },
       },
       rightBar: {
         width: 4,
@@ -98,13 +94,18 @@
       },
       types: {},
     },
+    TimeSignature: {
+      fillStyle: '#afafaf',
+    },
+    KeySignature: {
+      fillStyle: '#afafaf',
+    },
   });
 
   class MovingStaff extends MovableElement {
     private config: ConfigInstance;
-    private clefElement: HTMLDivElement;
+    private fixedElement: HTMLDivElement;
     private notesElement: HTMLDivElement;
-    private clefRenderer: Renderer | null = null;
     renderer!: Renderer;
     context!: RenderContext;
     staveX = 0;
@@ -124,7 +125,7 @@
     };
 
     constructor(
-      clefElement: HTMLElement,
+      fixedElement: HTMLElement,
       notesElement: HTMLElement,
       maxOffsetX: number,
       config: ConfigInstance,
@@ -133,28 +134,37 @@
     ) {
       super(maxOffsetX);
       this.config = config;
-      this.clefElement = clefElement as HTMLDivElement;
+      this.fixedElement = fixedElement as HTMLDivElement;
       this.notesElement = notesElement as HTMLDivElement;
       this.setTiming(tempo, timeSignature);
       this.getPixelsPerSecond = () => this.computePixelsPerSecond();
 
-      // this.drawClef();
+      this.drawFixedStave();
       this.prepareForRedraw();
     }
 
-    private drawClef() {
-      this.clefElement.innerHTML = '';
-      this.clefRenderer = new VexFlow.Renderer(
+    private drawFixedStave() {
+      this.fixedElement.innerHTML = '';
+      let renderer = new VexFlow.Renderer(
         this.config,
-        this.clefElement,
+        this.fixedElement,
         VexFlow.Renderer.Backends.SVG,
       );
-      this.clefRenderer.resize(layout.clefWidth, layout.staveHeight);
-      const clefStave = new Stave(0, 0, layout.clefWidth, this.config, {
+      renderer.resize(layout.fixedStaveWidth, layout.staveHeight);
+      const fixedStave = new Stave(this.config, 0, 0, layout.fixedStaveWidth, {
         stillCursor: false,
+        leftBar: {
+          width: 4,
+          style: {
+            fillStyle: '#dadada',
+          },
+        },
       });
-      clefStave.addClef('treble');
-      clefStave.setContext(this.clefRenderer.getContext()).draw();
+      fixedStave.addClef('treble');
+      if (data.song.keySignature) {
+        fixedStave.addKeySignature(data.song.keySignature);
+      }
+      fixedStave.setContext(renderer.getContext()).draw();
     }
 
     prepareForRedraw() {
@@ -171,19 +181,30 @@
     }
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[]) {
-      const measureStave = new Stave(this.staveX, 0, layout.measureWidth, this.config);
+      let config = this.config;
+      if (this.notes.length == 0) {
+        config = this.config.fork({
+          Stave: {
+            paddingLeft: 48,
+          },
+        });
+      }
+      const measureStave = new Stave(config, this.staveX, 0, layout.measureWidth);
       this.staveX += layout.measureWidth;
+      if (this.notes.length == 0) {
+        measureStave.addTimeSignature('4/4');
+      }
       measureStave.setContext(this.context).draw();
 
       const staveNotes = notes.map((note) => {
-        const staveNote = new VexFlow.StaveNote(this.config, { ...note, autoStem: true });
+        const staveNote = new VexFlow.StaveNote(config, { ...note, autoStem: true });
         if (this.noteSpanAllVisible) {
           staveNote.showNoteSpan();
         } else {
           staveNote.hideNoteSpan();
         }
         if (note.duration.includes('d')) {
-          const dot = new VexFlow.Dot(this.config);
+          const dot = new VexFlow.Dot(config);
           staveNote.addModifier(dot, 0);
         }
         this.notes.push(staveNote);
@@ -195,7 +216,7 @@
           this.context,
           measureStave,
           { timeSignature, notes: staveNotes },
-          this.config,
+          config,
           {
             autoBeam: true,
           },
@@ -382,14 +403,6 @@
     overflow: hidden;
     cursor: grab;
     user-select: none;
-    /* the distance being visible from the left of the still cursor line */
-    margin-left: -40px;
-  }
-
-  #notes-container {
-    /* the distance we need offset to keep whole notes area visible */
-    /* the above 40px - 5px(the width of the still cursor line) */
-    padding-left: 35px;
   }
 
   .controls-row {

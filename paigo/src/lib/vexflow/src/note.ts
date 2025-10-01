@@ -657,7 +657,8 @@ export abstract class Note extends Tickable {
     // Position note to left edge of tick context.
     let x = tickContext.getX();
     if (this.stave) {
-      x += this.stave.getNoteStartX() + this.config.get('Stave.paddingLeft', 0);
+      const paddingLeft = this.config.get('Stave.paddingLeft', 0);
+      x += this.stave.getNoteStartX() + paddingLeft;
     }
     if (this.isCenterAligned()) {
       x += this.getCenterXShift();

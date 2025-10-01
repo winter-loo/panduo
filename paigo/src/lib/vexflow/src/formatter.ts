@@ -18,7 +18,7 @@ import { TabStave } from './tabstave';
 import { Tickable } from './tickable';
 import { TickContext } from './tickcontext';
 import { isNote, isStaveNote } from './typeguard';
-import { defined, log, midLine, RuntimeError, sumArray } from './util';
+import { log, midLine, RuntimeError, sumArray } from './util';
 import { Voice } from './voice';
 
 interface Distance {

@@ -6,6 +6,7 @@
 // representation
 
 import { BoundingBox } from './boundingbox';
+import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Glyphs } from './glyphs';
 import { RenderContext } from './rendercontext';
@@ -58,12 +59,11 @@ export class TimeSignature extends StaveModifier {
   protected validateArgs: boolean;
   protected topStartX: number = 0;
   protected botStartX: number = 0;
-  protected lineShift: number = 0;
 
-  constructor(timeSpec: string = '4/4', customPadding = 15, validateArgs = true) {
-    super();
-    this.topText = new Element();
-    this.botText = new Element();
+  constructor(config: VexflowConfigInstance, timeSpec: string = '4/4', customPadding = 15, validateArgs = true) {
+    super(config);
+    this.topText = new Element(config);
+    this.botText = new Element(config);
     this.validateArgs = validateArgs;
 
     const padding = customPadding;
@@ -129,10 +129,6 @@ export class TimeSignature extends StaveModifier {
     this.botText.setText(txt);
     botWidth = this.botText.getWidth();
     height = Math.max(height, this.botText.getHeight());
-
-    // If the height of the digits is more than three staff spaces (30), shift half a line line
-    // in order to center the digits on lines 1.5 and 4.5 rather than 2 and 4.
-    this.lineShift = height > 30 ? 0.5 : 0;
 
     this.width = Math.max(topWidth, botWidth);
     this.topStartX = (this.width - topWidth) / 2.0;
@@ -223,16 +219,22 @@ export class TimeSignature extends StaveModifier {
       // render top text
       let startX = x + this.topStartX;
       if (this.botText.getText().length > 0) {
-        this.topRenderY = stave.getYForLine(this.topLine - this.lineShift);
+        this.topRenderY = stave.getYForLine(this.topLine);
       } else {
         this.topRenderY =
           (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
+      }
+      // make time signature text fit in stave
+      if (this.topText.height * 2 >= 4 * this.config.get("Stave.spacingBetweenLinesPx")) {
+        const fontSize = parseInt(this.topText.fontSize) * 0.8;
+        this.topText.fontSize = fontSize;
+        this.botText.fontSize = fontSize;
       }
       this.topText.renderText(ctx, startX, this.topRenderY);
 
       // render bottom text
       startX = x + this.botStartX;
-      this.botRenderY = stave.getYForLine(this.bottomLine + this.lineShift);
+      this.botRenderY = stave.getYForLine(this.bottomLine);
       this.botText.renderText(ctx, startX, this.botRenderY);
     } else {
       this.renderText(ctx, x - this.x, stave.getYForLine(this.line));

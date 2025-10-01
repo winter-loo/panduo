@@ -70,8 +70,8 @@ export interface StaveConfigValues {
   numLines: number;
   stillCursor: boolean;
   lineConfig: StaveLineConfig[];
-  leftBar: BarlineOptions;
-  rightBar: BarlineOptions;
+  leftBar?: BarlineOptions | boolean;
+  rightBar?: BarlineOptions | boolean;
   style: ElementStyle;
   fontSize: number;
   padding: number;
@@ -105,6 +105,13 @@ export interface NoteHeadConfigValues {
   pointerRect: boolean,
 }
 
+export interface TimeSignatureConfigValues extends ElementStyle {
+  font?: FontInfo,
+}
+
+export interface KeySignatureConfigValues extends ElementStyle {
+}
+
 export interface VexflowConfigShape {
   pointerRect: boolean,
   fontFamily: string,
@@ -115,6 +122,8 @@ export interface VexflowConfigShape {
   tempo: number,
   Stave: StaveConfigValues;
   Clef: ClefConfigValues;
+  TimeSignature: TimeSignatureConfigValues,
+  KeySignature: KeySignatureConfigValues,
   Stem: StemConfigValues;
   NoteHead: NoteHeadConfigValues,
 }
@@ -137,8 +146,6 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     numLines: 5,
     stillCursor: false,
     lineConfig: [],
-    leftBar: {},
-    rightBar: {},
     style: {
       shadowColor: 'black',
       shadowBlur: 0,
@@ -161,6 +168,8 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     },
     types: {},
   },
+  TimeSignature: {},
+  KeySignature: {},
   Stem: {
     width: 1.5,
     height: 35,

@@ -28,8 +28,8 @@ export interface StaveOptions {
   spaceBelowStaffLn?: number;
   spaceAboveStaffLn?: number;
   verticalBarWidth?: number;
-  leftBar?: BarlineOptions;
-  rightBar?: BarlineOptions;
+  leftBar?: BarlineOptions | boolean;
+  rightBar?: BarlineOptions | boolean;
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
@@ -84,7 +84,7 @@ export class Stave extends Element {
     return this.config.get('Stave.endPaddingMax');
   }
 
-  constructor(x: number, y: number, width: number, config: VexflowConfigInstance, options?: StaveOptions) {
+  constructor(config: VexflowConfigInstance, x: number, y: number, width: number, options?: StaveOptions) {
     super(config);
 
     this.x = x;
@@ -114,21 +114,25 @@ export class Stave extends Element {
     this.resetLines();
 
     // beg bar
-    this.addModifier(
-      new Barline(
-        this.config,
-        this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE,
-        this.options.leftBar,
-      ),
-    );
+    if (this.options.leftBar) {
+      this.addModifier(
+        new Barline(
+          this.config,
+          BarlineType.SINGLE,
+          typeof this.options.leftBar == 'boolean' ? undefined : this.options.leftBar,
+        ),
+      );
+    }
     // end bar
-    this.addEndModifier(
-      new Barline(
-        this.config,
-        this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE,
-        this.options.rightBar,
-      ),
-    );
+    if (this.options.rightBar) {
+      this.addEndModifier(
+        new Barline(
+          this.config,
+          BarlineType.SINGLE,
+          typeof this.options.rightBar == 'boolean' ? undefined : this.options.rightBar,
+        ),
+      );
+    }
   }
 
   /** Set default style for ledger lines. */
@@ -501,7 +505,7 @@ export class Stave extends Element {
     if (position === undefined) {
       position = StaveModifierPosition.BEGIN;
     }
-    this.addModifier(new KeySignature(keySpec, cancelKeySpec).setPosition(position), position);
+    this.addModifier(new KeySignature(this.config, keySpec, cancelKeySpec).setPosition(position), position);
     return this;
   }
 
@@ -558,7 +562,7 @@ export class Stave extends Element {
    * @returns
    */
   addTimeSignature(timeSpec: string, customPadding?: number, position?: number): this {
-    this.addModifier(new TimeSignature(timeSpec, customPadding), position);
+    this.addModifier(new TimeSignature(this.config, timeSpec, customPadding), position);
     return this;
   }
 
@@ -640,10 +644,10 @@ export class Stave extends Element {
     for (let i = 0; i < begModifiers.length; i++) {
       modifier = begModifiers[i];
       padding = modifier.getPadding(i + offset);
-      console.log(`modifier padding=${padding}`);
       width = modifier.getWidth();
 
       x += padding;
+      console.log(`modifier(${modifier.getCategory()}) padding=${padding} width=${width} x=${x}`);
       modifier.setX(x);
       x += width;
 
@@ -651,7 +655,6 @@ export class Stave extends Element {
     }
 
     this.startX = x;
-    console.log('xxx startx ', this.startX);
     x = this.x + this.width;
 
     const widths = {
@@ -737,10 +740,6 @@ export class Stave extends Element {
           'stroke-width': lineWidth,
         });
       }
-    }
-
-    if (this.options.stillCursor) {
-      this.drawStillCursor();
     }
 
     this.drawPointerRect();
