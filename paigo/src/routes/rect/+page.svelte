@@ -91,6 +91,11 @@
       this.notes = [];
     }
 
+    protected override onReset(): void {
+      super.onReset();
+      this.staveX = 0;
+    }
+
     init(clefElement: HTMLDivElement, notesElement: HTMLDivElement) {
       // draw the treble clef on the staff independently
       const TREBLE_CLEF_STAVE_WIDTH = 120;

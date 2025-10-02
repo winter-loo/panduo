@@ -119,14 +119,20 @@ export class MovableElement {
     this.lastFrameTime = undefined;
   };
 
+  // Use class field syntax so callbacks like `onclick={movable.reset}` keep
+  // the MovableElement instance as `this` without extra binding.
   reset = () => {
     this.stop();
+    this.onReset();
+  };
+
+  protected onReset(): void {
     this.currentOffsetX = 0;
     this.currentPosComp.current = position({
       current: { x: this.currentOffsetX, y: 0 },
     });
     this.onMove?.(this.currentOffsetX);
-  };
+  }
 
   // Nudge left by a positive pixel distance (immediate), respecting bounds.
   nudgeBy = (distancePx: number) => {

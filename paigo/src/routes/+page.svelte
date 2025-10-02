@@ -155,6 +155,21 @@
       this.onMove = (offsetX) => this.syncCursorPosition(offsetX);
     }
 
+    protected override onReset(): void {
+      super.onReset();
+      if (!this.noteSpanAllVisible && this.highlightedNoteIndex !== null) {
+        this.notes[this.highlightedNoteIndex]?.hideNoteSpan();
+      }
+      this.currentNoteIndex = 0;
+      this.highlightedNoteIndex = null;
+      const firstNoteX = this.notes[0]?.getAbsoluteX() ?? null;
+      const anchorChanged = this.cursorAnchorX !== firstNoteX;
+      this.cursorAnchorX = firstNoteX;
+      if (anchorChanged) {
+        this.syncCursorPosition();
+      }
+    }
+
     private drawFixedStave() {
       this.fixedElement.innerHTML = '';
       const renderer = new VexFlow.Renderer(
