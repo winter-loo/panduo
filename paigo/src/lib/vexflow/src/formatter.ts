@@ -879,7 +879,6 @@ export class Formatter {
    * Calls postFormat on each ModifierContext and TickContext.
    */
   postFormat(): this {
-    console.log('................postFormat........');
     this.modifierContexts.forEach((modifierContexts) => {
       modifierContexts.array.forEach((mc) => mc.postFormat());
     });
@@ -942,7 +941,10 @@ export class Formatter {
   formatToStave(voices: Voice[], stave: Stave, optionsParam?: FormatParams): this {
     const options: FormatParams = { context: stave.getContext(), ...optionsParam };
     if (!options.config) {
-      options.config = stave.getConfig() ?? VexflowConfig.defaults();
+      options.config = this.config;
+    }
+    if (!options.stave) {
+      options.stave = stave;
     }
 
     const justifyWidth = stave.getJustifyWidth();

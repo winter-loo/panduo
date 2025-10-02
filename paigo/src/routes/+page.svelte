@@ -10,6 +10,8 @@
     VexFlow,
     type DebugGridOptions,
     type StaveNoteStruct,
+    Voice,
+    Formatter,
   } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
@@ -120,6 +122,8 @@
     private pixelsPerBeat: number = layout.measureWidth / 4;
     private cursorAnchorX: number | null = null;
     private cursorElement: SVGGElement | null = null;
+    private currentNoteIndex = 0;
+    private highlightedNoteIndex: number | null = null;
 
     private readonly handleNoteClick = (note: StaveNote) => {
       const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
@@ -181,6 +185,8 @@
       this.notes = [];
       this.cursorAnchorX = null;
       this.cursorElement = null;
+      this.currentNoteIndex = 0;
+      this.highlightedNoteIndex = null;
     }
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
@@ -237,7 +243,15 @@
       if (last) {
         const extras = 3;
         for (let i = 0; i < extras - 1; i++) {
-          new Stave(config, this.staveX, 0, layout.measureWidth).setContext(this.context).draw();
+          let stave = new Stave(config, this.staveX, 0, layout.measureWidth);
+          stave.setContext(this.context).draw();
+          if (i == 0) {
+            // add an invisble note
+            let xNote = new StaveNote(config, { keys: ['r/4'], duration: '1' });
+            this.notes.push(xNote);
+            let voice = new Voice(config, timeSignature).addTickables([xNote]);
+            new Formatter(config).formatToStave([voice], stave);
+          }
           this.staveX += layout.measureWidth;
         }
         new Stave(config, this.staveX, 0, layout.measureWidth, {
@@ -266,6 +280,9 @@
           note.hideNoteSpan();
         }
       });
+      if (!visible && this.highlightedNoteIndex !== null) {
+        this.notes[this.highlightedNoteIndex]?.showNoteSpan();
+      }
     }
 
     setTiming(tempo: number, timeSignature: string) {
@@ -350,6 +367,58 @@
       if (!cursor) return;
 
       cursor.setAttribute('transform', `translate(${this.cursorAnchorX + offsetX}, 0)`);
+    }
+
+    private getCursorAnchor(): number | null {
+      if (this.cursorAnchorX !== null) return this.cursorAnchorX;
+      if (this.notes.length === 0) return null;
+      return this.notes[0].getAbsoluteX();
+    }
+
+    private showNoteSpanFor(index: number) {
+      if (index < 0 || index >= this.notes.length) return;
+      if (this.noteSpanAllVisible) {
+        this.highlightedNoteIndex = index;
+        return;
+      }
+      if (this.highlightedNoteIndex !== null && this.highlightedNoteIndex !== index) {
+        this.notes[this.highlightedNoteIndex]?.hideNoteSpan();
+      }
+      this.notes[index].showNoteSpan();
+      this.highlightedNoteIndex = index;
+    }
+
+    private scrollToNote(index: number) {
+      if (index < 0 || index >= this.notes.length) return;
+      const anchorX = this.getCursorAnchor();
+      if (anchorX === null) return;
+      const noteX = this.notes[index].getAbsoluteX();
+      const targetOffset = Math.max(0, Math.min(this.maxOffsetX, noteX - anchorX));
+      const distance = Math.abs(targetOffset - this.currentOffsetX);
+
+      if (distance < 0.5) {
+        this.adjustBy(targetOffset - this.currentOffsetX);
+        this.syncCursorPosition();
+        return;
+      }
+
+      const pixelsPerSecond = this.getPixelsPerSecond ? this.getPixelsPerSecond() : 60;
+      if (!Number.isFinite(pixelsPerSecond) || pixelsPerSecond <= 0) {
+        this.adjustBy(targetOffset - this.currentOffsetX);
+        this.syncCursorPosition();
+        return;
+      }
+
+      const duration = Math.max(120, (distance / pixelsPerSecond) * 1000);
+      this.moveTo(targetOffset, duration);
+    }
+
+    goToNextNote() {
+      if (this.notes.length === 0) return;
+      const nextIndex = Math.min(this.notes.length - 1, this.currentNoteIndex + 1);
+      this.showNoteSpanFor(this.currentNoteIndex);
+      this.scrollToNote(nextIndex);
+      this.currentNoteIndex = nextIndex;
     }
   }
 
@@ -471,6 +540,7 @@
   <Button type="button" onclick={toggleNoteSpan}>
     {noteSpanVisible ? 'hide span' : 'show span'}
   </Button>
+  <Button type="button" onclick={() => movingStaff?.goToNextNote()}>next note</Button>
 </div>
 
 <div class="bg-[#f3f3f3] ml-2 w-42 h-16 flex items-center justify-center rounded-xl">
