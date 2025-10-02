@@ -2,18 +2,60 @@
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button';
   import { fly, fade } from 'svelte/transition';
+  import opentype from 'opentype.js';
+  import '@vexflow-fonts/bravura/index.css';
+  import bravuraMetadata from '@vexflow-fonts/bravura/metadata.json';
+  import bravuraFontUrl from '@vexflow-fonts/bravura/bravura.otf?url';
+
+  const glyphChar = '\ue0a4';
+  const glyphName = 'noteheadBlack';
+  const glyphCodePoint = 0xe0a4;
+  const smuflBox = bravuraMetadata.glyphBBoxes?.[glyphName];
+  const smuflWidthSpaces = smuflBox
+    ? smuflBox.bBoxNE[0] - smuflBox.bBoxSW[0]
+    : null;
+  const smuflHeightSpaces = smuflBox
+    ? smuflBox.bBoxNE[1] - smuflBox.bBoxSW[1]
+    : null;
 
   let length = $state(50);
-
   let outputContainer: HTMLElement;
+  let fontSize = $state(40);
+  let bravuraFont: opentype.Font | null = null;
+  let fontReady = $state(false);
+  let glyphPath = $state('');
+  let glyphViewBox = $state('0 0 120 120');
+  let glyphTransform = $state('');
+  let glyphBounds = $state<{ width: number; height: number } | null>(null);
+  let glyphPadding = $state(12);
+  let glyphStatus = $state<'loading' | 'ready' | 'error'>('loading');
+  let glyphError = $state('');
+  let unitsPerEm = $state<number | null>(null);
+
+  function updateGlyphPath() {
+    if (!bravuraFont) return;
+    const glyph = bravuraFont.charToGlyph(String.fromCodePoint(glyphCodePoint));
+    const path = glyph.getPath(0, 0, fontSize);
+    const bbox = path.getBoundingBox();
+    const width = bbox.x2 - bbox.x1;
+    const height = bbox.y2 - bbox.y1;
+    const padding = 4;
+    glyphPadding = padding;
+    glyphPath = path.toPathData(5);
+    glyphTransform = `translate(${padding - bbox.x1}, ${padding - bbox.y1})`;
+    glyphViewBox = `0 0 ${width + padding * 2} ${height + padding * 2}`;
+    glyphBounds = { width, height };
+    glyphStatus = 'ready';
+  }
+
   onMount(() => {
     const svgNS = 'http://www.w3.org/2000/svg';
 
-    let svg = document.createElementNS(svgNS, 'svg');
+    const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('width', '200');
     svg.setAttribute('height', '200');
 
-    let rect = document.createElementNS(svgNS, 'rect');
+    const rect = document.createElementNS(svgNS, 'rect');
     rect.setAttribute('x', '0');
     rect.setAttribute('y', '20');
     rect.setAttribute('width', '50');
@@ -21,14 +63,124 @@
     rect.setAttribute('fill', '#aa7777');
 
     svg.appendChild(rect);
-
     outputContainer.appendChild(svg);
+
+    (async () => {
+      try {
+        const response = await fetch(bravuraFontUrl);
+        const buffer = await response.arrayBuffer();
+        bravuraFont = opentype.parse(buffer);
+        unitsPerEm = bravuraFont.unitsPerEm ?? null;
+        fontReady = true;
+        updateGlyphPath();
+      } catch (error) {
+        glyphStatus = 'error';
+        glyphError = error instanceof Error ? error.message : String(error);
+      }
+    })();
+  });
+
+  $effect(() => {
+    if (!fontReady) return;
+    fontSize;
+    updateGlyphPath();
   });
 
   let showWhich = $state(3);
 </script>
 
 <main class="flex flex-wrap mt-10 mb-20 ml-5 gap-2">
+  <section class="p-10 border-4 border-dashed max-w-3xl space-y-4">
+    <h3 class="text-lg font-bold">Music font glyph → SVG path</h3>
+    <p class="text-sm text-slate-500">
+      This demo fetches the Bravura music font, extracts the black notehead glyph and converts it
+      into an SVG <span class="font-mono">&lt;path&gt;</span>. Slide the control to see how glyph metrics
+      scale independently of the rendered notehead.
+    </p>
+    <label class="flex items-center gap-3 text-sm font-medium">
+      <span>Font size</span>
+      <input type="range" min="10" max="160" step="5" bind:value={fontSize} class="grow" />
+      <span class="tabular-nums">{fontSize}px</span>
+    </label>
+
+    {#if glyphStatus === 'loading'}
+      <p>Loading Bravura glyph…</p>
+    {:else if glyphStatus === 'error'}
+      <p class="text-red-500">Failed to load glyph: {glyphError}</p>
+    {:else}
+      <div class="grid gap-6 sm:grid-cols-2">
+        <figure class="space-y-2">
+          <figcaption class="font-semibold">Text glyph (baseline)</figcaption>
+          <svg
+            viewBox={glyphViewBox}
+            class="w-[200px] h-[200px] border border-dashed border-slate-400 bg-white rounded-md shadow-sm"
+          >
+            <rect
+              x={glyphPadding}
+              y={glyphPadding}
+              width={glyphBounds ? glyphBounds.width : 0}
+              height={glyphBounds ? glyphBounds.height : 0}
+              fill="none"
+              stroke="#38bdf8"
+            />
+            <g transform={glyphTransform} class="text-slate-800">
+              <text font-family="Bravura" font-size={`${fontSize}px`} x="0" y="0" fill="currentColor">
+                {glyphChar}
+              </text>
+            </g>
+          </svg>
+        </figure>
+
+        <figure class="space-y-2">
+          <figcaption class="font-semibold">Converted SVG path</figcaption>
+          <svg
+            viewBox={glyphViewBox}
+            class="w-[200px] h-[200px] border border-dashed border-slate-400 bg-white rounded-md shadow-sm"
+          >
+            <rect
+              x={glyphPadding}
+              y={glyphPadding}
+              width={glyphBounds ? glyphBounds.width : 0}
+              height={glyphBounds ? glyphBounds.height : 0}
+              fill="none"
+              stroke="#38bdf8"
+            />
+            <g transform={glyphTransform} fill="currentColor" class="text-slate-800">
+              <path d={glyphPath} />
+            </g>
+          </svg>
+        </figure>
+      </div>
+
+      <dl class="grid gap-y-1 text-sm">
+        <div class="flex gap-2">
+          <dt class="min-w-32 font-semibold">unitsPerEm</dt>
+          <dd>{unitsPerEm ?? '—'}</dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="min-w-32 font-semibold">Path box</dt>
+          <dd>
+            {#if glyphBounds}
+              {glyphBounds.width.toFixed(1)} × {glyphBounds.height.toFixed(1)} px
+            {:else}
+              —
+            {/if}
+          </dd>
+        </div>
+        <div class="flex gap-2">
+          <dt class="min-w-32 font-semibold">SMuFL box</dt>
+          <dd>
+            {#if smuflWidthSpaces !== null && smuflHeightSpaces !== null}
+              {smuflWidthSpaces.toFixed(2)} × {smuflHeightSpaces.toFixed(2)} staff spaces
+            {:else}
+              —
+            {/if}
+          </dd>
+        </div>
+      </dl>
+    {/if}
+  </section>
+
   <section class="p-10 border-4 border-dashed">
     <Button onclick={() => (length += 5)}>zoom out</Button>
     <Button onclick={() => (length -= 5)}>zoom in</Button>
