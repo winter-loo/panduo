@@ -222,7 +222,7 @@
       this.staves.push(measureStave);
       this.staveX += layout.measureWidth;
       if (this.staves.length == 1) {
-        measureStave.addTimeSignature('4/4');
+        measureStave.addTimeSignature(data.song.timeSignature);
       }
       measureStave.setContext(this.context).draw();
 
