@@ -12,6 +12,7 @@
     type StaveNoteStruct,
     Voice,
     Formatter,
+    VoiceMode,
   } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { MovableElement } from '$lib/movable';
@@ -124,6 +125,7 @@
     private cursorElement: SVGGElement | null = null;
     private currentNoteIndex = 0;
     private highlightedNoteIndex: number | null = null;
+    private lastAdvanceTimestamp = 0;
 
     private readonly handleNoteClick = (note: StaveNote) => {
       const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
@@ -162,12 +164,6 @@
       }
       this.currentNoteIndex = 0;
       this.highlightedNoteIndex = null;
-      const firstNoteX = this.notes[0]?.getAbsoluteX() ?? null;
-      const anchorChanged = this.cursorAnchorX !== firstNoteX;
-      this.cursorAnchorX = firstNoteX;
-      if (anchorChanged) {
-        this.syncCursorPosition();
-      }
     }
 
     private drawFixedStave() {
@@ -262,9 +258,11 @@
           stave.setContext(this.context).draw();
           if (i == 0) {
             // add an invisble note
-            let xNote = new StaveNote(config, { keys: ['r/4'], duration: '1' });
+            let xNote = new StaveNote(config, { keys: ['r/4'], duration: '8' });
             this.notes.push(xNote);
-            let voice = new Voice(config, timeSignature).addTickables([xNote]);
+            let voice = new Voice(config, timeSignature)
+              .setMode(VoiceMode.SOFT)
+              .addTickables([xNote]);
             new Formatter(config).formatToStave([voice], stave);
           }
           this.staveX += layout.measureWidth;
@@ -403,24 +401,29 @@
       this.highlightedNoteIndex = index;
     }
 
-    private scrollToNote(index: number) {
+    private scrollToNote(index: number, options: { immediate?: boolean } = {}) {
       if (index < 0 || index >= this.notes.length) return;
+      const { immediate = false } = options;
       const anchorX = this.getCursorAnchor();
       if (anchorX === null) return;
       const noteX = this.notes[index].getAbsoluteX();
       const targetOffset = Math.max(0, Math.min(this.maxOffsetX, noteX - anchorX));
       const distance = Math.abs(targetOffset - this.currentOffsetX);
 
+      if (immediate) {
+        this.stop();
+        this.adjustByAnimated(targetOffset - this.currentOffsetX);
+        return;
+      }
+
       if (distance < 0.5) {
         this.adjustBy(targetOffset - this.currentOffsetX);
-        this.syncCursorPosition();
         return;
       }
 
       const pixelsPerSecond = this.getPixelsPerSecond ? this.getPixelsPerSecond() : 60;
       if (!Number.isFinite(pixelsPerSecond) || pixelsPerSecond <= 0) {
-        this.adjustBy(targetOffset - this.currentOffsetX);
-        this.syncCursorPosition();
+        this.adjustByAnimated(targetOffset - this.currentOffsetX);
         return;
       }
 
@@ -431,8 +434,12 @@
     goToNextNote() {
       if (this.notes.length === 0) return;
       const nextIndex = Math.min(this.notes.length - 1, this.currentNoteIndex + 1);
+      console.log('currentNoteIndex=', this.currentNoteIndex, ', nextIndex=', nextIndex);
       this.showNoteSpanFor(this.currentNoteIndex);
-      this.scrollToNote(nextIndex);
+      const now = performance.now();
+      const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
+      this.lastAdvanceTimestamp = now;
+      this.scrollToNote(nextIndex, { immediate });
       this.currentNoteIndex = nextIndex;
     }
   }
