@@ -418,7 +418,7 @@
 
     private findNextNonRestIndex(fromIndex: number): number | null {
       if (this.notes.length === 0) return null;
-      for (let i = Math.min(this.notes.length - 1, fromIndex + 1); i < this.notes.length; i++) {
+      for (let i = fromIndex + 1; i < this.notes.length; i++) {
         const note = this.notes[i];
         if (!note) continue;
         if (typeof note.isRest === 'function' && note.isRest()) continue;
@@ -459,9 +459,12 @@
       this.clearHighlightedNoteSpan();
     }
 
-    private scrollToNote(index: number, options: { immediate?: boolean } = {}) {
+    private scrollToNote(
+      index: number,
+      options: { immediate?: boolean; easing?: boolean } = {},
+    ) {
       if (index < 0 || index >= this.notes.length) return;
-      const { immediate = false } = options;
+      const { immediate = false, easing = true } = options;
       const anchorX = this.getCursorAnchor();
       if (anchorX === null) return;
       const noteX = this.notes[index].getAbsoluteX();
@@ -476,11 +479,6 @@
 
       if (distance < 0.5) {
         this.adjustBy(targetOffset - this.currentOffsetX);
-        if (this.onMove) {
-          this.onMove(this.currentOffsetX);
-        } else {
-          this.syncCursorPosition();
-        }
         return;
       }
 
@@ -490,8 +488,8 @@
         return;
       }
 
-      const duration = Math.max(120, (distance / pixelsPerSecond) * 1000);
-      this.moveTo(targetOffset, duration);
+      const duration = Math.max(16, (distance / pixelsPerSecond) * 1000);
+      this.moveTo(targetOffset, duration, easing);
     }
 
     goToNextNote() {
@@ -504,7 +502,7 @@
       const now = performance.now();
       const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
       this.lastAdvanceTimestamp = now;
-      this.scrollToNote(nextIndex, { immediate });
+      this.scrollToNote(nextIndex, { immediate, easing: false });
       this.currentNoteIndex = nextIndex;
     }
   }

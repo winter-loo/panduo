@@ -147,7 +147,7 @@ export class MovableElement {
   };
 
   // Animate to a target offset (absolute, 0..maxOffsetX)
-  moveTo = (targetOffsetX: number, durationMs = 220) => {
+  moveTo = (targetOffsetX: number, durationMs = 220, useEasing = true) => {
     const end = Math.min(this.maxOffsetX, Math.max(0, targetOffsetX));
     const start = this.currentOffsetX;
     const delta = end - start;
@@ -162,7 +162,7 @@ export class MovableElement {
     const step = () => {
       const now = performance.now();
       const p = Math.min(1, (now - t0) / durationMs);
-      const e = easeInOutQuad(p);
+      const e = useEasing ? easeInOutQuad(p) : p;
       this.currentOffsetX = start + delta * e;
       this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
       this.onMove?.(this.currentOffsetX);
