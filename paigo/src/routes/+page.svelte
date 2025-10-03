@@ -266,7 +266,7 @@
           stave.setContext(this.context).draw();
           if (i == 0) {
             // add an invisble note
-            let xNote = new StaveNote(config, { keys: ['r/4'], duration: '8' });
+            let xNote = new StaveNote(config, { keys: ['b/4'], duration: '8' });
             this.notes.push(xNote);
             let voice = new Voice(config, timeSignature)
               .setMode(VoiceMode.SOFT)
@@ -416,6 +416,17 @@
       this.highlightedNoteIndex = index;
     }
 
+    private findNextNonRestIndex(fromIndex: number): number | null {
+      if (this.notes.length === 0) return null;
+      for (let i = Math.min(this.notes.length - 1, fromIndex + 1); i < this.notes.length; i++) {
+        const note = this.notes[i];
+        if (!note) continue;
+        if (typeof note.isRest === 'function' && note.isRest()) continue;
+        return i;
+      }
+      return null;
+    }
+
     private setNoteSpanVisibility(index: number, visible: boolean) {
       const note = this.notes[index];
       if (!note) return;
@@ -485,13 +496,13 @@
 
     goToNextNote() {
       if (this.notes.length === 0) return;
-      const nextIndex = Math.min(this.notes.length - 1, this.currentNoteIndex + 1);
       if (this.showingNoteSpanFromHold) {
         this.showNoteSpanFor(this.currentNoteIndex);
       }
+      const nextIndex = this.findNextNonRestIndex(this.currentNoteIndex);
+      if (nextIndex === null) return;
       const now = performance.now();
-      const immediate =
-        this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
+      const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
       this.lastAdvanceTimestamp = now;
       this.scrollToNote(nextIndex, { immediate });
       this.currentNoteIndex = nextIndex;

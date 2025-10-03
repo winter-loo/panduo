@@ -11,14 +11,14 @@ export const load: LayoutLoad = () => {
       {
         notes: [
           { keys: ['b/4'], duration: '4' },
-          { keys: ['b/4'], duration: '4' },
-          { keys: ['b/4'], duration: '4' },
+          { keys: ['r/4'], duration: '4r' },
+          { keys: ['r/4'], duration: '4r' },
         ]
       },
       {
         notes: [
-          { keys: ['b/4'], duration: '4', fingering: 2 },
-          { keys: ['b/4'], duration: '4', fingering: 2 },
+          { keys: ['r/4'], duration: '4r', fingering: 2 },
+          { keys: ['r/4'], duration: '4r', fingering: 2 },
           { keys: ['b/4'], duration: '4', fingering: 2 },
         ],
       },
