@@ -36,6 +36,7 @@ export class NoteSpan extends Element {
   private expanded: boolean = false;
   private visible: boolean = false;
   private animationFrame: number | null = null;
+  private animationStartTimestamp: number | null = null;
   private animationLastTimestamp: number | null = null;
   private boundNote?: Tickable;
 
@@ -246,6 +247,7 @@ export class NoteSpan extends Element {
       window.cancelAnimationFrame(this.animationFrame);
     }
     this.animationFrame = null;
+    this.animationStartTimestamp = null;
     this.animationLastTimestamp = null;
   }
 
@@ -287,17 +289,38 @@ export class NoteSpan extends Element {
         return;
       }
 
+      if (this.animationStartTimestamp === null) {
+        this.animationStartTimestamp = timestamp;
+      }
+
       if (this.animationLastTimestamp === null) {
         this.animationLastTimestamp = timestamp;
         this.animationFrame = window.requestAnimationFrame(animate);
         return;
       }
 
-      const elapsed = timestamp - this.animationLastTimestamp;
-      this.animationLastTimestamp = timestamp;
+      const totalElapsed = timestamp - this.animationStartTimestamp;
+      const traveledDistance = totalElapsed * speedPerMs;
 
-      const deltaWidth = elapsed * speedPerMs;
-      const nextWidth = Math.min(maxInner, this.innerWidth + deltaWidth);
+      const cursorWidth = this.config.get('Stem.width');
+      const staveLineWidth = this.config.get('Stave.style.lineWidth');
+      const extra = cursorWidth + staveLineWidth;
+      // delay expansion until specified width has passed
+      if (traveledDistance + extra < minInner) {
+        this.animationLastTimestamp = timestamp;
+        this.animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      const expansionDistance = traveledDistance + extra - minInner;
+      const nextWidth = Math.min(maxInner, minInner + expansionDistance);
+
+      if (nextWidth <= this.innerWidth) {
+        this.animationLastTimestamp = timestamp;
+        this.animationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
       this.innerWidth = nextWidth;
       this.updateDomDimensions();
 
@@ -307,9 +330,11 @@ export class NoteSpan extends Element {
         return;
       }
 
+      this.animationLastTimestamp = timestamp;
       this.animationFrame = window.requestAnimationFrame(animate);
     };
 
+    this.animationStartTimestamp = null;
     this.animationLastTimestamp = null;
     this.animationFrame = window.requestAnimationFrame(animate);
   }
