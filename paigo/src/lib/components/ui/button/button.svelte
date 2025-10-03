@@ -49,6 +49,16 @@
     type = 'button',
     disabled,
     children,
+    onpointerdown,
+    onpointerup,
+    onpointerleave,
+    onpointercancel,
+    onmousedown,
+    onmouseup,
+    onmouseleave,
+    ontouchstart,
+    ontouchend,
+    ontouchcancel,
     ...restProps
   }: ButtonProps = $props();
 </script>
@@ -62,6 +72,16 @@
     aria-disabled={disabled}
     role={disabled ? 'link' : undefined}
     tabindex={disabled ? -1 : undefined}
+    {onpointerdown}
+    {onpointerup}
+    {onpointerleave}
+    {onpointercancel}
+    {onmousedown}
+    {onmouseup}
+    {onmouseleave}
+    {ontouchstart}
+    {ontouchend}
+    {ontouchcancel}
     {...restProps}
   >
     {@render children?.()}
@@ -73,6 +93,16 @@
     class={cn(buttonVariants({ variant, size }), className)}
     {type}
     {disabled}
+    {onpointerdown}
+    {onpointerup}
+    {onpointerleave}
+    {onpointercancel}
+    {onmousedown}
+    {onmouseup}
+    {onmouseleave}
+    {ontouchstart}
+    {ontouchend}
+    {ontouchcancel}
     {...restProps}
   >
     {@render children?.()}

@@ -125,6 +125,7 @@
     private cursorElement: SVGGElement | null = null;
     private currentNoteIndex = 0;
     private highlightedNoteIndex: number | null = null;
+    private showingNoteSpanFromHold = false;
     private lastAdvanceTimestamp = 0;
 
     private readonly handleNoteClick = (note: StaveNote) => {
@@ -159,11 +160,16 @@
 
     protected override onReset(): void {
       super.onReset();
-      if (!this.noteSpanAllVisible && this.highlightedNoteIndex !== null) {
-        this.notes[this.highlightedNoteIndex]?.hideNoteSpan();
-      }
+      this.clearHighlightedNoteSpan();
+      this.showingNoteSpanFromHold = false;
       this.currentNoteIndex = 0;
-      this.highlightedNoteIndex = null;
+      this.lastAdvanceTimestamp = 0;
+      const firstNoteX = this.notes[0]?.getAbsoluteX() ?? null;
+      const anchorChanged = this.cursorAnchorX !== firstNoteX;
+      this.cursorAnchorX = firstNoteX;
+      if (anchorChanged) {
+        this.syncCursorPosition();
+      }
     }
 
     private drawFixedStave() {
@@ -198,6 +204,8 @@
       this.cursorElement = null;
       this.currentNoteIndex = 0;
       this.highlightedNoteIndex = null;
+      this.showingNoteSpanFromHold = false;
+      this.lastAdvanceTimestamp = 0;
     }
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
@@ -388,6 +396,13 @@
       return this.notes[0].getAbsoluteX();
     }
 
+    private clearHighlightedNoteSpan() {
+      if (this.highlightedNoteIndex !== null && !this.noteSpanAllVisible) {
+        this.setNoteSpanVisibility(this.highlightedNoteIndex, false);
+      }
+      this.highlightedNoteIndex = null;
+    }
+
     private showNoteSpanFor(index: number) {
       if (index < 0 || index >= this.notes.length) return;
       if (this.noteSpanAllVisible) {
@@ -395,10 +410,42 @@
         return;
       }
       if (this.highlightedNoteIndex !== null && this.highlightedNoteIndex !== index) {
-        this.notes[this.highlightedNoteIndex]?.hideNoteSpan();
+        this.setNoteSpanVisibility(this.highlightedNoteIndex, false);
       }
-      this.notes[index].showNoteSpan();
+      this.setNoteSpanVisibility(index, true);
       this.highlightedNoteIndex = index;
+    }
+
+    private setNoteSpanVisibility(index: number, visible: boolean) {
+      const note = this.notes[index];
+      if (!note) return;
+      if (visible) {
+        note.showNoteSpan();
+      } else {
+        note.hideNoteSpan();
+      }
+      const group = note.getSVGElement() as SVGGElement | null;
+      const spanGroup = group?.querySelector('g.vf-notespan') as SVGGElement | null;
+      if (!spanGroup) return;
+      if (visible) {
+        spanGroup.removeAttribute('display');
+        spanGroup.removeAttribute('aria-hidden');
+      } else {
+        spanGroup.setAttribute('display', 'none');
+        spanGroup.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    startNoteSpanPreview() {
+      if (this.notes.length === 0) return;
+      this.showingNoteSpanFromHold = true;
+      this.showNoteSpanFor(this.currentNoteIndex);
+    }
+
+    stopNoteSpanPreview() {
+      if (!this.showingNoteSpanFromHold) return;
+      this.showingNoteSpanFromHold = false;
+      this.clearHighlightedNoteSpan();
     }
 
     private scrollToNote(index: number, options: { immediate?: boolean } = {}) {
@@ -418,6 +465,11 @@
 
       if (distance < 0.5) {
         this.adjustBy(targetOffset - this.currentOffsetX);
+        if (this.onMove) {
+          this.onMove(this.currentOffsetX);
+        } else {
+          this.syncCursorPosition();
+        }
         return;
       }
 
@@ -434,10 +486,12 @@
     goToNextNote() {
       if (this.notes.length === 0) return;
       const nextIndex = Math.min(this.notes.length - 1, this.currentNoteIndex + 1);
-      console.log('currentNoteIndex=', this.currentNoteIndex, ', nextIndex=', nextIndex);
-      this.showNoteSpanFor(this.currentNoteIndex);
+      if (this.showingNoteSpanFromHold) {
+        this.showNoteSpanFor(this.currentNoteIndex);
+      }
       const now = performance.now();
-      const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
+      const immediate =
+        this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
       this.lastAdvanceTimestamp = now;
       this.scrollToNote(nextIndex, { immediate });
       this.currentNoteIndex = nextIndex;
@@ -481,6 +535,41 @@
   function toggleNoteSpan() {
     noteSpanVisible = !noteSpanVisible;
     movingStaff?.setNoteSpanVisible(noteSpanVisible);
+  }
+
+  let pointerHoldActive = false;
+  let skipNextClick = false;
+
+  function handleNextNotePointerDown(event: PointerEvent) {
+    if (event.button !== 0) return;
+    pointerHoldActive = true;
+    skipNextClick = true;
+    movingStaff?.startNoteSpanPreview();
+    movingStaff?.goToNextNote();
+  }
+
+  function handleNextNotePointerUp() {
+    if (!pointerHoldActive) return;
+    pointerHoldActive = false;
+    movingStaff?.stopNoteSpanPreview();
+  }
+
+  function handleNextNotePointerLeave() {
+    if (!pointerHoldActive) {
+      skipNextClick = false;
+      return;
+    }
+    pointerHoldActive = false;
+    skipNextClick = false;
+    movingStaff?.stopNoteSpanPreview();
+  }
+
+  function handleNextNoteClick() {
+    if (skipNextClick) {
+      skipNextClick = false;
+      return;
+    }
+    movingStaff?.goToNextNote();
   }
 
   $effect(() => {
@@ -562,7 +651,16 @@
   <Button type="button" onclick={toggleNoteSpan}>
     {noteSpanVisible ? 'hide span' : 'show span'}
   </Button>
-  <Button type="button" onclick={() => movingStaff?.goToNextNote()}>next note</Button>
+  <Button
+    type="button"
+    onpointerdown={handleNextNotePointerDown}
+    onpointerup={handleNextNotePointerUp}
+    onpointerleave={handleNextNotePointerLeave}
+    onpointercancel={handleNextNotePointerLeave}
+    onclick={handleNextNoteClick}
+  >
+    next note
+  </Button>
 </div>
 
 <div class="bg-[#f3f3f3] ml-2 w-42 h-16 flex items-center justify-center rounded-xl">
