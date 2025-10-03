@@ -311,6 +311,8 @@
       this.beatsPerMeasure = this.parseBeatsPerMeasure(timeSignature);
       this.pixelsPerBeat = layout.measureWidth / this.beatsPerMeasure;
       this.config.setTempo(this.tempo);
+      const pixelsPerSecond = this.computePixelsPerSecond();
+      this.config.setTempoSpeed(pixelsPerSecond / 1000);
     }
 
     getTempo(): number {

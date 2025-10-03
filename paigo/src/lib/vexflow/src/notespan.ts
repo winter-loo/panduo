@@ -6,7 +6,6 @@ import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
-import { Tables } from './tables';
 import type { Tickable } from './tickable';
 import { log, prefix as cp } from './util';
 
@@ -15,7 +14,6 @@ function L(...args: any[]) {
   if (NoteSpan.DEBUG) log('VexFlow.NoteSpan', args);
 }
 
-const QUARTER_NOTE_TICKS = Tables.durationToTicks('4');
 
 interface SpanBounds {
   x: number;
@@ -38,7 +36,7 @@ export class NoteSpan extends Element {
   private expanded: boolean = false;
   private visible: boolean = false;
   private animationFrame: number | null = null;
-  private animationStart: number | null = null;
+  private animationLastTimestamp: number | null = null;
   private boundNote?: Tickable;
 
   constructor(config: VexflowConfigInstance) {
@@ -216,21 +214,9 @@ export class NoteSpan extends Element {
     return this;
   }
 
-  private getNoteDurationTicks(): number {
-    if (this.boundNote) {
-      const ticksValue = this.boundNote.getTicks().value();
-      if (Number.isFinite(ticksValue) && ticksValue > 0) {
-        return ticksValue;
-      }
-    }
-    return QUARTER_NOTE_TICKS;
-  }
-
-  private getAnimationDurationMs(): number {
-    const noteTicks = this.getNoteDurationTicks();
-    const ratio = noteTicks > 0 ? noteTicks / QUARTER_NOTE_TICKS : 1;
-    const tempo = this.config.get('tempo', 60);
-    return 60000 / tempo * ratio;
+  private getTempoSpeed(): number {
+    const configuredSpeed = this.config.get('tempoSpeed', 0);
+    return Number.isFinite(configuredSpeed) && configuredSpeed > 0 ? configuredSpeed : 0;
   }
 
   expandToDelta(delta: number, timestamp?: DOMHighResTimeStamp): boolean {
@@ -260,7 +246,7 @@ export class NoteSpan extends Element {
       window.cancelAnimationFrame(this.animationFrame);
     }
     this.animationFrame = null;
-    this.animationStart = null;
+    this.animationLastTimestamp = null;
   }
 
   private startExpandAnimation(): void {
@@ -277,7 +263,6 @@ export class NoteSpan extends Element {
 
     const minInner = this.getMinInnerWidth();
     const maxInner = this.getMaxInnerWidth();
-    const animationDurationMs = this.getAnimationDurationMs();
     if (maxInner <= minInner) {
       this.innerWidth = maxInner;
       this.expanded = true;
@@ -288,31 +273,44 @@ export class NoteSpan extends Element {
     this.innerWidth = minInner;
     this.updateDomDimensions();
 
+    const speedPerMs = this.getTempoSpeed();
+    if (speedPerMs <= 0) {
+      this.innerWidth = maxInner;
+      this.expanded = true;
+      this.updateDomDimensions();
+      return;
+    }
+
     const animate = (timestamp: DOMHighResTimeStamp) => {
       if (!this.visible) {
         this.cancelAnimation();
         return;
       }
 
-      if (this.animationStart === null) {
-        this.animationStart = timestamp;
+      if (this.animationLastTimestamp === null) {
+        this.animationLastTimestamp = timestamp;
+        this.animationFrame = window.requestAnimationFrame(animate);
+        return;
       }
 
-      const elapsed = timestamp - this.animationStart;
-      const duration = animationDurationMs;
-      const progress = Math.min(1, elapsed / duration);
-      const nextWidth = minInner + (maxInner - minInner) * progress;
+      const elapsed = timestamp - this.animationLastTimestamp;
+      this.animationLastTimestamp = timestamp;
+
+      const deltaWidth = elapsed * speedPerMs;
+      const nextWidth = Math.min(maxInner, this.innerWidth + deltaWidth);
       this.innerWidth = nextWidth;
       this.updateDomDimensions();
 
-      if (progress < 1) {
-        this.animationFrame = window.requestAnimationFrame(animate);
-      } else {
+      if (nextWidth >= maxInner) {
         this.expanded = true;
         this.cancelAnimation();
+        return;
       }
+
+      this.animationFrame = window.requestAnimationFrame(animate);
     };
 
+    this.animationLastTimestamp = null;
     this.animationFrame = window.requestAnimationFrame(animate);
   }
 }

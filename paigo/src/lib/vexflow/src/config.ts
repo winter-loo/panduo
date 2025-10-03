@@ -118,6 +118,7 @@ export interface VexflowConfigShape {
   fontWeight: string,
   fontStyle: string,
   tempo: number,
+  tempoSpeed: number,
   Stave: StaveConfigValues;
   Clef: ClefConfigValues;
   TimeSignature: TimeSignatureConfigValues,
@@ -134,6 +135,7 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
   fontWeight: 'normal',
   fontStyle: 'normal',
   tempo: 60,
+  tempoSpeed: 0,
   Stave: {
     spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE,
     spaceAboveStaffLn: 4,
@@ -211,6 +213,19 @@ export class VexflowConfigInstance {
         ? { ...(this.overrides as Record<string, unknown>) }
         : {};
     overrides.tempo = safeTempo;
+    this.overrides = overrides as DeepPartial<VexflowConfigShape>;
+    this.cached = undefined;
+    this.cacheStyle.clear();
+    this.cacheFont.clear();
+  }
+
+  setTempoSpeed(speed: number): void {
+    const safeSpeed = Number.isFinite(speed) && speed > 0 ? speed : 0;
+    const overrides =
+      this.overrides && isPlainObject(this.overrides)
+        ? { ...(this.overrides as Record<string, unknown>) }
+        : {};
+    overrides.tempoSpeed = safeSpeed;
     this.overrides = overrides as DeepPartial<VexflowConfigShape>;
     this.cached = undefined;
     this.cacheStyle.clear();
