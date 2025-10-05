@@ -61,6 +61,7 @@ const merge = <T>(base: T, overrides?: DeepPartial<T>): T => {
 };
 
 export interface StaveConfigValues {
+  spacingBetweenModsPx: number;
   spacingBetweenLinesPx: number;
   spaceAboveStaffLn: number;
   spaceBelowStaffLn: number;
@@ -105,6 +106,7 @@ export interface NoteHeadConfigValues {
 
 export interface TimeSignatureConfigValues extends ElementStyle {
   font?: FontInfo,
+  spec: string,
 }
 
 export interface KeySignatureConfigValues extends ElementStyle {
@@ -119,6 +121,9 @@ export interface VexflowConfigShape {
   fontStyle: string,
   tempo: number,
   tempoSpeed: number,
+  quarterNoteWidth: number,
+  beatUnit: number,
+  beatsInMeasure: number,
   Stave: StaveConfigValues;
   Clef: ClefConfigValues;
   TimeSignature: TimeSignatureConfigValues,
@@ -136,7 +141,11 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
   fontStyle: 'normal',
   tempo: 60,
   tempoSpeed: 0,
+  quarterNoteWidth: 112,
+  beatUnit: 4,
+  beatsInMeasure: 4,
   Stave: {
+    spacingBetweenModsPx: 6,
     spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE,
     spaceAboveStaffLn: 4,
     spaceBelowStaffLn: 4,
@@ -169,7 +178,9 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     },
     types: {},
   },
-  TimeSignature: {},
+  TimeSignature: {
+    spec: '4/4'
+  },
   KeySignature: {},
   Stem: {
     width: 1.5,
@@ -213,6 +224,33 @@ export class VexflowConfigInstance {
         ? { ...(this.overrides as Record<string, unknown>) }
         : {};
     overrides.tempo = safeTempo;
+    this.overrides = overrides as DeepPartial<VexflowConfigShape>;
+    this.cached = undefined;
+    this.cacheStyle.clear();
+    this.cacheFont.clear();
+  }
+
+  setBeatUnit(beatUnit: number) {
+    const safeBeatUnit = Number.isFinite(beatUnit) && beatUnit > 0 ? beatUnit : DEFAULT_CONFIG.beatUnit;
+    const overrides =
+      this.overrides && isPlainObject(this.overrides)
+        ? { ...(this.overrides as Record<string, unknown>) }
+        : {};
+    overrides.beatUnit = safeBeatUnit;
+    this.overrides = overrides as DeepPartial<VexflowConfigShape>;
+    this.cached = undefined;
+    this.cacheStyle.clear();
+    this.cacheFont.clear();
+  }
+
+  setBeatsInMeasure(beatsInMeasure: number) {
+    const safeBeatsInMeasure = Number.isFinite(beatsInMeasure) &&
+      beatsInMeasure > 0 ? beatsInMeasure : DEFAULT_CONFIG.beatsInMeasure;
+    const overrides =
+      this.overrides && isPlainObject(this.overrides)
+        ? { ...(this.overrides as Record<string, unknown>) }
+        : {};
+    overrides.beatsInMeasure = safeBeatsInMeasure;
     this.overrides = overrides as DeepPartial<VexflowConfigShape>;
     this.cached = undefined;
     this.cacheStyle.clear();

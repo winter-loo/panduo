@@ -167,7 +167,7 @@ export class TimeSignature extends StaveModifier {
   }
 
   /**
-   * Return the staff line that the TimeSignature sits on.  Generally 0 for numerator/
+   * Return the staff line that the TimeSignature sits on. Generally 0 for numerator/
    * denominator time signatures such as 3/4 and 2 for cut/common.
    */
   getLine(): number {

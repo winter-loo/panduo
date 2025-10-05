@@ -64,6 +64,7 @@
   type ConfigInstance = ReturnType<typeof VexFlow.Config.defaults>;
 
   const configInstance = VexFlow.Config.create({
+    quarterNoteWidth: 112,
     fontSize: 60,
     Stem: {
       width: 6,
@@ -108,6 +109,14 @@
     },
   });
 
+  const parts = data.song.timeSignature.split('/');
+  configInstance.setBeatsInMeasure(parseInt(parts[0]));
+  configInstance.setBeatUnit(parseInt(parts[1]));
+
+  layout.measureWidth =
+    (configInstance.get('quarterNoteWidth') * configInstance.get('beatsInMeasure') * 4) /
+    configInstance.get('beatUnit');
+
   class MovingStaff extends MovableElement {
     private config: ConfigInstance;
     private fixedElement: HTMLDivElement;
@@ -120,7 +129,7 @@
     private noteSpanAllVisible = false;
     private tempo: number = 60;
     private beatsPerMeasure: number = 4;
-    private pixelsPerBeat: number = layout.measureWidth / 4;
+    private pixelsPerBeat: number = 112;
     private cursorAnchorX: number | null = null;
     private cursorElement: SVGGElement | null = null;
     private currentNoteIndex = 0;
@@ -218,11 +227,15 @@
           },
         });
       }
-      const measureStave = new Stave(config, this.staveX, 0, layout.measureWidth);
+      let measureWidth = layout.measureWidth;
+      if (this.staves.length === 0 && timeSignature) {
+        measureWidth += this.computeTimeSignatureExtraWidth(config.fork(), timeSignature);
+      }
+      const measureStave = new Stave(config, this.staveX, 0, measureWidth);
       this.staves.push(measureStave);
-      this.staveX += layout.measureWidth;
-      if (this.staves.length == 1) {
-        measureStave.addTimeSignature(data.song.timeSignature);
+      this.staveX += measureWidth;
+      if (this.staves.length == 1 && timeSignature) {
+        measureStave.addTimeSignature(timeSignature);
       }
       measureStave.setContext(this.context).draw();
 
@@ -363,6 +376,17 @@
       return Math.max(Math.ceil(computed), minWidth);
     }
 
+    private computeTimeSignatureExtraWidth(config: ConfigInstance, timeSignature: string): number {
+      if (!timeSignature) return 0;
+      const baseStave = new Stave(config, 0, 0, 1000);
+      const baseStart = baseStave.getNoteStartX();
+      const withTimeSignature = new Stave(config, 0, 0, 1000);
+      withTimeSignature.addTimeSignature(timeSignature);
+      const timeSignatureStart = withTimeSignature.getNoteStartX();
+      const extra = timeSignatureStart - baseStart + config.get('Stave.paddingLeft') - config.get('Stave.style.lineWidth') * 2;
+      return Number.isFinite(extra) && extra > 0 ? extra : 0;
+    }
+
     private ensureCursorElement(): SVGGElement | null {
       if (this.cursorElement) return this.cursorElement;
       const svgContext = this.getSvgContext();
@@ -461,10 +485,7 @@
       this.clearHighlightedNoteSpan();
     }
 
-    private scrollToNote(
-      index: number,
-      options: { immediate?: boolean; easing?: boolean } = {},
-    ) {
+    private scrollToNote(index: number, options: { immediate?: boolean; easing?: boolean } = {}) {
       if (index < 0 || index >= this.notes.length) return;
       const { immediate = false, easing = true } = options;
       const anchorX = this.getCursorAnchor();

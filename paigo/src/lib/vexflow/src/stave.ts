@@ -911,6 +911,9 @@ export class Stave extends Element {
   }
 
   getJustifyWidth(): number {
-    return this.getNoteEndX() - this.getNoteStartX();
+    const beatUnit = this.config.get('beatUnit');
+    const beatsInMeasure = this.config.get('beatsInMeasure');
+    const qWidth = this.config.get('quarterNoteWidth');
+    return beatsInMeasure * qWidth * 4 / beatUnit;
   }
 }
