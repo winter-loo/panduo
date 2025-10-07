@@ -87,6 +87,12 @@
   });
 
   let showWhich = $state(3);
+
+  let highlightScale = $state(1);
+  const toggleHighlightScale = () => {
+    highlightScale = highlightScale === 1 ? 1.4 : 1;
+  };
+  const highlightTransform = $derived(`scale(${highlightScale})`);
 </script>
 
 <main class="flex flex-wrap mt-10 mb-20 ml-5 gap-2">
@@ -193,6 +199,35 @@
   <section class="p-10 border-4 border-dashed">
     <h3 class="text-lg">created by javascript</h3>
     <div class="output" bind:this={outputContainer}></div>
+  </section>
+
+  <section class="p-10 border-4 border-dashed">
+    <h3 class="text-lg font-bold">Scale a triangle on click</h3>
+    <p class="text-sm text-slate-500">
+      Click anywhere inside the SVG to scale just the green triangle; the other shapes stay fixed.
+    </p>
+    <svg
+      width="240"
+      height="160"
+      viewBox="0 0 120 80"
+      class="mt-4 cursor-pointer"
+      onclick={toggleHighlightScale}
+    >
+      <rect x="8" y="12" width="104" height="56" fill="#f3f4f6" stroke="#cbd5f5" />
+      <circle cx="30" cy="40" r="12" fill="#60a5fa" />
+      <polygon
+        points="60,24 84,64 36,64"
+        fill="#22c55e"
+        style:transition="transform 180ms ease"
+        style:transform-box="fill-box"
+        style:transform-origin="center"
+        style:transform={highlightTransform}
+      />
+      <line x1="90" y1="20" x2="90" y2="60" stroke="#f97316" stroke-width="4" />
+    </svg>
+    <p class="mt-2 text-xs text-slate-500">
+      Current scale: {highlightScale.toFixed(1)}×
+    </p>
   </section>
 
   <section class="p-10 border-4 border-dashed">
