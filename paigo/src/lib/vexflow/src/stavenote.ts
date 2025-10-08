@@ -112,11 +112,11 @@ export class StaveNote extends StemmableNote {
     return Metrics.get('NoteHead.minPadding');
   }
 
-  private static readonly ACTIVE_SCALE_FACTOR = 1.3;
-  private static readonly ACTIVE_SCALE_ATTRIBUTE = 'data-vf-scale-active';
-  private activeScaleGroup?: SVGGElement;
-  private activeScaleBaseTransform: string | null = null;
-  private activeScaleState = false;
+  private static readonly SCALE_PULSE_FACTOR = 1.3;
+  private static readonly SCALE_PULSE_ATTRIBUTE = 'data-vf-scale-pulse';
+  private scalePulseGroup?: SVGGElement;
+  private scalePulseBaseTransform: string | null = null;
+  private scalePulseEnabled = false;
 
   /** Format notes inside a ModifierContext. */
   static format(notes: StaveNote[], state: ModifierContextState): boolean {
@@ -1353,7 +1353,7 @@ export class StaveNote extends StemmableNote {
 
     // Apply the overall style -- may be contradicted by local settings:
     const group = ctx.openGroup('stavenote', this.getAttribute('id'));
-    this.bindActiveScaleGroup(group);
+    this.bindScalePulseGroup(group);
     this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
@@ -1372,15 +1372,15 @@ export class StaveNote extends StemmableNote {
     return allExpanded;
   }
 
-  private bindActiveScaleGroup(group: unknown): void {
+  private bindScalePulseGroup(group: unknown): void {
     if (typeof SVGGElement === 'undefined' || !(group instanceof SVGGElement)) {
-      this.activeScaleGroup = undefined;
-      this.activeScaleBaseTransform = null;
+      this.scalePulseGroup = undefined;
+      this.scalePulseBaseTransform = null;
       return;
     }
 
-    this.activeScaleGroup = group;
-    this.activeScaleBaseTransform = group.style.transform?.trim() || null;
+    this.scalePulseGroup = group;
+    this.scalePulseBaseTransform = group.style.transform?.trim() || null;
 
     if (!group.style.transition) {
       group.style.transition = 'transform 180ms ease';
@@ -1389,29 +1389,25 @@ export class StaveNote extends StemmableNote {
       group.style.transformOrigin = 'center';
     }
     group.style.setProperty('transform-box', 'fill-box');
-    this.updateActiveScale();
+    this.applyScalePulse();
   }
 
-  setActiveState(active: boolean): this {
-    if (this.activeScaleState === active) return this;
-    this.activeScaleState = active;
-    this.updateActiveScale();
+  setScalePulseState(enabled: boolean): this {
+    if (this.scalePulseEnabled === enabled) return this;
+    this.scalePulseEnabled = enabled;
+    this.applyScalePulse();
     return this;
   }
 
-  isActive(): boolean {
-    return this.activeScaleState;
-  }
-
-  private updateActiveScale(): void {
-    const group = this.activeScaleGroup;
+  private applyScalePulse(): void {
+    const group = this.scalePulseGroup;
     if (!group) return;
 
-    const active = this.activeScaleState;
-    const baseTransform = this.activeScaleBaseTransform;
-    const scaled = `scale(${StaveNote.ACTIVE_SCALE_FACTOR})`;
+    const active = this.scalePulseEnabled;
+    const baseTransform = this.scalePulseBaseTransform;
+    const scaled = `scale(${StaveNote.SCALE_PULSE_FACTOR})`;
 
-    group.setAttribute(StaveNote.ACTIVE_SCALE_ATTRIBUTE, active ? 'true' : 'false');
+    group.setAttribute(StaveNote.SCALE_PULSE_ATTRIBUTE, active ? 'true' : 'false');
 
     if (active) {
       group.style.transform = baseTransform ? `${baseTransform} ${scaled}` : scaled;

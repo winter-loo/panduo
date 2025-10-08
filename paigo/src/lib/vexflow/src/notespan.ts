@@ -154,7 +154,7 @@ export class NoteSpan extends Element {
     if (innerRect) {
       innerRect.setAttribute('width', `${innerWidth}`);
       innerRect.setAttribute('height', `${headHeight}`);
-      innerRect.setAttribute('rx', `${headHeight / 2}`);
+      innerRect.setAttribute('rx', `${headWidth / 2}`);
       innerRect.setAttribute('ry', `${headHeight / 2}`);
     }
 
@@ -208,7 +208,6 @@ export class NoteSpan extends Element {
     const headHeight = this.noteHeadHeight > 0 ? this.noteHeadHeight : height;
 
     ctx.openGroup('span');
-    const innerWidth = this.getEffectiveInnerWidth();
     const innerRx = headHeight / 2;
     ctx.fillRect(x, y, headWidth, headHeight, {
       class: 'inner',

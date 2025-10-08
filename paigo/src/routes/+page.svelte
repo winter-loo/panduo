@@ -134,7 +134,7 @@
     private cursorElement: SVGGElement | null = null;
     private currentNoteIndex = 0;
     private highlightedNoteIndex: number | null = null;
-    private activeNoteIndex: number | null = null;
+    private scalePulseNoteIndex: number | null = null;
     private pendingNoteIndex: number | null = null;
     private showingNoteSpanFromHold = false;
     private lastAdvanceTimestamp = 0;
@@ -172,7 +172,7 @@
     protected override onReset(): void {
       super.onReset();
       this.clearHighlightedNoteSpan();
-      this.setNoteActive(null);
+      this.applyScalePulseToNote(null);
       this.showingNoteSpanFromHold = false;
       this.currentNoteIndex = 0;
       this.pendingNoteIndex = null;
@@ -204,9 +204,9 @@
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
-      if (this.activeNoteIndex !== null) {
-        const active = this.notes[this.activeNoteIndex];
-        active?.setActiveState(false);
+      if (this.scalePulseNoteIndex !== null) {
+        const active = this.notes[this.scalePulseNoteIndex];
+        active?.setScalePulseState(false);
         if (active) this.resetNoteColor(active);
       }
       this.notes.forEach((note) => {
@@ -226,7 +226,7 @@
       this.cursorElement = null;
       this.currentNoteIndex = 0;
       this.highlightedNoteIndex = null;
-      this.activeNoteIndex = null;
+      this.scalePulseNoteIndex = null;
       this.pendingNoteIndex = null;
       this.showingNoteSpanFromHold = false;
       this.lastAdvanceTimestamp = 0;
@@ -536,15 +536,17 @@
 
     goToNextNote() {
       if (this.notes.length === 0) return;
-      if (this.showingNoteSpanFromHold) {
-        this.showNoteSpanFor(this.currentNoteIndex);
+
+      const originIndex = this.currentNoteIndex;
+      const originNote = this.notes[originIndex];
+      if (originNote) {
+        this.applyNoteColor(originNote, this.getNoteColorVar(originNote));
+        this.showNoteSpanFor(originIndex);
       }
-      const currentNote = this.notes[this.currentNoteIndex];
-      if (currentNote) {
-        this.applyNoteColor(currentNote, this.getNoteColorVar(currentNote));
-      }
-      const nextIndex = this.findNextNonRestIndex(this.currentNoteIndex);
+
+      const nextIndex = this.findNextNonRestIndex(originIndex);
       if (nextIndex === null) return;
+
       const now = performance.now();
       const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
       this.lastAdvanceTimestamp = now;
@@ -552,16 +554,16 @@
       this.pendingNoteIndex = nextIndex;
     }
 
-    activateCurrentNote(): StaveNote | null {
+    startScalePulseAnimation(): StaveNote | null {
       if (this.notes.length === 0) {
-        this.setNoteActive(null);
+        this.applyScalePulseToNote(null);
         return null;
       }
       if (this.currentNoteIndex < 0 || this.currentNoteIndex >= this.notes.length) {
-        this.setNoteActive(null);
+        this.applyScalePulseToNote(null);
         return null;
       }
-      const note = this.setNoteActive(this.currentNoteIndex);
+      const note = this.applyScalePulseToNote(this.currentNoteIndex);
       if (this.pendingNoteIndex !== null) {
         this.currentNoteIndex = this.pendingNoteIndex;
         this.pendingNoteIndex = null;
@@ -569,16 +571,16 @@
       return note;
     }
 
-    private setNoteActive(index: number | null): StaveNote | null {
-      if (this.activeNoteIndex !== null) {
-        const previousNote = this.notes[this.activeNoteIndex];
-        if (previousNote) {
-          previousNote.setActiveState(false);
-          previousNote.noteSpans.forEach((span) => span.resetOuterMode());
+    private applyScalePulseToNote(index: number | null): StaveNote | null {
+      if (this.scalePulseNoteIndex !== null) {
+        const note = this.notes[this.scalePulseNoteIndex];
+        if (note) {
+          note.setScalePulseState(false);
+          note.noteSpans.forEach((span) => span.resetOuterMode());
         }
       }
 
-      this.activeNoteIndex = null;
+      this.scalePulseNoteIndex = null;
 
       if (index === null) return null;
 
@@ -589,9 +591,9 @@
       const note = this.notes[index];
       if (!note) return null;
 
-      note.setActiveState(true);
+      note.setScalePulseState(true);
       note.noteSpans.forEach((span) => span.resetOuterMode());
-      this.activeNoteIndex = index;
+      this.scalePulseNoteIndex = index;
       return note;
     }
 
@@ -660,7 +662,7 @@
   let skipNextClick = false;
 
   function runNextNoteReleaseAnimation() {
-    const note = movingStaff?.activateCurrentNote();
+    const note = movingStaff?.startScalePulseAnimation();
     if (!note) {
       movingStaff?.stopNoteSpanPreview();
       return;
@@ -671,12 +673,12 @@
     });
 
     if (typeof window === 'undefined') {
-      note.setActiveState(false);
+      note.setScalePulseState(false);
       movingStaff?.stopNoteSpanPreview();
       return;
     }
 
-    window.setTimeout(() => note.setActiveState(false), NOTE_SCALE_DURATION);
+    window.setTimeout(() => note.setScalePulseState(false), NOTE_SCALE_DURATION);
     window.setTimeout(
       () => movingStaff?.stopNoteSpanPreview(),
       NOTESPAN_EXPAND_DELAY + NOTESPAN_HOLD_DURATION,
