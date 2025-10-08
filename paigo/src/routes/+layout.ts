@@ -13,8 +13,9 @@ export const load: LayoutLoad = () => {
           { keys: ['b/4'], duration: '4' },
           { keys: ['b/4'], duration: '4' },
           { keys: ['b/4'], duration: '8' },
+          { keys: ['c/5'], duration: '8' },
           { keys: ['b/4'], duration: '8' },
-          { keys: ['b/4'], duration: '4' },
+          { keys: ['a/4'], duration: '8' },
         ]
       },
       {

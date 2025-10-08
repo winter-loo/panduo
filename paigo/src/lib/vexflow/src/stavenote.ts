@@ -1213,6 +1213,7 @@ export class StaveNote extends StemmableNote {
       span
         .setContext(ctx)
         .setGeometry(bbox.getX(), bbox.getY(), spanWidth, bbox.getH(), staffLineWidth)
+        .setNoteHeadSize(bbox.getW(), bbox.getH())
         .show();
 
       if (!span.isRendered()) {

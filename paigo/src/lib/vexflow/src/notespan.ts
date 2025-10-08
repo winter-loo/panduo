@@ -39,6 +39,10 @@ export class NoteSpan extends Element {
   private animationStartTimestamp: number | null = null;
   private animationLastTimestamp: number | null = null;
   private boundNote?: Tickable;
+  private outerMode: 'full' | 'inner' | 'halo' = 'full';
+  private outerModeTimers: number[] = [];
+  private noteHeadWidth: number = 0;
+  private noteHeadHeight: number = 0;
 
   constructor(config: VexflowConfigInstance) {
     super(config);
@@ -59,6 +63,7 @@ export class NoteSpan extends Element {
       this.innerWidth = this.getMinInnerWidth();
     }
     this.expanded = false;
+    this.resetOuterMode();
     this.updateDomVisibility();
     this.updateDomDimensions();
     this.startExpandAnimation();
@@ -68,6 +73,7 @@ export class NoteSpan extends Element {
   hide(): this {
     this.visible = false;
     this.cancelAnimation();
+    this.clearOuterModeTimers();
     this.updateDomVisibility();
     return this;
   }
@@ -82,6 +88,12 @@ export class NoteSpan extends Element {
     if (hasWidthChange) {
       this.resetAnimation();
     }
+    return this;
+  }
+
+  setNoteHeadSize(width: number, height: number): this {
+    this.noteHeadWidth = Math.max(0, width);
+    this.noteHeadHeight = Math.max(0, height);
     return this;
   }
 
@@ -135,20 +147,54 @@ export class NoteSpan extends Element {
 
     const innerWidth = this.getEffectiveInnerWidth();
 
+    const headWidth = this.noteHeadWidth > 0 ? this.noteHeadWidth : this.getMinInnerWidth();
+    const headHeight = this.noteHeadHeight > 0 ? this.noteHeadHeight : this.bounds.height;
+
     const innerRect = group.querySelector(`.${cp('span')} .inner`) as SVGRectElement | null;
     if (innerRect) {
       innerRect.setAttribute('width', `${innerWidth}`);
+      innerRect.setAttribute('height', `${headHeight}`);
     }
 
     const outerRect = group.querySelector(`.${cp('span')} .outer`) as SVGRectElement | null;
     if (outerRect) {
-      const outerWidth = this.getFullOuterWidth();
-      if (outerWidth > 0) {
-        outerRect.setAttribute('width', `${outerWidth}`);
+      const { x, y, height } = this.bounds;
+      const slw = this.staffLineWidth || this.config.get('Stave.style.lineWidth');
+      const halfStroke = slw / 2;
+      const fullWidth = this.getFullOuterWidth();
+      const fullHeight = Math.max(0, height + slw * 3);
+      const fullX = x - slw * 2 + halfStroke;
+      const fullY = y - slw * 2 + halfStroke;
+      const fullRadius = fullHeight / 2;
+
+      if (this.outerMode === 'inner') {
+        outerRect.setAttribute('x', `${x}`);
+        outerRect.setAttribute('y', `${y}`);
+        outerRect.setAttribute('width', `${headWidth}`);
+        outerRect.setAttribute('height', `${headHeight}`);
+        outerRect.setAttribute('rx', `${headHeight / 2}`);
+        outerRect.setAttribute('ry', `${headHeight / 2}`);
+        outerRect.removeAttribute('display');
+      } else if (this.outerMode === 'halo') {
+        const haloWidth = headWidth + slw * 2;
+        const haloHeight = headHeight + slw * 2;
+        const haloX = x - slw;
+        const haloY = y - slw;
+        outerRect.setAttribute('x', `${haloX}`);
+        outerRect.setAttribute('y', `${haloY}`);
+        outerRect.setAttribute('width', `${haloWidth}`);
+        outerRect.setAttribute('height', `${haloHeight}`);
+        outerRect.setAttribute('rx', `${haloHeight / 2}`);
+        outerRect.setAttribute('ry', `${haloHeight / 2}`);
         outerRect.removeAttribute('display');
       } else {
-        outerRect.setAttribute('width', '0');
-        outerRect.setAttribute('display', 'none');
+        outerRect.setAttribute('x', `${fullX}`);
+        outerRect.setAttribute('y', `${fullY}`);
+        outerRect.setAttribute('width', `${fullWidth}`);
+        outerRect.setAttribute('height', `${fullHeight}`);
+        outerRect.setAttribute('rx', `${fullRadius}`);
+        outerRect.setAttribute('ry', `${fullRadius}`);
+        outerRect.removeAttribute('display');
       }
     }
   }
@@ -156,13 +202,15 @@ export class NoteSpan extends Element {
   private drawSpan(ctx: RenderContext): void {
     const { x, y, width, height } = this.bounds;
     const slw = this.staffLineWidth || this.config.get('Stave.style.lineWidth');
+    const headWidth = this.noteHeadWidth > 0 ? this.noteHeadWidth : this.getMinInnerWidth();
+    const headHeight = this.noteHeadHeight > 0 ? this.noteHeadHeight : height;
 
     ctx.openGroup('span');
     const innerWidth = this.getEffectiveInnerWidth();
-    ctx.fillRect(x, y, innerWidth, height, {
+    ctx.fillRect(x, y, innerWidth, headHeight, {
       class: 'inner',
-      rx: height / 2,
-      ry: height / 2,
+      rx: headWidth / 2,
+      ry: headHeight / 2,
       opacity: 0.5,
     });
 
@@ -191,6 +239,7 @@ export class NoteSpan extends Element {
   }
 
   private getMinInnerWidth(): number {
+    if (this.noteHeadWidth > 0) return this.noteHeadWidth;
     const { height } = this.bounds;
     return Math.max(0, height - 4);
   }
@@ -249,6 +298,60 @@ export class NoteSpan extends Element {
     this.animationFrame = null;
     this.animationStartTimestamp = null;
     this.animationLastTimestamp = null;
+  }
+
+  private clearOuterModeTimers(): void {
+    if (typeof window === 'undefined') {
+      this.outerModeTimers = [];
+      return;
+    }
+    this.outerModeTimers.forEach((timer) => window.clearTimeout(timer));
+    this.outerModeTimers = [];
+  }
+
+  setOuterMode(mode: 'full' | 'inner' | 'halo'): this {
+    if (this.outerMode === mode) return this;
+    this.outerMode = mode;
+    this.updateDomDimensions();
+    return this;
+  }
+
+  snapInnerWidthToMinimum(): this {
+    this.cancelAnimation();
+    this.innerWidth = this.getMinInnerWidth();
+    this.expanded = false;
+    this.updateDomDimensions();
+    return this;
+  }
+
+  resetOuterMode(): this {
+    this.clearOuterModeTimers();
+    this.outerMode = 'full';
+    this.updateDomDimensions();
+    return this;
+  }
+
+  startHaloPulseAnimation(expandDelayMs: number, holdDurationMs: number): this {
+    this.clearOuterModeTimers();
+    this.snapInnerWidthToMinimum();
+    this.setOuterMode('inner');
+
+    if (typeof window === 'undefined') {
+      this.setOuterMode('halo');
+      this.setOuterMode('inner');
+      return this;
+    }
+
+    const expandTimer = window.setTimeout(() => {
+      this.setOuterMode('halo');
+    }, Math.max(0, expandDelayMs));
+
+    const collapseTimer = window.setTimeout(() => {
+      this.setOuterMode('inner');
+    }, Math.max(0, expandDelayMs + holdDurationMs));
+
+    this.outerModeTimers.push(expandTimer, collapseTimer);
+    return this;
   }
 
   private startExpandAnimation(): void {

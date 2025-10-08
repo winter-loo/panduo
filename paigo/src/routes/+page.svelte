@@ -207,6 +207,9 @@
       if (this.activeNoteIndex !== null) {
         this.notes[this.activeNoteIndex]?.setActiveState(false);
       }
+      this.notes.forEach((note) => {
+        note.noteSpans.forEach((span) => span.resetOuterMode());
+      });
       this.renderer = new VexFlow.Renderer(
         this.config,
         this.notesElement,
@@ -557,8 +560,12 @@
     }
 
     private setNoteActive(index: number | null): StaveNote | null {
-      if (this.activeNoteIndex !== null && this.notes[this.activeNoteIndex]) {
-        this.notes[this.activeNoteIndex]?.setActiveState(false);
+      if (this.activeNoteIndex !== null) {
+        const previousNote = this.notes[this.activeNoteIndex];
+        if (previousNote) {
+          previousNote.setActiveState(false);
+          previousNote.noteSpans.forEach((span) => span.resetOuterMode());
+        }
       }
 
       this.activeNoteIndex = null;
@@ -573,6 +580,7 @@
       if (!note) return null;
 
       note.setActiveState(true);
+      note.noteSpans.forEach((span) => span.resetOuterMode());
       this.activeNoteIndex = index;
       return note;
     }
@@ -617,8 +625,33 @@
     movingStaff?.setNoteSpanVisible(noteSpanVisible);
   }
 
+  const NOTE_SCALE_DURATION = 200;
+  const NOTESPAN_EXPAND_DELAY = 60;
+  const NOTESPAN_HOLD_DURATION = 200;
+
   let pointerHoldActive = false;
   let skipNextClick = false;
+
+  function runNextNoteReleaseAnimation() {
+    const note = movingStaff?.activateCurrentNote();
+    if (!note) {
+      movingStaff?.stopNoteSpanPreview();
+      return;
+    }
+
+    note.noteSpans.forEach((span) => {
+      span.startHaloPulseAnimation(NOTESPAN_EXPAND_DELAY, NOTESPAN_HOLD_DURATION);
+    });
+
+    if (typeof window === 'undefined') {
+      note.setActiveState(false);
+      movingStaff?.stopNoteSpanPreview();
+      return;
+    }
+
+    window.setTimeout(() => note.setActiveState(false), NOTE_SCALE_DURATION);
+    window.setTimeout(() => movingStaff?.stopNoteSpanPreview(), NOTESPAN_EXPAND_DELAY + NOTESPAN_HOLD_DURATION);
+  }
 
   function handleNextNotePointerDown(event: PointerEvent) {
     if (event.button !== 0) return;
@@ -631,11 +664,7 @@
   function handleNextNotePointerUp() {
     if (!pointerHoldActive) return;
     pointerHoldActive = false;
-    movingStaff?.stopNoteSpanPreview();
-    const note = movingStaff?.activateCurrentNote();
-    if (!note) return;
-    const dwellMs = 200;
-    setTimeout(() => note.setActiveState(false), dwellMs);
+    runNextNoteReleaseAnimation();
   }
 
   function handleNextNotePointerLeave() {
