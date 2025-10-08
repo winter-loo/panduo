@@ -12,7 +12,8 @@ export const load: LayoutLoad = () => {
         notes: [
           { keys: ['b/4'], duration: '4' },
           { keys: ['b/4'], duration: '4' },
-          { keys: ['b/4'], duration: '4' },
+          { keys: ['b/4'], duration: '8' },
+          { keys: ['b/4'], duration: '8' },
           { keys: ['b/4'], duration: '4' },
         ]
       },

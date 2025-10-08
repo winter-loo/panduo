@@ -242,7 +242,7 @@ export class Stem extends Element {
     // ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
     //
     const notename = `note-${this.note.getPrimaryNoteName()}`;
-    ctx.openGroup([notename]);
+    ctx.openGroup([notename], this.getAttribute('id'));
     ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight);
     ctx.closeGroup();
   }

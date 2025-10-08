@@ -970,6 +970,18 @@ export class Beam extends Element {
         const stemX = note.getStemX();
         stem.setNoteHeadXBounds(stemX, stemX);
         stem.setContext(ctx).drawWithStyle();
+
+        if (typeof document !== 'undefined') {
+          const stemElement = stem.getSVGElement();
+          const noteGroup = note.getSVGElement();
+          if (
+            stemElement instanceof SVGGElement &&
+            noteGroup instanceof SVGGElement &&
+            stemElement.parentNode !== noteGroup
+          ) {
+            noteGroup.appendChild(stemElement);
+          }
+        }
       }
     }, this);
   }
@@ -998,31 +1010,31 @@ export class Beam extends Element {
           const lastBeamY = this.getSlopeY(lastBeamX, firstStemX, beamY, this.slope);
 
           // build whole beam line
-          let points = [
-            startBeamX, startBeamY,
-            startBeamX, startBeamY + beamThickness,
-            lastBeamX, lastBeamY + beamThickness,
-            lastBeamX, lastBeamY,
-          ];
-
-          ctx.polygon(points.join(" "), {
-            'stroke-linecap': 'round',
-            'stroke-linejoin': 'round',
-            stroke: 'none',
-            fill: 'currentColor',
-          });
+          // let points = [
+          //   startBeamX, startBeamY,
+          //   startBeamX, startBeamY + beamThickness,
+          //   lastBeamX, lastBeamY + beamThickness,
+          //   lastBeamX, lastBeamY,
+          // ];
+          //
+          // ctx.polygon(points.join(" "), {
+          //   'stroke-linecap': 'round',
+          //   'stroke-linejoin': 'round',
+          //   stroke: 'none',
+          //   fill: 'currentColor',
+          // });
 
           // build note's part beamline
           let midBeamX = startBeamX + (lastBeamX - startBeamX) / 2;
           let midBeamY = this.getSlopeY(midBeamX, firstStemX, beamY, this.slope);
-          points = [
+          let points = [
             startBeamX, startBeamY,
             startBeamX, startBeamY + beamThickness,
             midBeamX, midBeamY + beamThickness,
             midBeamX, midBeamY,
           ];
-          let notename = this.notes[beamLine.startNote!].getPrimaryNoteName();
-          ctx.openGroup(`note-${notename}`);
+          const startNote = this.notes[beamLine.startNote!];
+          const startGroup = ctx.openGroup(`note-${startNote.getPrimaryNoteName()}`);
           ctx.polygon(points.join(" "), {
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
@@ -1030,6 +1042,14 @@ export class Beam extends Element {
             fill: 'currentColor',
           });
           ctx.closeGroup();
+          const noteGroup = startNote.getSVGElement();
+          if (
+            startGroup instanceof SVGGElement &&
+            noteGroup instanceof SVGGElement &&
+            startGroup.parentNode !== noteGroup
+          ) {
+            noteGroup.appendChild(startGroup);
+          }
 
           if (j + 1 == beamLines.length) {
             points = [
@@ -1038,8 +1058,8 @@ export class Beam extends Element {
               lastBeamX, lastBeamY + beamThickness,
               lastBeamX, lastBeamY,
             ];
-            let notename = this.notes[beamLine.endNote!].getPrimaryNoteName();
-            ctx.openGroup(`note-${notename}`);
+            const endNote = this.notes[beamLine.endNote!];
+            const endGroup = ctx.openGroup(`note-${endNote.getPrimaryNoteName()}`);
             ctx.polygon(points.join(" "), {
               'stroke-linecap': 'round',
               'stroke-linejoin': 'round',
@@ -1047,6 +1067,14 @@ export class Beam extends Element {
               fill: 'currentColor',
             });
             ctx.closeGroup();
+            const noteGroup = endNote.getSVGElement();
+            if (
+              endGroup instanceof SVGGElement &&
+              noteGroup instanceof SVGGElement &&
+              endGroup.parentNode !== noteGroup
+            ) {
+              noteGroup.appendChild(endGroup);
+            }
           }
         } else {
           throw new RuntimeError('NoLastBeamX', 'lastBeamX undefined.');

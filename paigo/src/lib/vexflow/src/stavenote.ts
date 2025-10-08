@@ -112,6 +112,12 @@ export class StaveNote extends StemmableNote {
     return Metrics.get('NoteHead.minPadding');
   }
 
+  private static readonly ACTIVE_SCALE_FACTOR = 1.3;
+  private static readonly ACTIVE_SCALE_ATTRIBUTE = 'data-vf-scale-active';
+  private activeScaleGroup?: SVGGElement;
+  private activeScaleBaseTransform: string | null = null;
+  private activeScaleState = false;
+
   /** Format notes inside a ModifierContext. */
   static format(notes: StaveNote[], state: ModifierContextState): boolean {
     if (!notes || notes.length < 2) return false;
@@ -1346,7 +1352,8 @@ export class StaveNote extends StemmableNote {
 
     // Apply the overall style -- may be contradicted by local settings:
     const notename = `note-${this.getPrimaryNoteName()}`;
-    ctx.openGroup(['stavenote', notename], this.getAttribute('id'));
+    const group = ctx.openGroup(['stavenote', notename], this.getAttribute('id'));
+    this.bindActiveScaleGroup(group);
     this.drawLedgerLines();
     if (shouldRenderStem) this.drawStem();
     this.drawNoteHeads();
@@ -1363,5 +1370,55 @@ export class StaveNote extends StemmableNote {
     let allExpanded = true;
     this._noteSpans.forEach((span) => (allExpanded &&= span.expandToDelta(x, timestamp)));
     return allExpanded;
+  }
+
+  private bindActiveScaleGroup(group: unknown): void {
+    if (typeof SVGGElement === 'undefined' || !(group instanceof SVGGElement)) {
+      this.activeScaleGroup = undefined;
+      this.activeScaleBaseTransform = null;
+      return;
+    }
+
+    this.activeScaleGroup = group;
+    this.activeScaleBaseTransform = group.style.transform?.trim() || null;
+
+    if (!group.style.transition) {
+      group.style.transition = 'transform 180ms ease';
+    }
+    if (!group.style.transformOrigin) {
+      group.style.transformOrigin = 'center';
+    }
+    group.style.setProperty('transform-box', 'fill-box');
+    this.updateActiveScale();
+  }
+
+  setActiveState(active: boolean): this {
+    if (this.activeScaleState === active) return this;
+    this.activeScaleState = active;
+    this.updateActiveScale();
+    return this;
+  }
+
+  isActive(): boolean {
+    return this.activeScaleState;
+  }
+
+  private updateActiveScale(): void {
+    const group = this.activeScaleGroup;
+    if (!group) return;
+
+    const active = this.activeScaleState;
+    const baseTransform = this.activeScaleBaseTransform;
+    const scaled = `scale(${StaveNote.ACTIVE_SCALE_FACTOR})`;
+
+    group.setAttribute(StaveNote.ACTIVE_SCALE_ATTRIBUTE, active ? 'true' : 'false');
+
+    if (active) {
+      group.style.transform = baseTransform ? `${baseTransform} ${scaled}` : scaled;
+    } else if (baseTransform && baseTransform.length > 0) {
+      group.style.transform = baseTransform;
+    } else {
+      group.style.removeProperty('transform');
+    }
   }
 }

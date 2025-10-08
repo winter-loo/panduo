@@ -134,6 +134,8 @@
     private cursorElement: SVGGElement | null = null;
     private currentNoteIndex = 0;
     private highlightedNoteIndex: number | null = null;
+    private activeNoteIndex: number | null = null;
+    private pendingNoteIndex: number | null = null;
     private showingNoteSpanFromHold = false;
     private lastAdvanceTimestamp = 0;
 
@@ -170,8 +172,10 @@
     protected override onReset(): void {
       super.onReset();
       this.clearHighlightedNoteSpan();
+      this.setNoteActive(null);
       this.showingNoteSpanFromHold = false;
       this.currentNoteIndex = 0;
+      this.pendingNoteIndex = null;
       this.lastAdvanceTimestamp = 0;
       const firstNoteX = this.notes[0]?.getAbsoluteX() ?? null;
       const anchorChanged = this.cursorAnchorX !== firstNoteX;
@@ -200,6 +204,9 @@
 
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
+      if (this.activeNoteIndex !== null) {
+        this.notes[this.activeNoteIndex]?.setActiveState(false);
+      }
       this.renderer = new VexFlow.Renderer(
         this.config,
         this.notesElement,
@@ -213,6 +220,8 @@
       this.cursorElement = null;
       this.currentNoteIndex = 0;
       this.highlightedNoteIndex = null;
+      this.activeNoteIndex = null;
+      this.pendingNoteIndex = null;
       this.showingNoteSpanFromHold = false;
       this.lastAdvanceTimestamp = 0;
     }
@@ -520,13 +529,52 @@
       if (this.showingNoteSpanFromHold) {
         this.showNoteSpanFor(this.currentNoteIndex);
       }
-      const nextIndex = this.findNextNonRestIndex(this.currentNoteIndex);
+      const fromIndex = this.pendingNoteIndex ?? this.currentNoteIndex;
+      const nextIndex = this.findNextNonRestIndex(fromIndex);
       if (nextIndex === null) return;
       const now = performance.now();
       const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
       this.lastAdvanceTimestamp = now;
       this.scrollToNote(nextIndex, { immediate, easing: false });
-      this.currentNoteIndex = nextIndex;
+      this.pendingNoteIndex = nextIndex;
+    }
+
+    activateCurrentNote(): StaveNote | null {
+      if (this.notes.length === 0) {
+        this.setNoteActive(null);
+        return null;
+      }
+      if (this.currentNoteIndex < 0 || this.currentNoteIndex >= this.notes.length) {
+        this.setNoteActive(null);
+        return null;
+      }
+      const note = this.setNoteActive(this.currentNoteIndex);
+      if (this.pendingNoteIndex !== null) {
+        this.currentNoteIndex = this.pendingNoteIndex;
+        this.pendingNoteIndex = null;
+      }
+      return note;
+    }
+
+    private setNoteActive(index: number | null): StaveNote | null {
+      if (this.activeNoteIndex !== null && this.notes[this.activeNoteIndex]) {
+        this.notes[this.activeNoteIndex]?.setActiveState(false);
+      }
+
+      this.activeNoteIndex = null;
+
+      if (index === null) return null;
+
+      if (index < 0 || index >= this.notes.length) {
+        return null;
+      }
+
+      const note = this.notes[index];
+      if (!note) return null;
+
+      note.setActiveState(true);
+      this.activeNoteIndex = index;
+      return note;
     }
   }
 
@@ -584,6 +632,10 @@
     if (!pointerHoldActive) return;
     pointerHoldActive = false;
     movingStaff?.stopNoteSpanPreview();
+    const note = movingStaff?.activateCurrentNote();
+    if (!note) return;
+    const dwellMs = 200;
+    setTimeout(() => note.setActiveState(false), dwellMs);
   }
 
   function handleNextNotePointerLeave() {
