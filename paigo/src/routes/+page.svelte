@@ -205,10 +205,13 @@
     prepareForRedraw() {
       this.notesElement.innerHTML = '';
       if (this.activeNoteIndex !== null) {
-        this.notes[this.activeNoteIndex]?.setActiveState(false);
+        const active = this.notes[this.activeNoteIndex];
+        active?.setActiveState(false);
+        if (active) this.resetNoteColor(active);
       }
       this.notes.forEach((note) => {
         note.noteSpans.forEach((span) => span.resetOuterMode());
+        this.resetNoteColor(note);
       });
       this.renderer = new VexFlow.Renderer(
         this.config,
@@ -395,7 +398,11 @@
       const withTimeSignature = new Stave(config, 0, 0, 1000);
       withTimeSignature.addTimeSignature(timeSignature);
       const timeSignatureStart = withTimeSignature.getNoteStartX();
-      const extra = timeSignatureStart - baseStart + config.get('Stave.paddingLeft') - config.get('Stave.style.lineWidth') * 2;
+      const extra =
+        timeSignatureStart -
+        baseStart +
+        config.get('Stave.paddingLeft') -
+        config.get('Stave.style.lineWidth') * 2;
       return Number.isFinite(extra) && extra > 0 ? extra : 0;
     }
 
@@ -532,8 +539,11 @@
       if (this.showingNoteSpanFromHold) {
         this.showNoteSpanFor(this.currentNoteIndex);
       }
-      const fromIndex = this.pendingNoteIndex ?? this.currentNoteIndex;
-      const nextIndex = this.findNextNonRestIndex(fromIndex);
+      const currentNote = this.notes[this.currentNoteIndex];
+      if (currentNote) {
+        this.applyNoteColor(currentNote, this.getNoteColorVar(currentNote));
+      }
+      const nextIndex = this.findNextNonRestIndex(this.currentNoteIndex);
       if (nextIndex === null) return;
       const now = performance.now();
       const immediate = this.moveAnimationId !== null || now - this.lastAdvanceTimestamp < 200;
@@ -583,6 +593,23 @@
       note.noteSpans.forEach((span) => span.resetOuterMode());
       this.activeNoteIndex = index;
       return note;
+    }
+
+    private getNoteColorVar(note: StaveNote): string {
+      const primary = note.getPrimaryNoteName();
+      const letter = typeof primary === 'string' ? primary.charAt(0).toLowerCase() : '';
+      const validLetters = new Set(['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+      return validLetters.has(letter) ? `--note-${letter}` : '--note-default';
+    }
+
+    private applyNoteColor(note: StaveNote, cssVar: string): void {
+      const group = note.getSVGElement() as SVGGElement | null;
+      if (!group) return;
+      group.style.setProperty('color', `var(${cssVar})`);
+    }
+
+    private resetNoteColor(note: StaveNote): void {
+      this.applyNoteColor(note, '--note-default');
     }
   }
 
@@ -650,7 +677,10 @@
     }
 
     window.setTimeout(() => note.setActiveState(false), NOTE_SCALE_DURATION);
-    window.setTimeout(() => movingStaff?.stopNoteSpanPreview(), NOTESPAN_EXPAND_DELAY + NOTESPAN_HOLD_DURATION);
+    window.setTimeout(
+      () => movingStaff?.stopNoteSpanPreview(),
+      NOTESPAN_EXPAND_DELAY + NOTESPAN_HOLD_DURATION,
+    );
   }
 
   function handleNextNotePointerDown(event: PointerEvent) {

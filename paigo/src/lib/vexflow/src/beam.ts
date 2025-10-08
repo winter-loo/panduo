@@ -1034,7 +1034,7 @@ export class Beam extends Element {
             midBeamX, midBeamY,
           ];
           const startNote = this.notes[beamLine.startNote!];
-          const startGroup = ctx.openGroup(`note-${startNote.getPrimaryNoteName()}`);
+          const startGroup = ctx.openGroup();
           ctx.polygon(points.join(" "), {
             'stroke-linecap': 'round',
             'stroke-linejoin': 'round',
@@ -1059,7 +1059,7 @@ export class Beam extends Element {
               lastBeamX, lastBeamY,
             ];
             const endNote = this.notes[beamLine.endNote!];
-            const endGroup = ctx.openGroup(`note-${endNote.getPrimaryNoteName()}`);
+            const endGroup = ctx.openGroup();
             ctx.polygon(points.join(" "), {
               'stroke-linecap': 'round',
               'stroke-linejoin': 'round',

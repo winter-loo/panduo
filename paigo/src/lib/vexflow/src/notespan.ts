@@ -154,6 +154,8 @@ export class NoteSpan extends Element {
     if (innerRect) {
       innerRect.setAttribute('width', `${innerWidth}`);
       innerRect.setAttribute('height', `${headHeight}`);
+      innerRect.setAttribute('rx', `${headHeight / 2}`);
+      innerRect.setAttribute('ry', `${headHeight / 2}`);
     }
 
     const outerRect = group.querySelector(`.${cp('span')} .outer`) as SVGRectElement | null;
@@ -207,10 +209,11 @@ export class NoteSpan extends Element {
 
     ctx.openGroup('span');
     const innerWidth = this.getEffectiveInnerWidth();
-    ctx.fillRect(x, y, innerWidth, headHeight, {
+    const innerRx = headHeight / 2;
+    ctx.fillRect(x, y, headWidth, headHeight, {
       class: 'inner',
-      rx: headWidth / 2,
-      ry: headHeight / 2,
+      rx: innerRx,
+      ry: innerRx,
       opacity: 0.5,
     });
 
