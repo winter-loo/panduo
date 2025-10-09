@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let rows: boolean[][] = [];
+  type ProgressMatrixProps = {
+    rows?: boolean[][];
+  };
+
+  const props = $props<ProgressMatrixProps>();
+  const rows = $derived(props.rows ?? []);
 </script>
 
 <div class="flex flex-col gap-[10px]">

@@ -1,7 +1,12 @@
 <script lang="ts">
   import ProgressMatrix from './ProgressMatrix.svelte';
 
-  export let matrix: boolean[][] = [];
+  type PreviewPanelProps = {
+    matrix?: boolean[][];
+  };
+
+  const props = $props<PreviewPanelProps>();
+  const matrix = $derived(props.matrix ?? []);
 </script>
 
 <section class="flex w-full flex-col gap-6">

@@ -9,8 +9,14 @@
     align?: 'start' | 'center' | 'end';
   };
 
-  export let title = 'Roadmap';
-  export let items: RoadmapItem[] = [];
+  type RoadmapSectionProps = {
+    title?: string;
+    items?: RoadmapItem[];
+  };
+
+  const props = $props<RoadmapSectionProps>();
+  const title = $derived(props.title ?? 'Roadmap');
+  const items = $derived(props.items ?? []);
 
   const ALIGN_CLASS: Record<'start' | 'center' | 'end', string> = {
     start: 'justify-start',

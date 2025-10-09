@@ -1,8 +1,14 @@
 <script lang="ts">
   import type { ComponentType } from 'svelte';
 
-  export let icon: ComponentType;
-  export let label: string;
+  type FeatureItemProps = {
+    icon: ComponentType;
+    label: string;
+  };
+
+  const props = $props<FeatureItemProps>();
+  const icon = $derived(props.icon);
+  const label = $derived(props.label);
 </script>
 
 <div class="flex items-center gap-5 rounded-xl px-7 py-7">
