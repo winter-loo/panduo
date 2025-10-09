@@ -167,6 +167,7 @@
       this.prepareForRedraw();
 
       this.onMove = (offsetX) => this.syncCursorPosition(offsetX);
+      this.onDragEnd = () => this.snapToNearestPreviousNote();
     }
 
     protected override onReset(): void {
@@ -366,6 +367,36 @@
         group.classList.add('notespan-click-target');
         group.addEventListener('click', () => this.handleNoteClick(note));
       });
+    }
+
+    private snapToNearestPreviousNote() {
+      if (this.notes.length === 0) return;
+      const anchorX = this.getCursorAnchor();
+      if (anchorX === null) return;
+
+      const current = this.currentOffsetX;
+      const tolerance = 0.5;
+      let bestIndex = 0;
+      let bestOffset = 0;
+
+      // Snap to the last note whose leading edge is at or before the current offset.
+      this.notes.forEach((note, index) => {
+        const absoluteX = note.getAbsoluteX();
+        if (!Number.isFinite(absoluteX)) return;
+        const relative = absoluteX - anchorX;
+        const clamped = Math.max(0, Math.min(this.maxOffsetX, relative));
+        if (clamped <= current + tolerance && clamped >= bestOffset) {
+          bestOffset = clamped;
+          bestIndex = index;
+        }
+      });
+
+      this.currentNoteIndex = bestIndex;
+      this.pendingNoteIndex = null;
+
+      if (Math.abs(bestOffset - current) <= tolerance) return;
+
+      this.moveTo(bestOffset, 160);
     }
 
     private getSvgContext(): SVGContext | null {
