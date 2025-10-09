@@ -147,12 +147,25 @@ export class MovableElement {
   };
 
   // Animate to a target offset (absolute, 0..maxOffsetX)
-  moveTo = (targetOffsetX: number, durationMs = 220, useEasing = true) => {
+  moveTo = (
+    targetOffsetX: number,
+    durationMs = 220,
+    useEasingOrOptions: boolean | { useEasing?: boolean; onComplete?: () => void } = true,
+  ) => {
     const end = Math.min(this.maxOffsetX, Math.max(0, targetOffsetX));
     const start = this.currentOffsetX;
     const delta = end - start;
+    const { useEasing, onComplete } =
+      typeof useEasingOrOptions === 'object'
+        ? {
+            useEasing: useEasingOrOptions.useEasing ?? true,
+            onComplete: useEasingOrOptions.onComplete,
+          }
+        : { useEasing: useEasingOrOptions, onComplete: undefined };
+
     if (Math.abs(delta) < 0.5) {
       this.nudgeBy(end - start);
+      onComplete?.();
       return;
     }
     // cancel any existing animation
@@ -173,6 +186,7 @@ export class MovableElement {
         this.currentOffsetX = end;
         this.currentPosComp.current = position({ current: { x: -this.currentOffsetX, y: 0 } });
         this.onMove?.(this.currentOffsetX);
+        onComplete?.();
       }
     };
     this.moveAnimationId = requestAnimationFrame(step);

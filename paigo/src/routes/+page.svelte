@@ -138,6 +138,7 @@
     private pendingNoteIndex: number | null = null;
     private showingNoteSpanFromHold = false;
     private lastAdvanceTimestamp = 0;
+    private lastRecordedOffset = 0;
 
     private readonly handleNoteClick = (note: StaveNote) => {
       const hasVisibleSpan = note.noteSpans.some((span) => span.isVisible());
@@ -166,7 +167,11 @@
       this.drawFixedStave();
       this.prepareForRedraw();
 
-      this.onMove = (offsetX) => this.syncCursorPosition(offsetX);
+      this.onMove = (offsetX) => {
+        this.syncCursorPosition(offsetX);
+        this.resetColorsWhenOffsetDecreases(offsetX);
+      };
+      this.onDragStart = () => this.handleDragStart();
       this.onDragEnd = () => this.snapToNearestPreviousNote();
     }
 
@@ -184,6 +189,7 @@
       if (anchorChanged) {
         this.syncCursorPosition();
       }
+      this.lastRecordedOffset = this.currentOffsetX;
     }
 
     private drawFixedStave() {
@@ -231,6 +237,7 @@
       this.pendingNoteIndex = null;
       this.showingNoteSpanFromHold = false;
       this.lastAdvanceTimestamp = 0;
+      this.lastRecordedOffset = this.currentOffsetX;
     }
 
     addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
@@ -369,6 +376,20 @@
       });
     }
 
+    private handleDragStart() {
+      // Cancel automated animations so the drag fully controls the staff position.
+      this.stop();
+      this.lastRecordedOffset = this.currentOffsetX;
+    }
+
+    private resetColorsWhenOffsetDecreases(offsetX: number) {
+      const tolerance = 0.05;
+      if (offsetX <= this.lastRecordedOffset - tolerance) {
+        this.resetNotesRightOfOffset(offsetX);
+      }
+      this.lastRecordedOffset = offsetX;
+    }
+
     private snapToNearestPreviousNote() {
       if (this.notes.length === 0) return;
       const anchorX = this.getCursorAnchor();
@@ -393,10 +414,41 @@
 
       this.currentNoteIndex = bestIndex;
       this.pendingNoteIndex = null;
+      const snappedNote = this.notes[bestIndex] ?? null;
+      const delta = bestOffset - current;
 
-      if (Math.abs(bestOffset - current) <= tolerance) return;
+      if (Math.abs(delta) <= tolerance) {
+        if (snappedNote) this.resetNoteColor(snappedNote);
+        return;
+      }
 
-      this.moveTo(bestOffset, 160);
+      this.moveTo(bestOffset, 160, {
+        onComplete: () => {
+          if (snappedNote) this.resetNoteColor(snappedNote);
+        },
+      });
+    }
+
+    private resetNotesRightOfOffset(offsetX: number) {
+      if (this.notes.length === 0) return;
+      const anchorX = this.getCursorAnchor();
+      if (anchorX === null) return;
+
+      const tolerance = 0.05;
+      // Any note at or right of the cursor line should return to default color.
+      this.notes.forEach((note, index) => {
+        const absoluteX = note.getAbsoluteX();
+        if (!Number.isFinite(absoluteX)) return;
+        const relative = absoluteX - anchorX;
+        const clamped = Math.max(0, Math.min(this.maxOffsetX, relative));
+        if (clamped + tolerance >= offsetX) {
+          this.resetNoteColor(note);
+          if (!this.noteSpanAllVisible && this.highlightedNoteIndex === index) {
+            this.setNoteSpanVisibility(index, false);
+            this.highlightedNoteIndex = null;
+          }
+        }
+      });
     }
 
     private getSvgContext(): SVGContext | null {
