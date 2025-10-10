@@ -22,7 +22,7 @@
     song: StaffSong;
     tempo?: number;
     movable?: boolean;
-    pluginDefs?: PluginSpec[];
+    plugins?: PluginSpec[];
     onready: (data: {
       controller: MovingStaffController;
       layout: StaffLayout;
@@ -32,6 +32,14 @@
 
   const { onready, ...props }: MovingStaffProps = $props();
 
+  /**
+   * Configuration accepted from the parent when wiring built-in plugins.
+   *
+   * Each definition can be a plain string (`'debug-grid'`) that enables the plugin with its default
+   * configuration, or an object variant that supplies strongly typed options. The spec mirrors the
+   * generic `MovingStaffPluginSpec` type but narrows the plugin name to the built-in debug grid to
+   * keep the component constrained until we support more plugin types.
+   */
   type PluginSpec = MovingStaffPluginSpec<'debug-grid', DebugGridPluginConfig>;
 
   const BUILTIN_PLUGINS = {
@@ -42,6 +50,14 @@
   const pluginRegistry: Record<string, MovingStaffPluginInstance> = {};
   export const plugins = pluginRegistry;
 
+  /**
+   * Produce a stable key that describes the requested plugins and their options.
+   *
+   * We rely on this key to know when the plugin set has changed so we can rebuild the active
+   * instances. Options are JSON-stringified with functions filtered out because JSON cannot encode
+   * them, and we treat any serialization failure as an empty options blob, which forces a refresh.
+   * Example output: "debug-grid:{\"spacing\":20}|debug-grid:{}", ensuring order-sensitive hashing.
+   */
   const computePluginKey = (specs: PluginSpec[]): string =>
     specs
       .map((spec) => {
@@ -287,7 +303,7 @@
 
     if (runId !== renderRunId) return;
 
-    refreshPlugins(props.pluginDefs ?? [], {
+    refreshPlugins(props.plugins ?? [], {
       force: true,
       layoutOverride: nextController.getLayout() ?? layout,
     });
@@ -308,7 +324,7 @@
 
   $effect(() => {
     const song = props.song;
-    const pluginSpecs = props.pluginDefs ?? [];
+    const pluginSpecs = props.plugins ?? [];
     if (!controller || !config || !song) return;
 
     if (song !== lastSongRef) {

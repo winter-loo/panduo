@@ -1,5 +1,4 @@
 <script lang="ts">
-  // import { onMount } from 'svelte';
   import { VexFlow, type DebugGridOptions } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { Button } from '$lib/components/ui/button/index';
@@ -107,14 +106,15 @@
     tempo = movingStaffComponent.getTempo();
   });
 
-  let debugGridEnabled = $state(false);
-  let gridBaseOptions = $state<DebugGridOptions>({
+  const defaultGridOptions: DebugGridOptions = {
     spacing: 20,
     majorSpacing: 80,
     includeOriginLabels: true,
     showLabels: true,
-  });
-  let gridOptions = $state<DebugGridOptions>({ ...gridBaseOptions });
+  };
+  let debugGridEnabled = $state(false);
+  let gridBaseOptions = $state<DebugGridOptions>({ ...defaultGridOptions });
+  let gridOptions = $state<DebugGridOptions>({ ...defaultGridOptions });
 
   const getDebugGridPlugin = (): DebugGridPlugin | undefined =>
     movingStaffComponent?.getPlugin<DebugGridPlugin>('debug-grid');
@@ -169,7 +169,7 @@
     tempo={tempo ?? undefined}
     movable={true}
     onready={handleStaffReady}
-    pluginDefs={[
+    plugins={[
       'debug-grid',
     ]}
   />
