@@ -2,7 +2,9 @@
   import { goto } from '$app/navigation';
   import Sidebar, { type Feature } from '$lib/components/music-scales/Sidebar.svelte';
   import StageNavbar from '$lib/components/music-scales/StageNavbar.svelte';
-  import RoadmapSection, { type RoadmapItem } from '$lib/components/music-scales/RoadmapSection.svelte';
+  import RoadmapSection, {
+    type RoadmapItem,
+  } from '$lib/components/music-scales/RoadmapSection.svelte';
   import PreviewPanel from '$lib/components/music-scales/PreviewPanel.svelte';
   import { Aperture, Piano, ShoppingBag, User as UserIcon } from '@lucide/svelte';
   import { Armchair, HandHelping, Music3, Piano as PianoIcon } from '@lucide/svelte';
@@ -56,12 +58,14 @@
   <div class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 py-10 lg:flex-row">
     <Sidebar {features} />
     <div class="flex w-full max-w-[600px] flex-col items-center gap-10 self-center lg:self-stretch">
-      <StageNavbar {stageLabel} {songTitle} on:back={handleBack} />
+      <StageNavbar {stageLabel} {songTitle} onback={handleBack} />
       <div class="relative flex w-full flex-col items-center gap-10">
         <div class="w-full">
           <RoadmapSection title="roadmap" items={roadmapItems} />
         </div>
-        <div class="pointer-events-none w-[220px] rounded-full bg-white/80 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] backdrop-blur-sm lg:absolute lg:-right-10 lg:top-36">
+        <div
+          class="pointer-events-none w-[220px] rounded-full bg-white/80 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] backdrop-blur-sm lg:absolute lg:-right-10 lg:top-36"
+        >
           <img
             alt="Illustration of a panda practicing piano"
             class="h-full w-full rounded-full object-cover"
