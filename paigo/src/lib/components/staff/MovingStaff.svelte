@@ -7,15 +7,22 @@
     type StaffLayout,
     type StaffSong,
   } from '$lib/staff/moving-staff-controller';
+  import {
+    createDebugGridPlugin,
+    type DebugGridPluginConfig,
+    type DebugGridPluginState,
+  } from '$lib/staff/plugins/debug-grid';
+  import type {
+    MovingStaffPluginInstance,
+    MovingStaffPluginSpec,
+  } from '$lib/staff/plugins/plugin-types';
 
   type ConfigInstance = ReturnType<typeof VexFlow.Config.defaults>;
   type MovingStaffProps = {
     song: StaffSong;
     tempo?: number;
-    noteSpanVisible?: boolean;
     movable?: boolean;
-    containerClass?: string;
-    id?: string;
+    pluginDefs?: PluginSpec[];
     onready: (data: {
       controller: MovingStaffController;
       layout: StaffLayout;
@@ -25,32 +32,117 @@
 
   const { onready, ...props }: MovingStaffProps = $props();
 
-  const containerClass = $derived(props.containerClass ?? 'w-[1016px] mx-auto mt-6 mb-10 p-8');
-  const id = $derived(props.id ?? 'moving-staff');
-  const movable = $derived(props.movable ?? false);
+  type PluginSpec = MovingStaffPluginSpec<'debug-grid', DebugGridPluginConfig>;
+
+  const BUILTIN_PLUGINS = {
+    'debug-grid': createDebugGridPlugin,
+  } as const;
+
+  // Registry of active plugin instances (exposed to parents via `bind:this` for diagnostics).
+  const pluginRegistry: Record<string, MovingStaffPluginInstance> = {};
+  export const plugins = pluginRegistry;
+
+  const computePluginKey = (specs: PluginSpec[]): string =>
+    specs
+      .map((spec) => {
+        if (typeof spec === 'string') return spec;
+        const optionsKey = (() => {
+          try {
+            return JSON.stringify(spec.options ?? {}, (_, value) =>
+              typeof value === 'function' ? '__fn__' : value,
+            );
+          } catch {
+            return '';
+          }
+        })();
+        return `${spec.name}:${optionsKey}`;
+      })
+      .join('|');
+
+  const normalizePluginSpec = (
+    spec: PluginSpec,
+  ): { name: 'debug-grid'; options?: DebugGridPluginConfig } =>
+    typeof spec === 'string' ? { name: spec, options: undefined } : spec;
+
+  let currentPluginKey: string | null = null;
+
+  // Freeze the movable flag at mount so later prop changes cannot mutate controller behavior mid-drag.
+  const isMovable = props.movable ?? false;
 
   let fixedElement: HTMLDivElement | null = null;
   let notesElement: HTMLDivElement | null = null;
   let layout: StaffLayout = cloneLayout();
   let config: ConfigInstance | null = null;
   let controller: MovingStaffController | null = $state(null);
-  const dragAttachment = $derived.by(() => (movable && controller ? controller.draggable() : null));
+  const dragAttachment = $derived.by(() =>
+    isMovable && controller ? controller.draggable() : null,
+  );
   let lastSongRef: StaffSong | null = null;
-  let noteSpanVisible = $derived(props.noteSpanVisible ?? false);
   let resolvedTempo = $derived(props.tempo ?? props.song?.tempo ?? 60);
-  let initializeRunId = 0;
-  // Guard against overlapping init runs so effects don't re-enter while the DOM is being rebuilt.
-  let isInitializing = $state(false);
+  let renderRunId = 0;
 
-  const waitForAnimationFrame = () =>
-    new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-  const finishInitialization = (runId: number) => {
-    if (runId === initializeRunId) {
-      isInitializing = false;
+  const destroyPlugins = (resetKey = true) => {
+    for (const [name, instance] of Object.entries(pluginRegistry)) {
+      instance.destroy?.();
+      delete pluginRegistry[name];
+    }
+    if (resetKey) {
+      currentPluginKey = null;
     }
   };
-  // TODO: add comments
+
+  // Manage plugin lifecycle whenever the caller tweaks plugin definitions or we reload the layout.
+  const refreshPlugins = (
+    specs: PluginSpec[],
+    options: { force?: boolean; layoutOverride?: StaffLayout } = {},
+  ) => {
+    const currentController = controller;
+    const currentConfig = config;
+    if (!currentController || !currentConfig) return;
+    const key = computePluginKey(specs);
+    if (!options.force && currentPluginKey === key) {
+      return;
+    }
+
+    const effectiveLayout = options.layoutOverride ?? currentController.getLayout() ?? layout;
+    const context = currentController.getContext();
+    const savedStates: Record<string, DebugGridPluginState> = {};
+
+    for (const [name, instance] of Object.entries(pluginRegistry)) {
+      if (typeof instance.serialize === 'function') {
+        savedStates[name] = instance.serialize() as DebugGridPluginState;
+      }
+    }
+
+    destroyPlugins(false);
+
+    const readyQueue: MovingStaffPluginInstance[] = [];
+
+    specs.forEach((spec) => {
+      const normalized = normalizePluginSpec(spec);
+      const factory = BUILTIN_PLUGINS[normalized.name];
+      if (!factory) return;
+      const instance = factory({
+        controller: currentController,
+        layout: effectiveLayout,
+        config: currentConfig,
+        context,
+        state: savedStates[normalized.name],
+        options: normalized.options,
+      });
+      pluginRegistry[normalized.name] = instance;
+      readyQueue.push(instance);
+    });
+
+    currentPluginKey = key;
+    readyQueue.forEach((plugin) => plugin.onReady?.());
+  };
+
+  export function getPlugin<T = MovingStaffPluginInstance>(name: string): T | undefined {
+    return pluginRegistry[name] as T | undefined;
+  }
+
+  // Helper for layout: derive how much vertical padding we need so ledger lines stay balanced.
   const computeDerivedPadding = (candidate: StaffLayout): number => {
     const numerator =
       candidate.staveHeight - candidate.spacingBetweenLinesPx * (candidate.numLines - 1);
@@ -134,108 +226,100 @@
    * Prepare controller, renderer, and initial stave for the current song data.
    * Rebuilds everything whenever the song reference changes.
    */
-  const initialize = async () => {
+  const renderStave = async () => {
     const song = props.song;
     if (!song) return;
-    const runId = ++initializeRunId;
-    isInitializing = true;
     const runSong = song;
+    const runId = ++renderRunId;
 
-    try {
-      controller?.destroy();
-      controller = null;
+    // Ensure Svelte has flushed DOM updates before the lib touches it
+    await tick();
 
-      if (!fixedElement || !notesElement) {
-        return;
-      }
+    // If the lib needs layout (sizes/styles), wait one RAF so CSS is applied
+    await new Promise((r) => requestAnimationFrame(r));
 
-      layout = cloneLayout();
-      config = buildConfig(layout);
-      applyTimeSignature(config, runSong.timeSignature);
-      updateLayoutDimensions(layout, config);
+    // A later render call might have started while we awaited tick/RAF—abort this run if so.
+    if (runId !== renderRunId) return;
 
-      const maxOffsetX = runSong.measures.length * layout.measureWidth;
-      const tempoForSong = props.tempo ?? runSong.tempo ?? resolvedTempo;
+    controller?.destroy();
+    controller = null;
 
-      controller = new MovingStaffController(
-        layout,
-        fixedElement,
-        notesElement,
-        maxOffsetX,
-        config,
-        tempoForSong,
-        runSong.timeSignature,
-        runSong.keySignature,
-      );
-
-      resolvedTempo = tempoForSong;
-      lastSongRef = runSong;
-
-      // Yield twice: once for DOM bindings (`tick()`), once for SVG renderer paint, then add measures.
-      await tick();
-      await waitForAnimationFrame();
-      if (runId !== initializeRunId || props.song !== runSong || !controller) {
-        return;
-      }
-      populateSong(runSong);
-
-      onready({ controller, layout, config });
-    } finally {
-      finishInitialization(runId);
+    if (!fixedElement || !notesElement) {
+      return;
     }
-  };
 
-  /**
-   * Draw measures and notes for the provided song snapshot.
-   */
-  const populateSong = (target: StaffSong) => {
-    if (!controller) return;
-    controller.prepareForRedraw();
-    controller.maxOffsetX = target.measures.length * layout.measureWidth;
-    controller.setNoteSpanVisible(noteSpanVisible);
-    target.measures.forEach((measure, index) => {
-      controller?.addMeasure(
-        target.timeSignature,
+    layout = cloneLayout();
+    config = buildConfig(layout);
+    applyTimeSignature(config, runSong.timeSignature);
+    updateLayoutDimensions(layout, config);
+
+    const maxOffsetX = runSong.measures.length * layout.measureWidth;
+    const tempoForSong = props.tempo ?? runSong.tempo ?? resolvedTempo;
+
+    const nextController = new MovingStaffController(
+      layout,
+      fixedElement,
+      notesElement,
+      maxOffsetX,
+      config,
+      tempoForSong,
+      runSong.timeSignature,
+      runSong.keySignature,
+    );
+    controller = nextController;
+
+    // Another render may have preempted us during controller construction; bail if that happened.
+    if (runId !== renderRunId) return;
+
+    resolvedTempo = tempoForSong;
+    lastSongRef = runSong;
+
+    for (const [index, measure] of runSong.measures.entries()) {
+      if (runId !== renderRunId) {
+        return;
+      }
+      nextController.addMeasure(
+        song.timeSignature,
         measure.notes,
-        index + 1 === target.measures.length,
+        index + 1 === runSong.measures.length,
       );
+    }
+
+    if (runId !== renderRunId) return;
+
+    refreshPlugins(props.pluginDefs ?? [], {
+      force: true,
+      layoutOverride: nextController.getLayout() ?? layout,
     });
-    controller.setTiming(resolvedTempo, target.timeSignature);
+
+    if (runId !== renderRunId) return;
+
+    onready({ controller, layout, config });
   };
 
   onMount(() => {
-    void initialize();
+    renderStave();
   });
 
   onDestroy(() => {
+    destroyPlugins();
     controller?.destroy();
   });
 
   $effect(() => {
     const song = props.song;
+    const pluginSpecs = props.pluginDefs ?? [];
     if (!controller || !config || !song) return;
-    if (isInitializing) return;
 
-    controller.setTiming(resolvedTempo, song.timeSignature);
-    controller.setNoteSpanVisible(noteSpanVisible);
-
-    if (song && song !== lastSongRef) {
-      void initialize();
-    }
-
-    if (!movable && controller) {
-      controller.stop();
-    }
-  });
-
-  export function redraw(nextSong?: StaffSong) {
-    if (isInitializing) return;
-    if (!controller) {
-      void initialize();
+    if (song !== lastSongRef) {
+      renderStave();
       return;
     }
-    populateSong(nextSong ?? props.song);
-  }
+
+    controller.setTiming(resolvedTempo, song.timeSignature);
+
+    refreshPlugins(pluginSpecs);
+  });
 
   export function getController(): MovingStaffController | null {
     return controller;
@@ -274,7 +358,7 @@
   }
 
   export function move() {
-    if (!movable) return;
+    if (!isMovable) return;
     controller?.move();
   }
 
@@ -291,36 +375,11 @@
   export function getTempo(): number {
     return controller?.getTempo() ?? resolvedTempo;
   }
-
-  export function setNoteSpanVisibleState(visible: boolean) {
-    noteSpanVisible = visible;
-    controller?.setNoteSpanVisible(visible);
-  }
 </script>
 
-<div {id} class={containerClass}>
+<div class="flex flex-row justify-center">
   <div bind:this={fixedElement}></div>
-  <div id="notes-viewport">
-    <div id="notes-container" bind:this={notesElement} {@attach dragAttachment}></div>
+  <div class="w-full overflow-hidden cursor-grab select-none">
+    <div bind:this={notesElement} {@attach dragAttachment}></div>
   </div>
 </div>
-
-<style>
-  #moving-staff {
-    display: flex;
-    justify-content: center;
-    flex-direction: row;
-    position: relative;
-    z-index: 2;
-    box-shadow:
-      inset 2px 2px 4px rgba(243, 243, 243, 1),
-      inset -2px -2px 4px rgba(0, 0, 0, 0.25);
-  }
-
-  #notes-viewport {
-    width: 100%;
-    overflow: hidden;
-    cursor: grab;
-    user-select: none;
-  }
-</style>

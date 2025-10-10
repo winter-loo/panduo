@@ -110,20 +110,10 @@ export class MovingStaffController extends MovableElement {
 
   destroy() {
     this.stop();
-    this.applyScalePulseToNote(null);
-    this.clearHighlightedNoteSpan();
-    this.removeCursorElement();
-    this.notes = [];
-    this.staves = [];
+    this.releaseActiveVisualState();
     this.clearContainer(this.fixedElement);
     this.clearContainer(this.notesElement);
-    this.cursorAnchorX = null;
-    this.cursorElement = null;
-    this.currentNoteIndex = 0;
-    this.highlightedNoteIndex = null;
-    this.scalePulseNoteIndex = null;
-    this.pendingNoteIndex = null;
-    this.showingNoteSpanFromHold = false;
+    this.resetControllerState({ dropStaves: true });
   }
 
   private clearContainer(element: HTMLElement) {
@@ -133,6 +123,34 @@ export class MovingStaffController extends MovableElement {
   private removeCursorElement() {
     this.cursorElement?.remove();
     this.cursorElement = null;
+  }
+
+  private releaseActiveVisualState() {
+    this.deactivateScalePulse({ resetColor: true });
+    this.notes.forEach((note) => {
+      note.noteSpans.forEach((span) => span.resetOuterMode());
+      this.resetNoteColor(note);
+    });
+    this.clearHighlightedNoteSpan();
+    this.removeCursorElement();
+  }
+
+  private resetControllerState(options: { dropStaves?: boolean } = {}) {
+    const { dropStaves = false } = options;
+    this.notes = [];
+    if (dropStaves) {
+      this.staves = [];
+    }
+    this.staveX = 0;
+    this.cursorAnchorX = null;
+    this.cursorElement = null;
+    this.currentNoteIndex = 0;
+    this.highlightedNoteIndex = null;
+    this.scalePulseNoteIndex = null;
+    this.pendingNoteIndex = null;
+    this.showingNoteSpanFromHold = false;
+    this.lastAdvanceTimestamp = 0;
+    this.lastRecordedOffset = this.currentOffsetX;
   }
 
   private drawFixedStave() {
@@ -153,16 +171,8 @@ export class MovingStaffController extends MovableElement {
   }
 
   prepareForRedraw() {
-    this.notesElement.innerHTML = '';
-    if (this.scalePulseNoteIndex !== null) {
-      const active = this.notes[this.scalePulseNoteIndex];
-      active?.setScalePulseState(false);
-      if (active) this.resetNoteColor(active);
-    }
-    this.notes.forEach((note) => {
-      note.noteSpans.forEach((span) => span.resetOuterMode());
-      this.resetNoteColor(note);
-    });
+    this.releaseActiveVisualState();
+    this.clearContainer(this.notesElement);
     this.renderer = new VexFlow.Renderer(
       this.config,
       this.notesElement,
@@ -170,17 +180,7 @@ export class MovingStaffController extends MovableElement {
     );
     this.renderer.resize(this.layout.rendererWidth, this.layout.staveHeight);
     this.context = this.renderer.getContext();
-    this.staveX = 0;
-    this.notes = [];
-    this.cursorAnchorX = null;
-    this.cursorElement = null;
-    this.currentNoteIndex = 0;
-    this.highlightedNoteIndex = null;
-    this.scalePulseNoteIndex = null;
-    this.pendingNoteIndex = null;
-    this.showingNoteSpanFromHold = false;
-    this.lastAdvanceTimestamp = 0;
-    this.lastRecordedOffset = this.currentOffsetX;
+    this.resetControllerState({ dropStaves: true });
   }
 
   addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
@@ -294,6 +294,10 @@ export class MovingStaffController extends MovableElement {
 
   getTempo(): number {
     return this.tempo;
+  }
+
+  getContext(): RenderContext | null {
+    return this.context ?? null;
   }
 
   getLayout(): StaffLayout {
@@ -603,19 +607,26 @@ export class MovingStaffController extends MovableElement {
     return note;
   }
 
-  private applyScalePulseToNote(index: number | null): StaveNote | null {
-    if (this.scalePulseNoteIndex !== null) {
-      const note = this.notes[this.scalePulseNoteIndex];
-      if (note) {
-        note.setScalePulseState(false);
-        note.noteSpans.forEach((span) => span.resetOuterMode());
-      }
+  private deactivateScalePulse(options: { resetColor?: boolean } = {}) {
+    const { resetColor = false } = options;
+    if (this.scalePulseNoteIndex === null) return;
+    const active = this.notes[this.scalePulseNoteIndex];
+    if (!active) {
+      this.scalePulseNoteIndex = null;
+      return;
     }
-
+    active.setScalePulseState(false);
+    active.noteSpans.forEach((span) => span.resetOuterMode());
+    if (resetColor) {
+      this.resetNoteColor(active);
+    }
     this.scalePulseNoteIndex = null;
+  }
+
+  private applyScalePulseToNote(index: number | null): StaveNote | null {
+    this.deactivateScalePulse();
 
     if (index === null) return null;
-
     if (index < 0 || index >= this.notes.length) {
       return null;
     }

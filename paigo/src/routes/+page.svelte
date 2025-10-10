@@ -1,11 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import {
-    DebugGrid,
-    VexFlow,
-    type DebugGridOptions,
-    type RenderContext,
-  } from '$lib/vexflow/vexflow-core';
+  // import { onMount } from 'svelte';
+  import { VexFlow, type DebugGridOptions } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { Button } from '$lib/components/ui/button/index';
   import GridOverlayControl from '$lib/components/debug/GridOverlayControl.svelte';
@@ -13,6 +8,7 @@
   import MovingStaff from '$lib/components/staff/MovingStaff.svelte';
   import type MovingStaffComponent from '$lib/components/staff/MovingStaff.svelte';
   import type { MovingStaffController, StaffLayout } from '$lib/staff/moving-staff-controller';
+  import type { DebugGridPlugin } from '$lib/staff/plugins/debug-grid';
 
   const { data }: PageProps = $props();
 
@@ -44,15 +40,9 @@
   let pointerHoldActive = false;
   let skipNextClick = false;
 
-  function renderSong() {
-    movingStaffComponent?.redraw();
-    movingStaffComponent?.setNoteSpanVisibleState(noteSpanVisible);
-    tempo = movingStaffComponent?.getTempo() ?? tempo;
-  }
-
   function toggleNoteSpan() {
     noteSpanVisible = !noteSpanVisible;
-    movingStaffComponent?.setNoteSpanVisibleState(noteSpanVisible);
+    // movingStaffComponent?.setNoteSpanVisibleState(noteSpanVisible);
   }
 
   function runNextNoteReleaseAnimation() {
@@ -118,7 +108,6 @@
   });
 
   let debugGridEnabled = $state(false);
-  let debugGrid: DebugGrid | null = null;
   let gridBaseOptions = $state<DebugGridOptions>({
     spacing: 20,
     majorSpacing: 80,
@@ -127,50 +116,36 @@
   });
   let gridOptions = $state<DebugGridOptions>({ ...gridBaseOptions });
 
-  const applyLayoutToGrid = (layout: StaffLayout) => {
-    gridBaseOptions = {
-      ...gridBaseOptions,
-      spacing: layout.spacingBetweenLinesPx,
-      majorSpacing: layout.spacingBetweenLinesPx * 4,
-    };
-    gridOptions = {
-      ...gridOptions,
-      spacing: gridBaseOptions.spacing,
-      majorSpacing: gridBaseOptions.majorSpacing,
-    };
+  const getDebugGridPlugin = (): DebugGridPlugin | undefined =>
+    movingStaffComponent?.getPlugin<DebugGridPlugin>('debug-grid');
+
+  const syncGridOverlayState = () => {
+    const plugin = getDebugGridPlugin();
+    if (!plugin) return;
+    gridBaseOptions = plugin.getBaseOptions();
+    gridOptions = plugin.getOptions();
+    debugGridEnabled = plugin.enabled;
   };
 
-  const createDebugGrid = (context: RenderContext) => {
-    debugGrid = new VexFlow.DebugGrid(context, {
-      ...gridBaseOptions,
-      ...gridOptions,
-    });
+  const handleGridToggle = (detail: { enabled: boolean }) => {
+    const plugin = getDebugGridPlugin();
+    if (!plugin) return;
+    plugin.handleToggle(detail);
+    syncGridOverlayState();
   };
 
-  const redrawDebugGrid = () => {
-    if (!movingStaffComponent) return;
-    const context = movingStaffComponent.getContext();
-    if (!context) return;
-    if (!debugGrid) {
-      createDebugGrid(context);
-    } else {
-      debugGrid.clear();
-    }
-    if (debugGridEnabled && debugGrid) {
-      debugGrid.draw();
-    }
+  const handleGridOptionsChange = (detail: { options: DebugGridOptions }) => {
+    const plugin = getDebugGridPlugin();
+    if (!plugin) return;
+    plugin.handleOptionsChange(detail);
+    syncGridOverlayState();
   };
 
-  const handleStaffReady = (
-    event: { controller: MovingStaffController; layout: StaffLayout },
-  ) => {
-    applyLayoutToGrid(event.layout);
-    redrawDebugGrid();
+  const handleStaffReady = (_event: { controller: MovingStaffController; layout: StaffLayout }) => {
+    syncGridOverlayState();
   };
 
-  onMount(() => {
-    renderSong();
-  });
+  let version = $state(0);
 </script>
 
 <Button variant="link" href="/layout">layout</Button>
@@ -187,24 +162,28 @@
   </div>
 {/if}
 
-<MovingStaff
-  bind:this={movingStaffComponent}
-  song={data.song}
-  tempo={tempo ?? undefined}
-  noteSpanVisible={noteSpanVisible ?? false}
-  movable={true}
-  onready={handleStaffReady}
-/>
+{#key version}
+  <MovingStaff
+    bind:this={movingStaffComponent}
+    song={data.song}
+    tempo={tempo ?? undefined}
+    movable={true}
+    onready={handleStaffReady}
+    pluginDefs={[
+      'debug-grid',
+    ]}
+  />
+{/key}
 
 <div class="controls-row">
   <GridOverlayControl
     bind:enabled={debugGridEnabled}
     options={gridOptions}
     baseOptions={gridBaseOptions}
-    onToggle={redrawDebugGrid}
-    onOptionsChange={redrawDebugGrid}
+    onToggle={handleGridToggle}
+    onOptionsChange={handleGridOptionsChange}
   />
-  <Button id="renderButton" type="button" onclick={renderSong}>rerender</Button>
+  <Button id="renderButton" type="button" onclick={() => (version += 1)}>rerender</Button>
   <Button id="pauseButton" type="button" onclick={() => movingStaffComponent?.stop()}>pause</Button>
   <Button id="resumeButton" type="button" onclick={() => movingStaffComponent?.move()}
     >resume</Button
