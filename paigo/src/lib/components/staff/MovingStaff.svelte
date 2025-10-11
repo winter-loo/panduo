@@ -23,7 +23,7 @@
     tempo?: number;
     movable?: boolean;
     plugins?: PluginSpec[];
-    onready: (data: {
+    onready?: (data: {
       controller: MovingStaffController;
       layout: StaffLayout;
       config: ConfigInstance;
@@ -310,7 +310,7 @@
 
     if (runId !== renderRunId) return;
 
-    onready({ controller, layout, config });
+    onready?.({ controller, layout, config });
   };
 
   onMount(() => {

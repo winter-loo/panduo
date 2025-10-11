@@ -3,34 +3,21 @@
   import { Button } from '$lib/components/ui/button/index';
   import type { DebugGridOptions } from '$lib/vexflow/vexflow-core';
 
-  interface GridOverlayControlProps {
-    options: DebugGridOptions;
-    baseOptions: DebugGridOptions;
-    minSpacing?: number;
-    onToggle?: (detail: { enabled: boolean }) => void;
-    onOptionsChange?: (detail: { options: DebugGridOptions }) => void;
-  }
+  let { enabled = $bindable(false), options = $bindable({}) } = $props();
 
-  let { enabled = $bindable(false), ...props } = $props();
+  let initialOptions = structuredClone(options);
 
-  const minSpacing = $derived(props.minSpacing ?? 2);
+  const minSpacing = $derived(options.minSpacing ?? 2);
 
   let menuOpen = $state(false);
   let container: HTMLDivElement | null = null;
-  let editingOptions = $state<DebugGridOptions>({ ...props.options });
-
-  $effect(() => {
-    editingOptions = { ...props.options };
-  });
 
   function emitOptions(next: DebugGridOptions) {
-    editingOptions = { ...next };
-    props.onOptionsChange?.({ options: { ...editingOptions } });
+    options = { ...next };
   }
 
   function toggleGrid() {
     enabled = !enabled;
-    props.onToggle?.({ enabled: enabled });
     menuOpen = false;
   }
 
@@ -44,11 +31,11 @@
     const rawValue = Number.parseFloat(target.value);
     const spacing = Number.isFinite(rawValue)
       ? Math.max(minSpacing, rawValue)
-      : (editingOptions.spacing ?? minSpacing);
+      : (options.spacing ?? minSpacing);
     target.value = spacing.toString();
-    const majorSpacing = Math.max(spacing, editingOptions.majorSpacing ?? spacing);
+    const majorSpacing = Math.max(spacing, options.majorSpacing ?? spacing);
     emitOptions({
-      ...editingOptions,
+      ...options,
       spacing,
       majorSpacing,
     });
@@ -57,13 +44,13 @@
   function handleMajorSpacingInput(event: Event) {
     const target = event.currentTarget as HTMLInputElement;
     const rawValue = Number.parseFloat(target.value);
-    const baseSpacing = editingOptions.spacing ?? minSpacing;
+    const baseSpacing = options.spacing ?? minSpacing;
     const majorSpacing = Number.isFinite(rawValue)
       ? Math.max(baseSpacing, rawValue)
-      : (editingOptions.majorSpacing ?? baseSpacing);
+      : (options.majorSpacing ?? baseSpacing);
     target.value = majorSpacing.toString();
     emitOptions({
-      ...editingOptions,
+      ...options,
       majorSpacing,
     });
   }
@@ -71,7 +58,7 @@
   function handleShowLabelsChange(event: Event) {
     const target = event.currentTarget as HTMLInputElement;
     emitOptions({
-      ...editingOptions,
+      ...options,
       showLabels: target.checked,
     });
   }
@@ -79,7 +66,7 @@
   function handleMajorOnlyChange(event: Event) {
     const target = event.currentTarget as HTMLInputElement;
     emitOptions({
-      ...editingOptions,
+      ...options,
       labelMajorLinesOnly: target.checked,
     });
   }
@@ -87,13 +74,13 @@
   function handleOriginLabelsChange(event: Event) {
     const target = event.currentTarget as HTMLInputElement;
     emitOptions({
-      ...editingOptions,
+      ...options,
       includeOriginLabels: target.checked,
     });
   }
 
   function resetToDefaults() {
-    emitOptions({ ...props.baseOptions });
+    emitOptions({ ...initialOptions });
   }
 
   onMount(() => {
@@ -125,39 +112,33 @@
     <span class="sr-only">Configure grid overlay</span>
   </Button>
   {#if menuOpen}
-    <div class="grid-toggle__menu" role="menu" on:click|stopPropagation on:change|stopPropagation>
+    <div class="grid-toggle__menu" role="menu">
       <label>
         <span>Spacing (px)</span>
         <input
           type="number"
           min={minSpacing}
           step="1"
-          value={editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing}
-          on:change={handleSpacingInput}
+          value={options.spacing ?? minSpacing}
+          onchange={handleSpacingInput}
         />
       </label>
       <label>
         <span>Major spacing (px)</span>
         <input
           type="number"
-          min={Math.max(
-            minSpacing,
-            editingOptions.spacing ?? props.baseOptions.spacing ?? minSpacing,
-          )}
+          min={Math.max(minSpacing, options.spacing ?? minSpacing)}
           step="1"
-          value={editingOptions.majorSpacing ??
-            editingOptions.spacing ??
-            props.baseOptions.majorSpacing ??
-            minSpacing}
-          on:change={handleMajorSpacingInput}
+          value={options.majorSpacing ?? options.spacing ?? minSpacing}
+          onchange={handleMajorSpacingInput}
         />
       </label>
       <div class="checkbox-row">
         <input
           id="show-labels"
           type="checkbox"
-          checked={editingOptions.showLabels ?? props.baseOptions.showLabels ?? true}
-          on:change={handleShowLabelsChange}
+          checked={options.showLabels ?? true}
+          onchange={handleShowLabelsChange}
         />
         <label for="show-labels">Show labels</label>
       </div>
@@ -165,10 +146,8 @@
         <input
           id="label-major"
           type="checkbox"
-          checked={editingOptions.labelMajorLinesOnly ??
-            props.baseOptions.labelMajorLinesOnly ??
-            false}
-          on:change={handleMajorOnlyChange}
+          checked={options.labelMajorLinesOnly ?? false}
+          onchange={handleMajorOnlyChange}
         />
         <label for="label-major">Labels on major lines only</label>
       </div>
@@ -176,10 +155,8 @@
         <input
           id="origin-labels"
           type="checkbox"
-          checked={editingOptions.includeOriginLabels ??
-            props.baseOptions.includeOriginLabels ??
-            true}
-          on:change={handleOriginLabelsChange}
+          checked={options.includeOriginLabels ?? true}
+          onchange={handleOriginLabelsChange}
         />
         <label for="origin-labels">Include origin labels</label>
       </div>
@@ -196,10 +173,6 @@
     display: flex;
     gap: 0.25rem;
     align-items: stretch;
-  }
-
-  .grid-toggle__caret {
-    padding: 0 0.6rem;
   }
 
   .grid-toggle__menu {

@@ -106,44 +106,27 @@
     tempo = movingStaffComponent.getTempo();
   });
 
-  const defaultGridOptions: DebugGridOptions = {
-    spacing: 20,
-    majorSpacing: 80,
-    includeOriginLabels: true,
-    showLabels: true,
-  };
+  // debug grid settings
+  // [
   let debugGridEnabled = $state(false);
-  let gridBaseOptions = $state<DebugGridOptions>({ ...defaultGridOptions });
-  let gridOptions = $state<DebugGridOptions>({ ...defaultGridOptions });
+  let gridOptions = $state<DebugGridOptions>({});
 
   const getDebugGridPlugin = (): DebugGridPlugin | undefined =>
     movingStaffComponent?.getPlugin<DebugGridPlugin>('debug-grid');
 
-  const syncGridOverlayState = () => {
+  function onStaffReady() {
     const plugin = getDebugGridPlugin();
     if (!plugin) return;
-    gridBaseOptions = plugin.getBaseOptions();
     gridOptions = plugin.getOptions();
-    debugGridEnabled = plugin.enabled;
-  };
+  }
 
-  const handleGridToggle = (detail: { enabled: boolean }) => {
+  $effect(() => {
     const plugin = getDebugGridPlugin();
     if (!plugin) return;
-    plugin.handleToggle(detail);
-    syncGridOverlayState();
-  };
-
-  const handleGridOptionsChange = (detail: { options: DebugGridOptions }) => {
-    const plugin = getDebugGridPlugin();
-    if (!plugin) return;
-    plugin.handleOptionsChange(detail);
-    syncGridOverlayState();
-  };
-
-  const handleStaffReady = (_event: { controller: MovingStaffController; layout: StaffLayout }) => {
-    syncGridOverlayState();
-  };
+    plugin.handleToggle({ enabled: debugGridEnabled });
+    plugin.handleOptionsChange({ options: gridOptions });
+  });
+  // ]
 
   let version = $state(0);
 </script>
@@ -168,21 +151,13 @@
     song={data.song}
     tempo={tempo ?? undefined}
     movable={true}
-    onready={handleStaffReady}
-    plugins={[
-      'debug-grid',
-    ]}
+    plugins={['debug-grid']}
+    onready={onStaffReady}
   />
 {/key}
 
 <div class="controls-row">
-  <GridOverlayControl
-    bind:enabled={debugGridEnabled}
-    options={gridOptions}
-    baseOptions={gridBaseOptions}
-    onToggle={handleGridToggle}
-    onOptionsChange={handleGridOptionsChange}
-  />
+  <GridOverlayControl bind:enabled={debugGridEnabled} bind:options={gridOptions} />
   <Button id="renderButton" type="button" onclick={() => (version += 1)}>rerender</Button>
   <Button id="pauseButton" type="button" onclick={() => movingStaffComponent?.stop()}>pause</Button>
   <Button id="resumeButton" type="button" onclick={() => movingStaffComponent?.move()}
