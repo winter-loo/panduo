@@ -1,13 +1,9 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button/index';
   import MovingStaff from '$lib/components/staff/MovingStaff.svelte';
-  import type MovingStaffComponent from '$lib/components/staff/MovingStaff.svelte';
   import type { StaffSong } from '$lib/staff/moving-staff-controller';
 
   const demoSong: StaffSong = {
-    timeSignature: '4/4',
-    tempo: 72,
-    keySignature: 'C',
     measures: [
       {
         notes: [
@@ -20,37 +16,14 @@
     ],
   };
 
-  let staff: MovingStaffComponent | null = null;
+  let staff = $state<MovingStaff | null>(null);
 
-  const NOTE_SCALE_DURATION = 200;
-  const NOTESPAN_EXPAND_DELAY = 60;
-  const NOTESPAN_HOLD_DURATION = 200;
-
-  function playNextNote() {
-    staff?.startNoteSpanPreview();
+  function onpointerdown() {
     staff?.onNoteOn();
+  }
 
-    const note = staff?.startScalePulseAnimation();
-    if (!note) {
-      staff?.stopNoteSpanPreview();
-      return;
-    }
-
-    note.noteSpans.forEach((span) => {
-      span.startHaloPulseAnimation(NOTESPAN_EXPAND_DELAY, NOTESPAN_HOLD_DURATION);
-    });
-
-    if (typeof window === 'undefined') {
-      note.setScalePulseState(false);
-      staff?.stopNoteSpanPreview();
-      return;
-    }
-
-    window.setTimeout(() => note.setScalePulseState(false), NOTE_SCALE_DURATION);
-    window.setTimeout(
-      () => staff?.stopNoteSpanPreview(),
-      NOTESPAN_EXPAND_DELAY + NOTESPAN_HOLD_DURATION,
-    );
+  function onpointerup() {
+    staff?.onNoteOff();
   }
 </script>
 
@@ -65,11 +38,10 @@
     bind:this={staff}
     song={demoSong}
     tempo={demoSong.tempo}
-    noteSpanVisible={false}
     movable={false}
   />
 
   <div class="flex items-center gap-4">
-    <Button type="button" onclick={playNextNote}>Next note</Button>
+    <Button type="button" {onpointerdown} {onpointerup}>Next note</Button>
   </div>
 </main>

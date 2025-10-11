@@ -59,6 +59,7 @@
 </script>
 
 <Button variant="link" href="/layout">layout</Button>
+<Button variant="link" href="/demo">more demos</Button>
 
 <svelte:document
   onkeydown={(e) => {
@@ -80,6 +81,7 @@
     movable={true}
     plugins={['debug-grid']}
     onready={onStaffReady}
+    cursor
   />
 {/key}
 

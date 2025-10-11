@@ -67,6 +67,7 @@ export class MovingStaffController extends MovableElement {
   private lastAdvanceTimestamp = 0;
   private lastRecordedOffset = 0;
   private keySignature?: string;
+  private showCursor: boolean = false;
 
   constructor(
     layout: StaffLayout,
@@ -75,16 +76,19 @@ export class MovingStaffController extends MovableElement {
     maxOffsetX: number,
     config: ConfigInstance,
     tempo: number,
-    timeSignature: string,
+    timeSignature?: string,
     keySignature?: string,
+    showCursor?: boolean,
   ) {
     super(maxOffsetX);
     this.layout = layout;
     this.config = config;
     this.keySignature = keySignature;
+    if (showCursor) this.showCursor = showCursor;
+
     this.fixedElement = fixedElement as HTMLDivElement;
     this.notesElement = notesElement as HTMLDivElement;
-    this.setTiming(tempo, timeSignature);
+    this.setTiming(tempo, timeSignature ?? '4/4');
     this.getPixelsPerSecond = () => this.computePixelsPerSecond();
 
     this.drawFixedStave();
@@ -190,7 +194,7 @@ export class MovingStaffController extends MovableElement {
     this.resetControllerState({ dropStaves: true });
   }
 
-  addMeasure(timeSignature: string, notes: StaveNoteStruct[], last: boolean = false) {
+  addMeasure(notes: StaveNoteStruct[], timeSignature?: string, last: boolean = false) {
     let config = this.config;
     if (this.staves.length == 0) {
       config = this.config.fork({
@@ -239,7 +243,7 @@ export class MovingStaffController extends MovableElement {
       );
       this.registerNoteInteractions(staveNotes);
 
-      if (this.staves.length == 1) {
+      if (this.staves.length == 1 && this.showCursor) {
         this.drawCursorAt(this.notes[0].getAbsoluteX());
       }
     }
@@ -247,20 +251,21 @@ export class MovingStaffController extends MovableElement {
     if (last) {
       const extras = 3;
       for (let i = 0; i < extras - 1; i++) {
-        let stave = new Stave(config, this.staveX, 0, this.layout.measureWidth);
+        // use 'this.config' instead of 'config' so that these extra staves have the same style as normals
+        let stave = new Stave(this.config, this.staveX, 0, this.layout.measureWidth);
         stave.setContext(this.context).draw();
         if (i == 0) {
-          let xNote = new StaveNote(config, { keys: ['b/4'], duration: '8' });
+          let xNote = new StaveNote(this.config, { keys: ['b/4'], duration: '8' });
           this.notes.push(xNote);
-          let voice = new Voice(config, timeSignature)
+          let voice = new Voice(this.config, timeSignature)
             .setMode(VoiceMode.SOFT)
             .addTickables([xNote]);
           new Formatter(config).formatToStave([voice], stave);
         }
         this.staveX += this.layout.measureWidth;
       }
-      new Stave(config, this.staveX, 0, this.layout.measureWidth, {
-        rightBar: this.config.get('Stave.leftBar'),
+      new Stave(this.config, this.staveX, 0, this.layout.measureWidth, {
+        rightBar: this.config.get('Stave.rightBar'),
       })
         .setContext(this.context)
         .draw();
@@ -269,7 +274,7 @@ export class MovingStaffController extends MovableElement {
   }
 
   drawCursorAt(x: number) {
-    if (this.staves.length == 0) return;
+    if (!this.showCursor || this.staves.length == 0) return;
     this.cursorAnchorX = x;
     const element = this.ensureCursorElement();
     if (!element) return;
@@ -471,7 +476,7 @@ export class MovingStaffController extends MovableElement {
   }
 
   private syncCursorPosition(offsetX: number = this.currentOffsetX) {
-    if (this.cursorAnchorX === null) return;
+    if (!this.showCursor || this.cursorAnchorX === null) return;
     const cursor = this.ensureCursorElement();
     if (!cursor) return;
 
@@ -479,7 +484,7 @@ export class MovingStaffController extends MovableElement {
   }
 
   private getCursorAnchor(): number | null {
-    if (this.cursorAnchorX !== null) return this.cursorAnchorX;
+    if (!this.showCursor || this.cursorAnchorX !== null) return this.cursorAnchorX;
     if (this.notes.length === 0) return null;
     return this.notes[0].getAbsoluteX();
   }
@@ -667,7 +672,7 @@ export class MovingStaffController extends MovableElement {
 
 export type StaffSong = {
   tempo?: number;
-  timeSignature: string;
+  timeSignature?: string;
   keySignature?: string;
   measures: Array<{ notes: StaveNoteStruct[] }>;
 };

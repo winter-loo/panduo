@@ -30,7 +30,7 @@ interface Distance {
 }
 
 export interface MusicMeasure {
-  timeSignature: string;
+  timeSignature?: string;
   notes: Note[];
 }
 

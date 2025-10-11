@@ -21,6 +21,7 @@
   type MovingStaffProps = {
     song: StaffSong;
     tempo?: number;
+    cursor?: boolean;
     movable?: boolean;
     plugins?: PluginSpec[];
     onready?: (data: {
@@ -232,8 +233,8 @@
     candidate.measureWidth = width;
   };
 
-  const applyTimeSignature = (cfg: ConfigInstance, timeSignature: string) => {
-    const { beats, beatUnit } = parseBeats(timeSignature);
+  const applyTimeSignature = (cfg: ConfigInstance, timeSignature?: string) => {
+    const { beats, beatUnit } = parseBeats(timeSignature ?? '4/4');
     cfg.setBeatsInMeasure(beats);
     cfg.setBeatUnit(beatUnit);
   };
@@ -281,6 +282,7 @@
       tempoForSong,
       runSong.timeSignature,
       runSong.keySignature,
+      props.cursor,
     );
     controller = nextController;
 
@@ -295,8 +297,8 @@
         return;
       }
       nextController.addMeasure(
-        song.timeSignature,
         measure.notes,
+        runSong.timeSignature,
         index + 1 === runSong.measures.length,
       );
     }
@@ -332,7 +334,7 @@
       return;
     }
 
-    controller.setTiming(resolvedTempo, song.timeSignature);
+    controller.setTiming(resolvedTempo, song.timeSignature ?? '4/4');
 
     refreshPlugins(pluginSpecs);
   });
@@ -406,7 +408,7 @@
   export function setTempo(nextTempo: number) {
     const sanitized = Number.isFinite(nextTempo) && nextTempo > 0 ? nextTempo : resolvedTempo;
     resolvedTempo = sanitized;
-    controller?.setTiming(sanitized, props.song.timeSignature);
+    controller?.setTiming(sanitized, props.song.timeSignature ?? '4/4');
   }
 
   export function getTempo(): number {
