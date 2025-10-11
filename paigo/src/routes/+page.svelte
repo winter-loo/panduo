@@ -117,14 +117,20 @@
   function onStaffReady() {
     const plugin = getDebugGridPlugin();
     if (!plugin) return;
+    // get the initial plugin configuration
     gridOptions = plugin.getOptions();
   }
 
   $effect(() => {
+    // Capture reactive inputs up front so the effect re-runs when either value changes,
+    // even if the plugin is not ready yet.
+    // see issue: https://github.com/sveltejs/svelte/issues/16929
+    const enabled = debugGridEnabled;
+    const options = gridOptions;
     const plugin = getDebugGridPlugin();
     if (!plugin) return;
-    plugin.handleToggle({ enabled: debugGridEnabled });
-    plugin.handleOptionsChange({ options: gridOptions });
+    plugin.handleToggle({ enabled });
+    plugin.handleOptionsChange({ options });
   });
   // ]
 

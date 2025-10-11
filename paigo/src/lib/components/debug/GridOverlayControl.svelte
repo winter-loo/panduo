@@ -5,7 +5,7 @@
 
   let { enabled = $bindable(false), options = $bindable({}) } = $props();
 
-  let initialOptions = structuredClone(options);
+  let initialOptions = $state.snapshot(options);
 
   const minSpacing = $derived(options.minSpacing ?? 2);
 
