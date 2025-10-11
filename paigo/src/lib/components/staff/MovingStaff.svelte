@@ -353,20 +353,41 @@
     return config;
   }
 
-  export function goToNextNote() {
-    controller?.goToNextNote();
-  }
-
-  export function startNoteSpanPreview() {
+  export function onNoteOn() {
     controller?.startNoteSpanPreview();
-  }
-
-  export function stopNoteSpanPreview() {
-    controller?.stopNoteSpanPreview();
+    controller?.goToNextNote();
   }
 
   export function startScalePulseAnimation(): StaveNote | null {
     return controller?.startScalePulseAnimation() ?? null;
+  }
+
+  export function onNoteOff(
+    options: {
+      scaleDuration?: number;
+      spanExpandDelay?: number;
+      spanHoldDuration?: number;
+    } = {},
+  ) {
+    const { scaleDuration = 200, spanExpandDelay = 60, spanHoldDuration = 200 } = options;
+    const note = controller?.startScalePulseAnimation();
+    if (!note) {
+      controller?.stopNoteSpanPreview();
+      return;
+    }
+
+    note.noteSpans.forEach((span) => {
+      span.startHaloPulseAnimation(spanExpandDelay, spanHoldDuration);
+    });
+
+    if (typeof window === 'undefined') {
+      note.setScalePulseState(false);
+      controller?.stopNoteSpanPreview();
+      return;
+    }
+
+    window.setTimeout(() => note.setScalePulseState(false), scaleDuration);
+    window.setTimeout(() => controller?.stopNoteSpanPreview(), spanExpandDelay + spanHoldDuration);
   }
 
   export function reset() {

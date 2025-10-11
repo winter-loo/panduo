@@ -12,6 +12,13 @@ import {
 } from '$lib/vexflow/vexflow-core';
 import { MovableElement } from '$lib/movable';
 
+VexFlow.NoteHead.DEBUG = true;
+VexFlow.Stem.DEBUG = true;
+VexFlow.StaveNote.DEBUG = true;
+VexFlow.Formatter.DEBUG = true;
+VexFlow.EasyScore.DEBUG = true;
+VexFlow.ModifierContext.DEBUG = true;
+
 export interface StaffLayout {
   measureWidth: number;
   staveHeight: number;

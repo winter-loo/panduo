@@ -28,7 +28,7 @@
 
   function playNextNote() {
     staff?.startNoteSpanPreview();
-    staff?.goToNextNote();
+    staff?.onNoteOn();
 
     const note = staff?.startScalePulseAnimation();
     if (!note) {
