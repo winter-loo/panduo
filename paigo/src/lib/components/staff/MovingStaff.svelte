@@ -7,11 +7,8 @@
     type StaffLayout,
     type StaffSong,
   } from '$lib/staff/moving-staff-controller';
-  import {
-    createDebugGridPlugin,
-    type DebugGridPluginConfig,
-    type DebugGridPluginState,
-  } from '$lib/staff/plugins/debug-grid';
+  import { createDebugGridPlugin, type DebugGridPluginConfig } from '$lib/staff/plugins/debug-grid';
+  import { createTrailingStavesPlugin } from '$lib/staff/plugins/trailing-staves';
   import type {
     MovingStaffPluginInstance,
     MovingStaffPluginSpec,
@@ -33,18 +30,13 @@
 
   const { onready, ...props }: MovingStaffProps = $props();
 
-  /**
-   * Configuration accepted from the parent when wiring built-in plugins.
-   *
-   * Each definition can be a plain string (`'debug-grid'`) that enables the plugin with its default
-   * configuration, or an object variant that supplies strongly typed options. The spec mirrors the
-   * generic `MovingStaffPluginSpec` type but narrows the plugin name to the built-in debug grid to
-   * keep the component constrained until we support more plugin types.
-   */
-  type PluginSpec = MovingStaffPluginSpec<'debug-grid', DebugGridPluginConfig>;
+  type DebugGridSpec = MovingStaffPluginSpec<'debug-grid', DebugGridPluginConfig>;
+  type TrailingStavesSpec = MovingStaffPluginSpec<'trailing-staves', {}>;
+  type PluginSpec = DebugGridSpec | TrailingStavesSpec | 'trailing-staves';
 
   const BUILTIN_PLUGINS = {
     'debug-grid': createDebugGridPlugin,
+    'trailing-staves': createTrailingStavesPlugin,
   } as const;
 
   // Registry of active plugin instances (exposed to parents via `bind:this` for diagnostics).
@@ -76,10 +68,21 @@
       })
       .join('|');
 
-  const normalizePluginSpec = (
-    spec: PluginSpec,
-  ): { name: 'debug-grid'; options?: DebugGridPluginConfig } =>
-    typeof spec === 'string' ? { name: spec, options: undefined } : spec;
+  type NormalizedPluginSpec =
+    | { name: 'debug-grid'; options?: DebugGridPluginConfig }
+    | { name: 'trailing-staves'; options?: undefined };
+
+  const normalizePluginSpec = (spec: PluginSpec): NormalizedPluginSpec => {
+    if (typeof spec === 'string') {
+      return spec === 'trailing-staves'
+        ? { name: 'trailing-staves', options: undefined }
+        : { name: spec, options: undefined };
+    }
+    if (spec.name === 'trailing-staves') {
+      return { name: 'trailing-staves', options: undefined };
+    }
+    return spec;
+  };
 
   let currentPluginKey: string | null = null;
 
@@ -108,6 +111,12 @@
     }
   };
 
+  const notifySongRendered = (song: StaffSong) => {
+    Object.values(pluginRegistry).forEach((plugin) => {
+      plugin.onSongRendered?.({ song });
+    });
+  };
+
   // Manage plugin lifecycle whenever the caller tweaks plugin definitions or we reload the layout.
   const refreshPlugins = (
     specs: PluginSpec[],
@@ -123,11 +132,11 @@
 
     const effectiveLayout = options.layoutOverride ?? currentController.getLayout() ?? layout;
     const context = currentController.getContext();
-    const savedStates: Record<string, DebugGridPluginState> = {};
+    const savedStates: Record<string, unknown> = {};
 
     for (const [name, instance] of Object.entries(pluginRegistry)) {
       if (typeof instance.serialize === 'function') {
-        savedStates[name] = instance.serialize() as DebugGridPluginState;
+        savedStates[name] = instance.serialize();
       }
     }
 
@@ -144,7 +153,7 @@
         layout: effectiveLayout,
         config: currentConfig,
         context,
-        state: savedStates[normalized.name],
+        state: savedStates[normalized.name] as never,
         options: normalized.options,
       });
       pluginRegistry[normalized.name] = instance;
@@ -197,13 +206,13 @@
           lineWidth: 4,
           strokeStyle: '#dadada',
         },
-        leftBar: {
+        leftBar: false,
+        rightBar: {
           width: 4,
           style: {
             fillStyle: '#dadada',
           },
         },
-        rightBar: false,
         paddingLeft: 4,
       },
       Clef: {
@@ -292,15 +301,11 @@
     resolvedTempo = tempoForSong;
     lastSongRef = runSong;
 
-    for (const [index, measure] of runSong.measures.entries()) {
+    for (const measure of runSong.measures) {
       if (runId !== renderRunId) {
         return;
       }
-      nextController.addMeasure(
-        measure.notes,
-        runSong.timeSignature,
-        index + 1 === runSong.measures.length,
-      );
+      nextController.addMeasure(measure.notes, runSong.timeSignature);
     }
 
     if (runId !== renderRunId) return;
@@ -311,6 +316,8 @@
     });
 
     if (runId !== renderRunId) return;
+
+    notifySongRendered(runSong);
 
     onready?.({ controller, layout, config });
   };
@@ -337,6 +344,7 @@
     controller.setTiming(resolvedTempo, song.timeSignature ?? '4/4');
 
     refreshPlugins(pluginSpecs);
+    notifySongRendered(song);
   });
 
   export function getController(): MovingStaffController | null {

@@ -1,5 +1,5 @@
 import { VexFlow, type RenderContext } from '$lib/vexflow/vexflow-core';
-import type { MovingStaffController, StaffLayout } from '../moving-staff-controller';
+import type { MovingStaffController, StaffLayout, StaffSong } from '../moving-staff-controller';
 
 export type ConfigInstance = ReturnType<typeof VexFlow.Config.defaults>;
 
@@ -60,6 +60,10 @@ export interface MovingStaffPluginInstance<State = unknown> {
    * of that serialized data back to the plugin factory.
    */
   serialize?(): State;
+  /**
+   * Called after the song has been fully rendered to allow plugins to draw trailing elements.
+   */
+  onSongRendered?(args: { song: StaffSong }): void;
 }
 
 export type MovingStaffPluginSpec<Name extends string = string, Options = unknown> =

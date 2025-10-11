@@ -4,9 +4,6 @@ import {
   Stave,
   StaveNote,
   VexFlow,
-  Voice,
-  Formatter,
-  VoiceMode,
   SVGContext,
   type StaveNoteStruct,
 } from '$lib/vexflow/vexflow-core';
@@ -173,7 +170,9 @@ export class MovingStaffController extends MovableElement {
     );
     const fixedWidth = this.computeFixedStaveWidth();
     renderer.resize(fixedWidth, this.layout.staveHeight);
-    const fixedStave = new Stave(this.config, 0, 0, fixedWidth, {});
+    const fixedStave = new Stave(this.config, 0, 0, fixedWidth, {
+      leftBar: this.config.get('Stave.rightBar'),
+    });
     fixedStave.addClef('treble');
     if (this.keySignature) {
       fixedStave.addKeySignature(this.keySignature);
@@ -194,13 +193,12 @@ export class MovingStaffController extends MovableElement {
     this.resetControllerState({ dropStaves: true });
   }
 
-  addMeasure(notes: StaveNoteStruct[], timeSignature?: string, last: boolean = false) {
+  addMeasure(notes: StaveNoteStruct[], timeSignature?: string) {
     let config = this.config;
     if (this.staves.length == 0) {
       config = this.config.fork({
         Stave: {
           paddingLeft: 32,
-          leftBar: false,
         },
       });
     }
@@ -246,30 +244,6 @@ export class MovingStaffController extends MovableElement {
       if (this.staves.length == 1 && this.showCursor) {
         this.drawCursorAt(this.notes[0].getAbsoluteX());
       }
-    }
-
-    if (last) {
-      const extras = 3;
-      for (let i = 0; i < extras - 1; i++) {
-        // use 'this.config' instead of 'config' so that these extra staves have the same style as normals
-        let stave = new Stave(this.config, this.staveX, 0, this.layout.measureWidth);
-        stave.setContext(this.context).draw();
-        if (i == 0) {
-          let xNote = new StaveNote(this.config, { keys: ['b/4'], duration: '8' });
-          this.notes.push(xNote);
-          let voice = new Voice(this.config, timeSignature)
-            .setMode(VoiceMode.SOFT)
-            .addTickables([xNote]);
-          new Formatter(config).formatToStave([voice], stave);
-        }
-        this.staveX += this.layout.measureWidth;
-      }
-      new Stave(this.config, this.staveX, 0, this.layout.measureWidth, {
-        rightBar: this.config.get('Stave.rightBar'),
-      })
-        .setContext(this.context)
-        .draw();
-      this.staveX += this.layout.measureWidth;
     }
   }
 
