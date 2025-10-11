@@ -4,7 +4,6 @@ import {
   Stave,
   StaveNote,
   VexFlow,
-  SVGContext,
   type StaveNoteStruct,
 } from '$lib/vexflow/vexflow-core';
 import { MovableElement } from '$lib/movable';
@@ -54,8 +53,6 @@ export class MovingStaffController extends MovableElement {
   private tempo = 60;
   private beatsPerMeasure = 4;
   private pixelsPerBeat = 112;
-  private cursorAnchorX: number | null = null;
-  private cursorElement: SVGGElement | null = null;
   private currentNoteIndex = 0;
   private highlightedNoteIndex: number | null = null;
   private scalePulseNoteIndex: number | null = null;
@@ -64,7 +61,11 @@ export class MovingStaffController extends MovableElement {
   private lastAdvanceTimestamp = 0;
   private lastRecordedOffset = 0;
   private keySignature?: string;
-  private showCursor: boolean = false;
+  private scrollAnchorX: number | null = null;
+  private readonly moveListeners = new Set<(offsetX: number) => void>();
+  private readonly dragStartListeners = new Set<() => void>();
+  private readonly dragEndListeners = new Set<() => void>();
+  private readonly resetListeners = new Set<() => void>();
 
   constructor(
     layout: StaffLayout,
@@ -75,13 +76,11 @@ export class MovingStaffController extends MovableElement {
     tempo: number,
     timeSignature?: string,
     keySignature?: string,
-    showCursor?: boolean,
   ) {
     super(maxOffsetX);
     this.layout = layout;
     this.config = config;
     this.keySignature = keySignature;
-    if (showCursor) this.showCursor = showCursor;
 
     this.fixedElement = fixedElement as HTMLDivElement;
     this.notesElement = notesElement as HTMLDivElement;
@@ -91,12 +90,13 @@ export class MovingStaffController extends MovableElement {
     this.drawFixedStave();
     this.prepareForRedraw();
 
-    this.onMove = (offsetX) => {
-      this.syncCursorPosition(offsetX);
-      this.resetColorsWhenOffsetDecreases(offsetX);
-    };
-    this.onDragStart = () => this.handleDragStart();
-    this.onDragEnd = () => this.snapToNearestPreviousNote();
+    this.addMoveListener((offsetX) => this.resetColorsWhenOffsetDecreases(offsetX));
+    this.addDragStartListener(() => this.handleDragStart());
+    this.addDragEndListener(() => this.snapToNearestPreviousNote());
+
+    this.onMove = (offsetX) => this.emitMove(offsetX);
+    this.onDragStart = () => this.emitDragStart();
+    this.onDragEnd = () => this.emitDragEnd();
   }
 
   protected override onReset(): void {
@@ -107,13 +107,9 @@ export class MovingStaffController extends MovableElement {
     this.currentNoteIndex = 0;
     this.pendingNoteIndex = null;
     this.lastAdvanceTimestamp = 0;
-    const firstNoteX = this.notes[0]?.getAbsoluteX() ?? null;
-    const anchorChanged = this.cursorAnchorX !== firstNoteX;
-    this.cursorAnchorX = firstNoteX;
-    if (anchorChanged) {
-      this.syncCursorPosition();
-    }
     this.lastRecordedOffset = this.currentOffsetX;
+    this.scrollAnchorX = this.notes[0]?.getAbsoluteX() ?? null;
+    this.emitReset();
   }
 
   destroy() {
@@ -122,15 +118,58 @@ export class MovingStaffController extends MovableElement {
     this.clearContainer(this.fixedElement);
     this.clearContainer(this.notesElement);
     this.resetControllerState({ dropStaves: true });
+    this.moveListeners.clear();
+    this.dragStartListeners.clear();
+    this.dragEndListeners.clear();
+    this.resetListeners.clear();
+  }
+
+  addMoveListener(listener: (offsetX: number) => void): () => void {
+    this.moveListeners.add(listener);
+    return () => this.moveListeners.delete(listener);
+  }
+
+  addDragStartListener(listener: () => void): () => void {
+    this.dragStartListeners.add(listener);
+    return () => this.dragStartListeners.delete(listener);
+  }
+
+  addDragEndListener(listener: () => void): () => void {
+    this.dragEndListeners.add(listener);
+    return () => this.dragEndListeners.delete(listener);
+  }
+
+  addResetListener(listener: () => void): () => void {
+    this.resetListeners.add(listener);
+    return () => this.resetListeners.delete(listener);
+  }
+
+  private emitMove(offsetX: number) {
+    for (const listener of this.moveListeners) {
+      listener(offsetX);
+    }
+  }
+
+  private emitDragStart() {
+    for (const listener of this.dragStartListeners) {
+      listener();
+    }
+  }
+
+  private emitDragEnd() {
+    for (const listener of this.dragEndListeners) {
+      listener();
+    }
+  }
+
+  private emitReset() {
+    for (const listener of this.resetListeners) {
+      listener();
+    }
   }
 
   private clearContainer(element: HTMLElement) {
     element.replaceChildren();
-  }
-
-  private removeCursorElement() {
-    this.cursorElement?.remove();
-    this.cursorElement = null;
   }
 
   private releaseActiveVisualState() {
@@ -140,7 +179,6 @@ export class MovingStaffController extends MovableElement {
       this.resetNoteColor(note);
     });
     this.clearHighlightedNoteSpan();
-    this.removeCursorElement();
   }
 
   private resetControllerState(options: { dropStaves?: boolean } = {}) {
@@ -150,8 +188,6 @@ export class MovingStaffController extends MovableElement {
       this.staves = [];
     }
     this.staveX = 0;
-    this.cursorAnchorX = null;
-    this.cursorElement = null;
     this.currentNoteIndex = 0;
     this.highlightedNoteIndex = null;
     this.scalePulseNoteIndex = null;
@@ -159,6 +195,15 @@ export class MovingStaffController extends MovableElement {
     this.showingNoteSpanFromHold = false;
     this.lastAdvanceTimestamp = 0;
     this.lastRecordedOffset = this.currentOffsetX;
+    this.scrollAnchorX = null;
+  }
+
+  private getCursorAnchor(): number | null {
+    if (this.scrollAnchorX !== null) return this.scrollAnchorX;
+    if (this.notes.length === 0) return null;
+    const anchor = this.notes[0].getAbsoluteX();
+    this.scrollAnchorX = anchor ?? null;
+    return this.scrollAnchorX;
   }
 
   private drawFixedStave() {
@@ -241,18 +286,11 @@ export class MovingStaffController extends MovableElement {
       );
       this.registerNoteInteractions(staveNotes);
 
-      if (this.staves.length == 1 && this.showCursor) {
-        this.drawCursorAt(this.notes[0].getAbsoluteX());
+      if (this.scrollAnchorX === null && this.notes.length > 0) {
+        this.scrollAnchorX = this.notes[0].getAbsoluteX();
       }
-    }
-  }
 
-  drawCursorAt(x: number) {
-    if (!this.showCursor || this.staves.length == 0) return;
-    this.cursorAnchorX = x;
-    const element = this.ensureCursorElement();
-    if (!element) return;
-    this.syncCursorPosition();
+    }
   }
 
   setNoteSpanVisible(visible: boolean) {
@@ -392,10 +430,6 @@ export class MovingStaffController extends MovableElement {
     });
   }
 
-  private getSvgContext(): SVGContext | null {
-    return this.context instanceof SVGContext ? (this.context as SVGContext) : null;
-  }
-
   private computeFixedStaveWidth(): number {
     const scratch = new Stave(this.config, 0, 0, 0, {
       leftBar: {
@@ -428,39 +462,6 @@ export class MovingStaffController extends MovableElement {
       config.get('Stave.paddingLeft') -
       config.get('Stave.style.lineWidth') * 2;
     return Number.isFinite(extra) && extra > 0 ? extra : 0;
-  }
-
-  private ensureCursorElement(): SVGGElement | null {
-    if (this.cursorElement) return this.cursorElement;
-    const svgContext = this.getSvgContext();
-    if (!svgContext) return null;
-
-    const width = this.config.get('Stem.width');
-    const height = this.context.height;
-    this.cursorElement = svgContext.openGroup('cursor');
-    svgContext.fillRect(0, 0, width, height, {
-      rx: width / 2,
-      ry: width / 2,
-      opacity: 0.8,
-      fill: '#e0e0e0',
-      'pointer-events': 'none',
-    });
-    svgContext.closeGroup();
-    return this.cursorElement;
-  }
-
-  private syncCursorPosition(offsetX: number = this.currentOffsetX) {
-    if (!this.showCursor || this.cursorAnchorX === null) return;
-    const cursor = this.ensureCursorElement();
-    if (!cursor) return;
-
-    cursor.setAttribute('transform', `translate(${this.cursorAnchorX + offsetX}, 0)`);
-  }
-
-  private getCursorAnchor(): number | null {
-    if (!this.showCursor || this.cursorAnchorX !== null) return this.cursorAnchorX;
-    if (this.notes.length === 0) return null;
-    return this.notes[0].getAbsoluteX();
   }
 
   private clearHighlightedNoteSpan() {

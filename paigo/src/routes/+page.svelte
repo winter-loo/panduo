@@ -79,9 +79,8 @@
     song={data.song}
     tempo={tempo ?? undefined}
     movable={true}
-    plugins={['debug-grid', 'trailing-staves']}
+    plugins={['debug-grid', 'trailing-staves', 'cursor']}
     onready={onStaffReady}
-    cursor
   />
 {/key}
 

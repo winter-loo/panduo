@@ -8,6 +8,7 @@
     type StaffSong,
   } from '$lib/staff/moving-staff-controller';
   import { createDebugGridPlugin, type DebugGridPluginConfig } from '$lib/staff/plugins/debug-grid';
+  import { createCursorPlugin, type CursorPluginOptions } from '$lib/staff/plugins/cursor';
   import { createTrailingStavesPlugin } from '$lib/staff/plugins/trailing-staves';
   import type {
     MovingStaffPluginInstance,
@@ -18,7 +19,6 @@
   type MovingStaffProps = {
     song: StaffSong;
     tempo?: number;
-    cursor?: boolean;
     movable?: boolean;
     plugins?: PluginSpec[];
     onready?: (data: {
@@ -31,11 +31,13 @@
   const { onready, ...props }: MovingStaffProps = $props();
 
   type DebugGridSpec = MovingStaffPluginSpec<'debug-grid', DebugGridPluginConfig>;
-  type TrailingStavesSpec = MovingStaffPluginSpec<'trailing-staves', {}>;
-  type PluginSpec = DebugGridSpec | TrailingStavesSpec | 'trailing-staves';
+  type CursorSpec = MovingStaffPluginSpec<'cursor', CursorPluginOptions>;
+  type TrailingStavesSpec = MovingStaffPluginSpec<'trailing-staves', void>;
+  type PluginSpec = DebugGridSpec | CursorSpec | TrailingStavesSpec;
 
   const BUILTIN_PLUGINS = {
     'debug-grid': createDebugGridPlugin,
+    cursor: createCursorPlugin,
     'trailing-staves': createTrailingStavesPlugin,
   } as const;
 
@@ -70,13 +72,18 @@
 
   type NormalizedPluginSpec =
     | { name: 'debug-grid'; options?: DebugGridPluginConfig }
+    | { name: 'cursor'; options?: CursorPluginOptions }
     | { name: 'trailing-staves'; options?: undefined };
 
   const normalizePluginSpec = (spec: PluginSpec): NormalizedPluginSpec => {
     if (typeof spec === 'string') {
-      return spec === 'trailing-staves'
-        ? { name: 'trailing-staves', options: undefined }
-        : { name: spec, options: undefined };
+      if (spec === 'trailing-staves') {
+        return { name: 'trailing-staves', options: undefined };
+      }
+      if (spec === 'cursor') {
+        return { name: 'cursor', options: undefined };
+      }
+      return { name: spec, options: undefined };
     }
     if (spec.name === 'trailing-staves') {
       return { name: 'trailing-staves', options: undefined };
@@ -291,7 +298,6 @@
       tempoForSong,
       runSong.timeSignature,
       runSong.keySignature,
-      props.cursor,
     );
     controller = nextController;
 
