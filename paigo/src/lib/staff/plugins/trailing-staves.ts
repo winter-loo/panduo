@@ -4,13 +4,36 @@ import {
   StaveNote,
   Voice,
   VoiceMode,
+  type RenderContext,
   type StaveNoteStruct,
 } from '$lib/vexflow/vexflow-core';
 import type { StaffSong } from '$lib/staff/moving-staff-controller';
 import type { MovingStaffPluginFactory } from './plugin-types';
 
 const CORE_NOTE: StaveNoteStruct = { keys: ['b/4'], duration: '8' };
-const EXTRA_STAVES = 5;
+const FALLBACK_TRAILING_STAVES = 5;
+
+const computeViewportWidth = (context: RenderContext | null, measureWidth: number): number => {
+  if (typeof window !== 'undefined' && Number.isFinite(window.innerWidth) && window.innerWidth > 0) {
+    return window.innerWidth;
+  }
+
+  const contextWidth = context?.width ?? 0;
+  if (Number.isFinite(contextWidth) && contextWidth > 0) {
+    return contextWidth;
+  }
+
+  return measureWidth * FALLBACK_TRAILING_STAVES;
+};
+
+const deriveTrailingStaveCount = (context: RenderContext | null, measureWidth: number): number => {
+  if (!Number.isFinite(measureWidth) || measureWidth <= 0) {
+    return FALLBACK_TRAILING_STAVES;
+  }
+
+  const viewportWidth = computeViewportWidth(context, measureWidth);
+  return Math.max(1, Math.ceil(viewportWidth / measureWidth));
+};
 
 export const createTrailingStavesPlugin: MovingStaffPluginFactory<{}, {}> = ({
   controller,
@@ -25,7 +48,9 @@ export const createTrailingStavesPlugin: MovingStaffPluginFactory<{}, {}> = ({
     if (!controller.context) return;
 
     const rightBar = config.get('Stave.rightBar');
-    for (let index = 0; index < EXTRA_STAVES; index++) {
+    const trailingStaveCount = deriveTrailingStaveCount(controller.context, layout.measureWidth);
+
+    for (let index = 0; index < trailingStaveCount; index++) {
       // traling notes have only right bar
       const trailingStave = new Stave(config, controller.staveX, 0, layout.measureWidth, { leftBar: false, rightBar });
       trailingStave.setContext(controller.context).draw();
@@ -42,6 +67,7 @@ export const createTrailingStavesPlugin: MovingStaffPluginFactory<{}, {}> = ({
       }
 
       controller.staveX += layout.measureWidth;
+      controller.renderer.resize(controller.staveX, controller.context.height);
     }
 
     alreadyDrawn = true;

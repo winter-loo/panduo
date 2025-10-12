@@ -6,7 +6,6 @@ import {
 import type { MovingStaffPluginFactory } from './plugin-types';
 
 export interface CursorPluginOptions {
-  enabled?: boolean;
   fill?: string;
   opacity?: number;
 }
@@ -25,13 +24,6 @@ export const createCursorPlugin: MovingStaffPluginFactory<CursorPluginState, Cur
   state,
   options,
 }) => {
-  const isEnabled = options?.enabled ?? true;
-  if (!isEnabled) {
-    return {
-      id: 'cursor',
-    };
-  }
-
   let cursorAnchorX: number | null = state?.anchorX ?? null;
   let cursorElement: SVGGElement | null = null;
 
@@ -83,9 +75,7 @@ export const createCursorPlugin: MovingStaffPluginFactory<CursorPluginState, Cur
   };
 
   const unsubscribeMove = controller.addMoveListener(syncCursorPosition);
-  const unsubscribeReset = controller.addResetListener(() => {
-    refreshAnchor();
-  });
+  const unsubscribeReset = controller.addResetListener(refreshAnchor);
 
   return {
     id: 'cursor',

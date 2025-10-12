@@ -233,7 +233,7 @@ export class MovingStaffController extends MovableElement {
       this.notesElement,
       VexFlow.Renderer.Backends.SVG,
     );
-    this.renderer.resize(this.layout.rendererWidth, this.layout.staveHeight);
+    this.renderer.resize(this.layout.measureWidth, this.layout.staveHeight);
     this.context = this.renderer.getContext();
     this.resetControllerState({ dropStaves: true });
   }
@@ -243,7 +243,7 @@ export class MovingStaffController extends MovableElement {
     if (this.staves.length == 0) {
       config = this.config.fork({
         Stave: {
-          paddingLeft: 32,
+          paddingLeft: timeSignature ? 32 : config.get('Stave.paddingLeft'),
         },
       });
     }
@@ -254,6 +254,8 @@ export class MovingStaffController extends MovableElement {
     const measureStave = new Stave(config, this.staveX, 0, measureWidth);
     this.staves.push(measureStave);
     this.staveX += measureWidth;
+    // resize render width so that this render can have enough space to show this stave
+    this.renderer.resize(this.staveX + config.get('Stave.rightBar.width'), this.context.height);
     if (this.staves.length == 1 && timeSignature) {
       measureStave.addTimeSignature(timeSignature);
     }
@@ -289,7 +291,6 @@ export class MovingStaffController extends MovableElement {
       if (this.scrollAnchorX === null && this.notes.length > 0) {
         this.scrollAnchorX = this.notes[0].getAbsoluteX();
       }
-
     }
   }
 
