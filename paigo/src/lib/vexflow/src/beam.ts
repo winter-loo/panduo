@@ -513,7 +513,7 @@ export class Beam extends Element {
     this._beamCount = this.getBeamCount();
     this.breakOnIndexes = [];
     this.renderOptions = {
-      beamWidth: 5,
+      beamWidth: 10,
       maxSlope: 0.25,
       minSlope: -0.25,
       slopeIterations: 20,

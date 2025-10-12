@@ -212,7 +212,7 @@ export class Stem extends Element {
     if (stemDirection === Stem.DOWN) {
       // Down stems are rendered to the left of the head.
       stemX = this.xBegin;
-      stemY = this.yTop;
+      stemY = this.yTop - this.getWidth() / 2;
       yBaseOffset = this.stemDownYBaseOffset;
     } else {
       // Up stems are rendered to the right of the head.
@@ -242,7 +242,11 @@ export class Stem extends Element {
     // ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
     //
     ctx.openGroup('stem', this.getAttribute('id'));
-    ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight);
+    ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight + this.getWidth() / 2, {
+      // use rounded corner to have a playful style
+      rx: this.getWidth() / 2,
+      ry: this.getWidth() / 2,
+    });
     ctx.closeGroup();
   }
 }
