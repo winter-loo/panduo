@@ -214,9 +214,12 @@ export class MovingStaffController extends MovableElement {
       VexFlow.Renderer.Backends.SVG,
     );
     const fixedWidth = this.computeFixedStaveWidth();
-    renderer.resize(fixedWidth, this.layout.staveHeight);
-    const fixedStave = new Stave(this.config, 0, 0, fixedWidth, {
+    // add small spaces
+    const renderWidth = fixedWidth + 4;
+    renderer.resize(renderWidth, this.layout.staveHeight);
+    const fixedStave = new Stave(this.config, 0, 0, renderWidth, {
       leftBar: this.config.get('Stave.rightBar'),
+      rightBar: false,
     });
     fixedStave.addClef('treble');
     if (this.keySignature) {
@@ -244,6 +247,7 @@ export class MovingStaffController extends MovableElement {
       config = this.config.fork({
         Stave: {
           paddingLeft: timeSignature ? 32 : config.get('Stave.paddingLeft'),
+          leftBar: false,
         },
       });
     }

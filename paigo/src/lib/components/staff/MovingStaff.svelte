@@ -213,7 +213,12 @@
           lineWidth: 4,
           strokeStyle: '#dadada',
         },
-        leftBar: false,
+        leftBar: {
+          width: 4,
+          style: {
+            fillStyle: '#dadada',
+          },
+        },
         rightBar: {
           width: 4,
           style: {
