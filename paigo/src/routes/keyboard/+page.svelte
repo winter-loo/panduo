@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { Metrics, MetricsDefaults, VexFlow } from '$lib/vexflow/vexflow-core';
+  import { Metrics, MetricsDefaults, VexFlow, VexflowConfig } from '$lib/vexflow/vexflow-core';
   import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
   import { page } from '$app/state';
   import Button from '$lib/components/ui/button/button.svelte';
@@ -10,16 +10,18 @@
   let outputContainer: HTMLDivElement;
   let currentNotes = $state<string[]>([]);
 
+  let config = VexflowConfig.create();
+
   function showNote(noteNames: string[]) {
     VexFlow.Clef.DEBUG = true;
     VexFlow.NoteHead.DEBUG = true;
     VexFlow.NoteSpan.DEBUG = true;
 
-    const renderer = new VexFlow.Renderer(outputContainer, VexFlow.Renderer.Backends.SVG);
+    const renderer = new VexFlow.Renderer(config, outputContainer, VexFlow.Renderer.Backends.SVG);
     const width = 160;
     // 200 = 20 * (3 + 4 + 3)
     renderer.resize(width, 600);
-    const stave = new VexFlow.Stave(0, 0, width, {
+    const stave = new VexFlow.Stave(config, 0, 0, width, {
       spacingBetweenLinesPx: 10,
       spaceAboveStaffLn: 17,
       spaceBelowStaffLn: 17,
@@ -31,8 +33,8 @@
 
     if (noteNames.length > 0) {
       // see note type in validNoteTypes in tables.ts
-      let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: 'q' });
-      VexFlow.Formatter.FormatAndDraw(context, stave, [staveNote]);
+      let staveNote = new VexFlow.StaveNote(config, { keys: noteNames, duration: 'q' });
+      VexFlow.Formatter.FormatAndDraw(context, stave, { notes: [staveNote] }, config);
     }
   }
 
