@@ -8,17 +8,21 @@
   let { name, octave, hideBlack = false }: PianoKeyFullname = $props();
 </script>
 
-<div class="piano-key relative" data-name={name} data-octave={octave}>
+<!--
+  use 'py-2 pl-1' to have exactly width taken visually by this piano key, i.e.,
+  to include shadow spacing
+-->
+<div class="piano-key relative py-2 pl-1" data-name={name} data-octave={octave}>
   <div
-    class="white-key z-1 ring-4 ring-[var(--border)] shadow-[0_4px_0_4px_var(--border)] w-18 h-48 bg-white
-    text-[var(--note-default)] flex justify-center items-end"
+    class="white-key z-1 flex
+    h-48 w-18 items-end justify-center bg-white text-[var(--note-default)] shadow-[0_0_0_var(--spacing)_var(--border),0_var(--spacing)_0_var(--spacing)_var(--border)]"
   >
     {name + octave.toString()}
   </div>
   {#if name != 'E' && name != 'B' && !hideBlack}
     <div
-      class="black-key z-2 shadow-[0_8px_0_black] absolute -top-2 left-11 w-13 h-24
-      bg-[var(--note-default)] text-white flex justify-center items-end"
+      class="black-key absolute -top-2 left-11 z-2 flex h-24 w-13
+      items-end justify-center bg-[var(--note-default)] text-white shadow-[0_calc(var(--spacing)*2)_0_black]"
     >
       {name + '#' + octave.toString()}
     </div>
