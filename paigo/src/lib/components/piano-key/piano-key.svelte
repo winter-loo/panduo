@@ -13,18 +13,28 @@
   to include shadow spacing
 -->
 <div class="piano-key relative py-2 pl-1" data-name={name} data-octave={octave}>
-  <div
-    class="white-key z-1 flex
-    h-48 w-18 items-end justify-center bg-white text-[var(--note-default)] shadow-[0_0_0_var(--spacing)_var(--border),0_var(--spacing)_0_var(--spacing)_var(--border)]"
+  <button
+    class="white-key ease z-1
+    flex h-48 w-18 items-end justify-center bg-white text-[var(--note-default)]
+    shadow-[0_0_0_var(--spacing)_var(--border),0_var(--spacing)_0_var(--spacing)_var(--border)]
+    transition-all
+    duration-200
+    hover:bg-[var(--key-hover)]
+    active:translate-y-1
+    active:bg-[var(--key-active)]"
   >
     {name + octave.toString()}
-  </div>
+  </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
-    <div
-      class="black-key absolute -top-2 left-11 z-2 flex h-24 w-13
-      items-end justify-center bg-[var(--note-default)] text-white shadow-[0_calc(var(--spacing)*2)_0_black]"
+    <button
+      class="black-key ease absolute top-0 left-11 z-2 flex h-24
+      w-13 items-end justify-center bg-[var(--note-default-500)]
+      text-white
+      shadow-[0_calc(var(--spacing)*2)_0_var(--note-default-100)] transition-all
+      duration-200 hover:bg-[var(--note-default-300)] active:top-1
+      active:bg-[var(--note-default-100)] active:shadow-[0_var(--spacing)_0_var(--note-default-100)]"
     >
       {name + '#' + octave.toString()}
-    </div>
+    </button>
   {/if}
 </div>

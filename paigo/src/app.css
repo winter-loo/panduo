@@ -38,6 +38,13 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
   --note-default: #4b4b4b;
+  --note-default-100: #2B2B2B;
+  --note-default-300: #404040;
+  --note-default-500: #4b4b4b;
+  --note-default-700: #545454;
+  --note-default-900: #696969;
+  --key-hover: #f5f5f5;
+  --key-active: #ebebeb;
   --note-c: #ce82ff;
   --note-d: #ff9600;
   --note-e: #58cc02;

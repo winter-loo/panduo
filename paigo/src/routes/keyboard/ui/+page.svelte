@@ -31,7 +31,7 @@
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
 
-<div class="fixed bottom-0 w-screen overflow-hidden">
+<div class="fixed bottom-1 w-screen overflow-hidden">
   <div
     class="relative flex w-full items-end justify-around transition-transform duration-100 ease-out"
     style:transform="translateX({offsetX}px)"
