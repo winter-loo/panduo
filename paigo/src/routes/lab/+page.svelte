@@ -13,4 +13,5 @@
   <Button variant="link" href={`${PagePath}/navbar`}>navbar</Button>
   <Button variant="link" href={`${PagePath}/abcjs`}>abcjs</Button>
   <Button variant="link" href={`${PagePath}/bits-ui`}>bits ui</Button>
+  <Button variant="link" href={`${PagePath}/motion`}>framer motion</Button>
 </nav>
