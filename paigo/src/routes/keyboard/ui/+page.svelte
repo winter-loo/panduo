@@ -27,9 +27,20 @@
       offsetX = Math.min(0, windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2);
     }
   });
+
+  function onnoteon(name: string, octave: number) {
+    console.log(`key ${name}${octave} pressed`);
+  }
+  function onnoteoff(name: string, octave: number) {
+    console.log(`key ${name}${octave} released`);
+  }
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
+
+{#snippet pianokey(name: PianoKeyName, octave: number, last: boolean)}
+  <PianoKey {name} {octave} hideBlack={last} {onnoteon} {onnoteoff}></PianoKey>
+{/snippet}
 
 <div class="fixed bottom-0 w-screen overflow-hidden">
   <div
@@ -39,10 +50,10 @@
     {#each pianoKeys as { name, octave }, index}
       {#if `${name}${octave}` == middleKeyName}
         <div bind:this={middleKey} data-middle-key>
-          <PianoKey {name} {octave} hideBlack={index + 1 == numPianoKeys}></PianoKey>
+          {@render pianokey(name, octave, index + 1 == numPianoKeys)}
         </div>
       {:else}
-        <PianoKey {name} {octave} hideBlack={index + 1 == numPianoKeys}></PianoKey>
+        {@render pianokey(name, octave, index + 1 == numPianoKeys)}
       {/if}
     {/each}
   </div>
