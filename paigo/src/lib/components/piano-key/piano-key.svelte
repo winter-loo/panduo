@@ -1,109 +1,100 @@
 <script lang="ts">
   export type PianoKeyName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
-  export type PianoKeyFullname = {
+  export type PianoKeyFullName = { name: string; octave: number };
+  export type PianoKeyProps = {
     name: PianoKeyName;
     octave: number;
     hideBlack?: boolean;
-    onnoteon?: (name: string, octave: number) => void;
-    onnoteoff?: (name: string, octave: number) => void;
+    onnoteon?: (name: PianoKeyFullName) => void;
+    onnoteoff?: (name: PianoKeyFullName) => void;
+    pluginOnWhite?: import('svelte').Snippet<[PianoKeyFullName]>;
+    pluginOnBlack?: import('svelte').Snippet<[PianoKeyFullName]>;
   };
-  let { name, octave, hideBlack = false, onnoteon, onnoteoff }: PianoKeyFullname = $props();
-
-  const RELEASE_DELAY_MS = 60;
-
-  let whitePressed = $state(false);
-  let whiteReleaseTimer: ReturnType<typeof setTimeout> | null = null;
-
-  let blackPressed = $state(false);
-  let blackReleaseTimer: ReturnType<typeof setTimeout> | null = null;
+  let {
+    name,
+    octave,
+    hideBlack = false,
+    onnoteon,
+    onnoteoff,
+    pluginOnWhite,
+    pluginOnBlack,
+  }: PianoKeyProps = $props();
 
   function startWhitePress(name: string, octave: number, event?: PointerEvent) {
-    if (whiteReleaseTimer) {
-      clearTimeout(whiteReleaseTimer);
-      whiteReleaseTimer = null;
-    }
-    if (event) {
-      (event.currentTarget as HTMLButtonElement | null)?.setPointerCapture?.(event.pointerId);
-    }
-    whitePressed = true;
-    onnoteon?.(name, octave);
+    onnoteon?.({ name, octave });
   }
 
   function endWhitePress(name: PianoKeyName, octave: number) {
-    if (whiteReleaseTimer) {
-      clearTimeout(whiteReleaseTimer);
-      whiteReleaseTimer = null;
-    }
-    whiteReleaseTimer = setTimeout(() => {
-      whitePressed = false;
-      whiteReleaseTimer = null;
-      onnoteoff?.(name, octave);
-    }, RELEASE_DELAY_MS);
+    onnoteoff?.({ name, octave });
   }
 
   function startBlackPress(name: string, octave: number, event?: PointerEvent) {
-    if (blackReleaseTimer) {
-      clearTimeout(blackReleaseTimer);
-      blackReleaseTimer = null;
-    }
-    if (event) {
-      (event.currentTarget as HTMLButtonElement | null)?.setPointerCapture?.(event.pointerId);
-    }
-    blackPressed = true;
-    onnoteon?.(name, octave);
+    onnoteon?.({ name, octave });
   }
 
   function endBlackPress(name: string, octave: number) {
-    if (blackReleaseTimer) {
-      clearTimeout(blackReleaseTimer);
-      blackReleaseTimer = null;
-    }
-    blackReleaseTimer = setTimeout(() => {
-      blackPressed = false;
-      blackReleaseTimer = null;
-      onnoteoff?.(name, octave);
-    }, RELEASE_DELAY_MS);
+    onnoteoff?.({ name, octave });
   }
 </script>
 
 <!--
-  use 'py-2 pl-1' to have exactly width taken visually by this piano key, i.e.,
-  to include shadow spacing
+  * use 'my-2 ml-1 last:mr-1' to have exactly width taken visually by this piano key, i.e.,
+    to include shadow spacing
+  * keep 'h-48' to decouple the black key from the white key's active height change
+  * implementation notes: use shadown and inset shadow and height transition to create a
+    slide up/down effect on click.
+    Pros:
+      - easy to handle spacing bewteen piano keys
+      - non clickable on the left and right shadows
+    Cons:
+      - inset shadow is clickable
+      - need set `translate-y-0` on an inner child
 -->
-<div class="piano-key relative py-2 pl-1" data-name={name} data-octave={octave}>
+<div
+  class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-48 items-end last:mr-1"
+  data-name={name}
+  data-octave={octave}
+>
   <!-- lesson leart: on active, do not remove the second shadow even it has the same value as the first one. -->
   <!-- Instead, change only what should be changed -->
   <button
-    class={`white-key ease z-1
-    flex h-48 w-18 items-end justify-center rounded-sm bg-white
-    text-[var(--note-default)]
-    shadow-[0_0_0_var(--spacing)_var(--border),0_var(--spacing)_0_var(--spacing)_var(--border)]
+    class={`white-key group z-1 flex
+    h-48 w-18 items-end justify-center rounded-sm
+    bg-white text-[var(--note-default)] shadow-[0_0_0_var(--spacing)_var(--border),inset_0_calc(var(--spacing)*-1)_0_0_var(--border)]
     transition-all
     duration-200
+    ease-out
     hover:bg-[var(--key-hover)]
-    active:translate-y-1
+    active:h-47
     active:bg-[var(--key-active)]
-    active:shadow-[0_0_0_var(--spacing)_var(--border),0_0_0_var(--spacing)_var(--border)]
-    ${whitePressed ? 'translate-y-1 bg-[var(--key-active)] shadow-[0_0_0_var(--spacing)_var(--border),0_0_0_var(--spacing)_var(--border)]' : ''}`}
+    active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]`}
     onpointerdown={(e) => startWhitePress(name, octave, e)}
     onpointerup={() => endWhitePress(name, octave)}
   >
-    {name + octave.toString()}
+    <div
+      class="plugin transition-translate -translate-y-1 duration-200 ease-out group-active:translate-y-0"
+    >
+      {@render pluginOnWhite?.({ name, octave })}
+    </div>
   </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
     <button
-      class={`black-key ease absolute top-0 left-11 z-2 flex h-24
-      w-13 items-end justify-center rounded-sm
-      bg-[var(--note-default-500)]
+      class={`black-key group absolute -top-2 left-11 z-2 flex h-24 w-13
+      items-end justify-center rounded-sm bg-[var(--note-default-500)]
       text-white
-      shadow-[0_calc(var(--spacing)*2)_0_var(--note-default-100)] transition-all
-      duration-200 hover:bg-[var(--note-default-300)] active:top-1
-      active:bg-[var(--note-default-100)] active:shadow-[0_var(--spacing)_0_var(--note-default-100)]
-      ${blackPressed ? 'top-1 bg-[var(--note-default-100)] shadow-[0_var(--spacing)_0_var(--note-default-100)]' : ''}`}
+      shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-default-100)]
+      transition-all duration-200
+      ease-out hover:bg-[var(--note-default-300)] active:-top-1
+      active:bg-[var(--note-default-100)]
+      active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-default-100)]`}
       onpointerdown={(e) => startBlackPress(name + '#', octave, e)}
       onpointerup={() => endBlackPress(name + '#', octave)}
     >
-      {name + '#' + octave.toString()}
+      <div
+        class="plugin transition-translate -translate-y-2 duration-200 ease-out group-active:translate-y-0"
+      >
+        {@render pluginOnBlack?.({ name: name + '#', octave })}
+      </div>
     </button>
   {/if}
 </div>

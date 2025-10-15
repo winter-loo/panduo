@@ -6,6 +6,8 @@ import {
   unstable_definePlugin,
   touchAction,
   events,
+  controls,
+  ControlFrom,
 } from '@neodrag/svelte';
 import type { Attachment } from 'svelte/attachments';
 
@@ -63,18 +65,26 @@ export class MovableElement {
     this.clampPlugin = clampX();
   }
 
-  draggable = (): Attachment<HTMLElement> => {
+  draggable = (cs?: string): Attachment<HTMLElement> => {
     // Compose with neodrag's events plugin to surface drag start/end.
-    return draggable(() => [
-      axis('x'),
-      this.clampPlugin,
-      touchAction('pan-y'),
-      events({
-        onDragStart: () => this.onDragStart?.(),
-        onDragEnd: () => this.onDragEnd?.(),
-      }),
-      this.currentPosComp,
-    ]);
+    return draggable(() => {
+      let plugins = [
+        axis('x'),
+        this.clampPlugin,
+        touchAction('pan-y'),
+        events({
+          onDragStart: () => this.onDragStart?.(),
+          onDragEnd: () => this.onDragEnd?.(),
+        }),
+        this.currentPosComp,
+      ];
+      if (cs) {
+        plugins.push(controls({
+          allow: ControlFrom.selector(cs)
+        }));
+      }
+      return plugins;
+    });
   };
 
   move = () => {
@@ -158,9 +168,9 @@ export class MovableElement {
     const { useEasing, onComplete } =
       typeof useEasingOrOptions === 'object'
         ? {
-            useEasing: useEasingOrOptions.useEasing ?? true,
-            onComplete: useEasingOrOptions.onComplete,
-          }
+          useEasing: useEasingOrOptions.useEasing ?? true,
+          onComplete: useEasingOrOptions.onComplete,
+        }
         : { useEasing: useEasingOrOptions, onComplete: undefined };
 
     if (Math.abs(delta) < 0.5) {
