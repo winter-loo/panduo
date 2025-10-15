@@ -13,10 +13,12 @@
   let middleKey = $state<HTMLElement | null>(null);
   let windowWidth = $state(960);
   let offsetX = $state(-144);
+  let keyboardWidth = $state(960);
 
   let selectedOctave = $state('4');
   let selectedName = $state('C');
   let middleKeyName = $derived(selectedName + selectedOctave);
+  let movable = $derived(new MovableElement(keyboardWidth - windowWidth));
 
   let pianoKeys: PianoKeyProps[] = [];
   let octave = 0;
@@ -34,6 +36,7 @@
       const middleKeyOffsetLeft = middleKey.offsetLeft;
       const middleKeyWidth = middleKey.offsetWidth;
       offsetX = Math.min(0, windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2);
+      movable.moveTo(-offsetX);
     }
   });
 
@@ -43,8 +46,6 @@
   function onnoteoff({ name, octave }: PianoKeyFullName) {
     console.log(`key ${name}${octave} released`);
   }
-
-  let movable = $derived(new MovableElement(windowWidth / 2));
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
@@ -123,13 +124,16 @@
 <div id="piano-keyboard" class="fixed bottom-0 w-screen overflow-hidden">
   <div
     class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
-    style:transform="translateX({offsetX}px)"
     {@attach movable.draggable('.handle')}
   >
-    <div class="handle absolute top-0 left-0 h-4 w-full cursor-move bg-white"></div>
+    <div
+      class="handle absolute top-0 left-0 h-2 w-full cursor-move bg-white"
+      bind:clientWidth={keyboardWidth}
+    ></div>
     {#each pianoKeys as { name, octave }, index}
       {#if `${name}${octave}` == middleKeyName}
-        <div bind:this={middleKey} data-middle-key>
+        <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
+        <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
           {@render pianokey(name, octave, index + 1 == numPianoKeys)}
         </div>
       {:else}

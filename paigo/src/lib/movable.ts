@@ -157,6 +157,7 @@ export class MovableElement {
   };
 
   // Animate to a target offset (absolute, 0..maxOffsetX)
+  // targetOffsetX should be >= 0 and it means move leftward ${targetOffsetX} px.
   moveTo = (
     targetOffsetX: number,
     durationMs = 220,
