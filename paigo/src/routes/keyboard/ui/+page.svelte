@@ -18,7 +18,7 @@
   let selectedOctave = $state('4');
   let selectedName = $state('C');
   let middleKeyName = $derived(selectedName + selectedOctave);
-  let movable = $derived(new MovableElement(keyboardWidth - windowWidth));
+  const movable = new MovableElement(0);
 
   let pianoKeys: PianoKeyProps[] = [];
   let octave = 0;
@@ -32,11 +32,27 @@
   }
 
   $effect(() => {
+    const maxOffset = Math.max(0, keyboardWidth - windowWidth);
+    movable.maxOffsetX = maxOffset;
+    if (movable.currentOffsetX > maxOffset) {
+      movable.moveTo(maxOffset, 0, false);
+    }
+  });
+
+  $effect(() => {
     if (middleKey) {
       const middleKeyOffsetLeft = middleKey.offsetLeft;
       const middleKeyWidth = middleKey.offsetWidth;
-      offsetX = Math.min(0, windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2);
-      movable.moveTo(-offsetX);
+      // compute how far we need to shift the rail so the chosen key sits at the viewport center:
+      // (windowWidth / 2) gives the viewport midpoint, subtracting the key's midpoint gives
+      // a signed offset; negative means slide the keyboard left. We then clamp that offset
+      // into [-movable.maxOffsetX, 0] so we never go past either rail limit.
+      const computedOffset =
+        windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
+      const minOffset = -movable.maxOffsetX;
+      const clampedOffset = Math.max(minOffset, Math.min(0, computedOffset));
+      offsetX = clampedOffset;
+      movable.moveTo(-clampedOffset);
     }
   });
 
