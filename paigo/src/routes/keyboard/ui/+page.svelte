@@ -47,8 +47,7 @@
       // (windowWidth / 2) gives the viewport midpoint, subtracting the key's midpoint gives
       // a signed offset; negative means slide the keyboard left. We then clamp that offset
       // into [-movable.maxOffsetX, 0] so we never go past either rail limit.
-      const computedOffset =
-        windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
+      const computedOffset = windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
       const minOffset = -movable.maxOffsetX;
       const clampedOffset = Math.max(minOffset, Math.min(0, computedOffset));
       offsetX = clampedOffset;
@@ -62,6 +61,44 @@
   function onnoteoff({ name, octave }: PianoKeyFullName) {
     console.log(`key ${name}${octave} released`);
   }
+
+  const pianoKeyHighlights: Record<string, { bg: string; border: string; text: string }> = {
+    C: {
+      text: 'text-[var(--note-c-100)]',
+      bg: 'bg-[var(--note-c-700)]',
+      border: 'border-[var(--note-c-900)]/30',
+    },
+    D: {
+      text: 'text-[var(--note-d-500)]',
+      bg: 'bg-[var(--note-d)]',
+      border: 'border-[var(--note-d-300)]',
+    },
+    E: {
+      text: 'text-[var(--note-e-500)]',
+      bg: 'bg-[var(--note-e)]',
+      border: 'border-[var(--note-e-300)]',
+    },
+    F: {
+      text: 'text-[var(--note-f)]',
+      bg: 'bg-[var(--note-f-500)]',
+      border: 'border-[var(--note-f-300)]',
+    },
+    G: {
+      text: 'text-[var(--note-g)]',
+      bg: 'bg-[var(--note-g-500)]',
+      border: 'border-[var(--note-g-300)]',
+    },
+    A: {
+      text: 'text-[var(--note-a)]',
+      bg: 'bg-[var(--note-a-500)]',
+      border: 'border-[var(--note-a-300)]',
+    },
+    B: {
+      text: 'text-[var(--note-b)]',
+      bg: 'bg-[var(--note-b-500)]',
+      border: 'border-[var(--note-b-300)]',
+    },
+  };
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
@@ -124,12 +161,23 @@
   </div>
 </div>
 
+{#snippet pianoKeyPlugin({ name, octave }: PianoKeyFullName)}
+  <div
+    class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
+  >
+    <span
+      class={`flex h-6 w-6 items-center justify-center text-sm font-bold ${pianoKeyHighlights[name[0]].text}`}
+      >{name}</span
+    >
+  </div>
+{/snippet}
+
 {#snippet pluginOnWhite({ name, octave }: PianoKeyFullName)}
-  <span class="text-sm">{name + octave.toString()}</span>
+  {@render pianoKeyPlugin({ name, octave })}
 {/snippet}
 
 {#snippet pluginOnBlack({ name, octave }: PianoKeyFullName)}
-  <span class="text-sm">{name + octave.toString()}</span>
+  {@render pianoKeyPlugin({ name, octave })}
 {/snippet}
 
 {#snippet pianokey(name: PianoKeyName, octave: number, last: boolean)}

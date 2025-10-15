@@ -46,12 +46,47 @@
   --key-hover: #f5f5f5;
   --key-active: #ebebeb;
   --note-c: #ce82ff;
+  --note-c-100: #f2f2f3;
+  --note-c-300: #EBCCFF;
+  --note-c-500: #C99BE6;
+  --note-c-700: #9D0AFF;
+  --note-c-900: #343036;
   --note-d: #ff9600;
+  --note-d-100: #FFF7EB;
+  --note-d-300: #FFDDAD;
+  --note-d-500: #FFBB5C;
+  --note-d-700: #A35F00;
+  --note-d-900: #140C00;
   --note-e: #58cc02;
+  --note-e-100: #F3FFEB;
+  --note-e-300: #C5FE9A;
+  --note-e-500: #A3FD5D;
+  --note-e-700: #2C6501;
+  --note-e-900: #091400;
   --note-f: #cc348d;
+  --note-f-100: #FBEFF6;
+  --note-f-300: #EBADD1;
+  --note-f-500: #DE7CB6;
+  --note-f-700: #83215A;
+  --note-f-900: #10040B;
   --note-g: #708fff;
+  --note-g-100: #EBEFFF;
+  --note-g-300: #ADBFFF;
+  --note-g-500: #99AFFF;
+  --note-g-700: #335FFF;
+  --note-g-900: #000414;
   --note-a: #ff86d0;
+  --note-a-100: #FFEBF7;
+  --note-a-300: #FFADE0;
+  --note-a-500: #FF5CC0;
+  --note-a-700: #B80071;
+  --note-a-900: #14000D;
   --note-b: #00ce9f;
+  --note-b-100: #EBFFFA;
+  --note-b-300: #85FFE2;
+  --note-b-500: #1FFFCB;
+  --note-b-700: #007A5E;
+  --note-b-900: #001410;
 }
 
 :root :where(.vf-stavenote) {
@@ -136,6 +171,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
