@@ -1,39 +1,30 @@
 <script lang="ts">
   export type PianoKeyName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
-  export type PianoKeyFullName = { name: string; octave: number };
+  export type PianoKeyFullName = { name: string; octave: number; sharp: boolean };
   export type PianoKeyProps = {
     name: PianoKeyName;
     octave: number;
     hideBlack?: boolean;
     onnoteon?: (name: PianoKeyFullName) => void;
     onnoteoff?: (name: PianoKeyFullName) => void;
-    pluginOnWhite?: import('svelte').Snippet<[PianoKeyFullName]>;
-    pluginOnBlack?: import('svelte').Snippet<[PianoKeyFullName]>;
+    plugin?: import('svelte').Snippet<[PianoKeyFullName]>;
   };
-  let {
-    name,
-    octave,
-    hideBlack = false,
-    onnoteon,
-    onnoteoff,
-    pluginOnWhite,
-    pluginOnBlack,
-  }: PianoKeyProps = $props();
+  let { name, octave, hideBlack = false, onnoteon, onnoteoff, plugin }: PianoKeyProps = $props();
 
-  function startWhitePress(name: string, octave: number, event?: PointerEvent) {
-    onnoteon?.({ name, octave });
+  function startWhitePress(name: PianoKeyFullName) {
+    onnoteon?.(name);
   }
 
-  function endWhitePress(name: PianoKeyName, octave: number) {
-    onnoteoff?.({ name, octave });
+  function endWhitePress(name: PianoKeyFullName) {
+    onnoteoff?.(name);
   }
 
-  function startBlackPress(name: string, octave: number, event?: PointerEvent) {
-    onnoteon?.({ name, octave });
+  function startBlackPress(name: PianoKeyFullName) {
+    onnoteon?.(name);
   }
 
-  function endBlackPress(name: string, octave: number) {
-    onnoteoff?.({ name, octave });
+  function endBlackPress(name: PianoKeyFullName) {
+    onnoteoff?.(name);
   }
 </script>
 
@@ -60,40 +51,40 @@
   <button
     class={`white-key group z-1 flex
     h-48 w-18 items-end justify-center rounded-sm
-    bg-white text-[var(--note-default)] shadow-[0_0_0_var(--spacing)_var(--border),inset_0_calc(var(--spacing)*-1)_0_0_var(--border)]
+    bg-white text-[var(--note-black)] shadow-[0_0_0_var(--spacing)_var(--border),inset_0_calc(var(--spacing)*-1)_0_0_var(--border)]
     transition-all
     duration-200
     ease-out
-    hover:bg-[var(--key-hover)]
+    hover:bg-[var(--note-black-100)]/50
     active:h-47
-    active:bg-[var(--key-active)]
+    active:bg-[var(--note-black-100)]/80
     active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]`}
-    onpointerdown={(e) => startWhitePress(name, octave, e)}
-    onpointerup={() => endWhitePress(name, octave)}
+    onpointerdown={() => startWhitePress({ name, octave, sharp: false })}
+    onpointerup={() => endWhitePress({ name, octave, sharp: false })}
   >
     <div
       class="plugin transition-translate -translate-y-1 duration-200 ease-out group-active:translate-y-0"
     >
-      {@render pluginOnWhite?.({ name, octave })}
+      {@render plugin?.({ name, octave, sharp: false })}
     </div>
   </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
     <button
       class={`black-key group absolute -top-2 left-11 z-2 flex h-24 w-13
-      items-end justify-center rounded-sm bg-[var(--note-default-500)]
+      items-end justify-center rounded-sm bg-[var(--note-black)]
       text-white
-      shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-default-100)]
+      shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-black-900)]
       transition-all duration-200
-      ease-out hover:bg-[var(--note-default-300)] active:-top-1
-      active:bg-[var(--note-default-100)]
-      active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-default-100)]`}
-      onpointerdown={(e) => startBlackPress(name + '#', octave, e)}
-      onpointerup={() => endBlackPress(name + '#', octave)}
+      ease-out hover:bg-[var(--note-black-600)] active:-top-1
+      active:bg-[var(--note-black-700)]
+      active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]`}
+      onpointerdown={() => startBlackPress({ name, octave, sharp: true })}
+      onpointerup={() => endBlackPress({ name, octave, sharp: true })}
     >
       <div
         class="plugin transition-translate -translate-y-2 duration-200 ease-out group-active:translate-y-0"
       >
-        {@render pluginOnBlack?.({ name: name + '#', octave })}
+        {@render plugin?.({ name, octave, sharp: true })}
       </div>
     </button>
   {/if}

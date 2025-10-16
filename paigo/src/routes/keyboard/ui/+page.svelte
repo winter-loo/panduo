@@ -62,41 +62,97 @@
     console.log(`key ${name}${octave} released`);
   }
 
-  const pianoKeyHighlights: Record<string, { bg: string; border: string; text: string }> = {
+  type PluginStyle = { bg: string; border: string; text: string };
+
+  type PluginKeyStyle = {
+    black: PluginStyle;
+    white: PluginStyle;
+  };
+
+  const pianoKeyHighlights: Record<string, PluginKeyStyle> = {
     C: {
-      text: 'text-[var(--note-c-100)]',
-      bg: 'bg-[var(--note-c-700)]',
-      border: 'border-[var(--note-c-900)]/30',
+      black: {
+        text: 'text-[var(--note-c-300)]',
+        bg: 'bg-[var(--note-c-500)]/40',
+        border: 'bg-[var(--note-c-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-c)]',
+        bg: 'bg-[var(--note-c-500)]/40',
+        border: 'bg-[var(--note-c-500)]/30',
+      },
     },
     D: {
-      text: 'text-[var(--note-d-500)]',
-      bg: 'bg-[var(--note-d)]',
-      border: 'border-[var(--note-d-300)]',
+      black: {
+        text: 'text-[var(--note-d-300)]',
+        bg: 'bg-[var(--note-d-500)]/40',
+        border: 'bg-[var(--note-d-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-d)]',
+        bg: 'bg-[var(--note-d-500)]/40',
+        border: 'bg-[var(--note-d-500)]/30',
+      },
     },
     E: {
-      text: 'text-[var(--note-e-500)]',
-      bg: 'bg-[var(--note-e)]',
-      border: 'border-[var(--note-e-300)]',
+      black: {
+        text: 'text-[var(--note-e-300)]',
+        bg: 'bg-[var(--note-e-500)]/40',
+        border: 'bg-[var(--note-e-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-e)]',
+        bg: 'bg-[var(--note-e-500)]/40',
+        border: 'bg-[var(--note-e-500)]/30',
+      },
     },
     F: {
-      text: 'text-[var(--note-f)]',
-      bg: 'bg-[var(--note-f-500)]',
-      border: 'border-[var(--note-f-300)]',
+      black: {
+        text: 'text-[var(--note-f-300)]',
+        bg: 'bg-[var(--note-f-500)]/40',
+        border: 'bg-[var(--note-f-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-f)]',
+        bg: 'bg-[var(--note-f-500)]/40',
+        border: 'bg-[var(--note-f-500)]/30',
+      },
     },
     G: {
-      text: 'text-[var(--note-g)]',
-      bg: 'bg-[var(--note-g-500)]',
-      border: 'border-[var(--note-g-300)]',
+      black: {
+        text: 'text-[var(--note-g-300)]',
+        bg: 'bg-[var(--note-g-500)]/40',
+        border: 'bg-[var(--note-g-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-g)]',
+        bg: 'bg-[var(--note-g-500)]/40',
+        border: 'bg-[var(--note-g-500)]/30',
+      },
     },
     A: {
-      text: 'text-[var(--note-a)]',
-      bg: 'bg-[var(--note-a-500)]',
-      border: 'border-[var(--note-a-300)]',
+      black: {
+        text: 'text-[var(--note-a-300)]',
+        bg: 'bg-[var(--note-a-500)]/40',
+        border: 'bg-[var(--note-a-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-a)]',
+        bg: 'bg-[var(--note-a-500)]/40',
+        border: 'bg-[var(--note-a-500)]/30',
+      },
     },
     B: {
-      text: 'text-[var(--note-b)]',
-      bg: 'bg-[var(--note-b-500)]',
-      border: 'border-[var(--note-b-300)]',
+      black: {
+        text: 'text-[var(--note-b-300)]',
+        bg: 'bg-[var(--note-b-500)]/40',
+        border: 'bg-[var(--note-b-500)]/30',
+      },
+      white: {
+        text: 'text-[var(--note-b)]',
+        bg: 'bg-[var(--note-b-500)]/40',
+        border: 'bg-[var(--note-b-500)]/30',
+      },
     },
   };
 </script>
@@ -155,40 +211,44 @@
 
 <div class="m-10 flex hidden w-400 items-center justify-center">
   <div class="inline-flex">
-    <PianoKey name="E" octave={4} {pluginOnWhite} {pluginOnBlack}></PianoKey>
-    <PianoKey name="F" octave={4} {pluginOnWhite} {pluginOnBlack}></PianoKey>
-    <PianoKey name="E" octave={4} {pluginOnWhite} {pluginOnBlack}></PianoKey>
+    <PianoKey name="E" octave={4} plugin={pianoKeyPlugin}></PianoKey>
+    <PianoKey name="F" octave={4} plugin={pianoKeyPlugin}></PianoKey>
+    <PianoKey name="E" octave={4} plugin={pianoKeyPlugin}></PianoKey>
   </div>
 </div>
 
-{#snippet pianoKeyPlugin({ name, octave }: PianoKeyFullName)}
-  <div>
-    <!-- Outer circle -->
-    <div
-      class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
-    ></div>
-    <!-- Inner circle -->
-    <div
-      class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
-    ></div>
-    <span
-      class={`flex items-center justify-center text-sm font-extrabold ${pianoKeyHighlights[name[0]].text}`}
-      >{name}</span
-    >
-  </div>
+{#snippet pianoKeyPlugin({ name, octave, sharp }: PianoKeyFullName)}
+  {#if sharp}
+    <div class="relative flex h-10 w-10 items-center justify-center">
+      <div
+        class={`absolute inset-0 flex rounded-full ${pianoKeyHighlights[name[0]].black.border}`}
+      ></div>
+      <div
+        class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].black.bg}`}
+      ></div>
+      <span
+        class={`isolate flex items-center justify-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].black.text}`}
+        >{name + '#'}</span
+      >
+    </div>
+  {:else}
+    <div class="relative flex h-12 w-12 items-center justify-center">
+      <div
+        class={`absolute inset-0 flex rounded-full ${pianoKeyHighlights[name[0]].white.border}`}
+      ></div>
+      <div
+        class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].white.bg}`}
+      ></div>
+      <span
+        class={`isolate  flex items-center justify-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
+        >{name}</span
+      >
+    </div>
+  {/if}
 {/snippet}
 
-{#snippet pluginOnWhite({ name, octave }: PianoKeyFullName)}
-  {@render pianoKeyPlugin({ name, octave })}
-{/snippet}
-
-{#snippet pluginOnBlack({ name, octave }: PianoKeyFullName)}
-  {@render pianoKeyPlugin({ name, octave })}
-{/snippet}
-
-{#snippet pianokey(name: PianoKeyName, octave: number, last: boolean)}
-  <PianoKey {name} {octave} hideBlack={last} {onnoteon} {onnoteoff} {pluginOnWhite} {pluginOnBlack}
-  ></PianoKey>
+{#snippet pianokey(name: PianoKeyName, octave: number, hideBlack: boolean)}
+  <PianoKey {name} {octave} {hideBlack} {onnoteon} {onnoteoff} plugin={pianoKeyPlugin}></PianoKey>
 {/snippet}
 
 <div id="piano-keyboard" class="fixed bottom-0 w-screen overflow-hidden">
@@ -204,10 +264,10 @@
       {#if `${name}${octave}` == middleKeyName}
         <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
         <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
-          {@render pianokey(name, octave, index + 1 == numPianoKeys)}
+          {@render pianokey(name, octave, index + 1 == pianoKeys.length)}
         </div>
       {:else}
-        {@render pianokey(name, octave, index + 1 == numPianoKeys)}
+        {@render pianokey(name, octave, index + 1 == pianoKeys.length)}
       {/if}
     {/each}
   </div>
