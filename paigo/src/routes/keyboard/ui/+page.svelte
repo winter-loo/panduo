@@ -160,7 +160,7 @@
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
 
 <div class="p-2">
-  <span class="text-[var(--note-default-900)]">Middle Key</span>
+  <span class="text-[var(--note-e-900)]">Middle Key</span>
   <Select.Root type="single" bind:value={selectedName}>
     <Select.Trigger>
       <span class="w-4 truncate px-2 py-2 text-start outline">
@@ -172,8 +172,8 @@
         <Select.Viewport>
           {#each ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as name}
             <Select.Item
-              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--key-hover)] px-2 text-sm capitalize
-               outline-hidden select-none data-highlighted:bg-[var(--key-active)]"
+              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--note-e-200)] px-2 text-sm capitalize
+               outline-hidden select-none data-highlighted:bg-[var(--note-e-400)]"
               value={name}
               label={name}
             >
@@ -195,8 +195,8 @@
         <Select.Viewport>
           {#each Array.from({ length: 8 }) as _, index}
             <Select.Item
-              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--key-hover)] px-2 text-sm capitalize
-              outline-hidden select-none data-highlighted:bg-[var(--key-active)]"
+              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--note-e-200)] px-2 text-sm capitalize
+              outline-hidden select-none data-highlighted:bg-[var(--note-e-400)]"
               value={(index + 1).toString()}
               label={(index + 1).toString()}
             >
@@ -225,8 +225,8 @@
   {@const label = sharp ? `${name}#` : name}
 
   <div class={`relative flex ${containerSize} items-center justify-center`}>
-    <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div>
-    <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div>
+    <!-- <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div> -->
+    <!-- <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div> -->
     <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span>
   </div>
 {/snippet}
@@ -235,13 +235,13 @@
   <PianoKey {name} {octave} {hideBlack} {onnoteon} {onnoteoff} plugin={pianoKeyPlugin}></PianoKey>
 {/snippet}
 
-<div id="piano-keyboard" class="fixed bottom-0 w-screen overflow-hidden">
+<div id="piano-keyboard" class="overflow-hidden] fixed bottom-0 w-screen">
   <div
     class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
     {@attach movable.draggable('.handle')}
   >
     <div
-      class="handle absolute top-0 left-0 h-2 w-full cursor-move bg-white"
+      class="handle absolute -top-1 left-0 h-2 w-full cursor-move"
       bind:clientWidth={keyboardWidth}
     ></div>
     {#each pianoKeys as { name, octave }, index}
