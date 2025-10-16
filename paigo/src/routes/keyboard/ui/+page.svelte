@@ -227,7 +227,7 @@
         class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].black.bg}`}
       ></div>
       <span
-        class={`isolate flex items-center justify-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].black.text}`}
+        class={`isolate text-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].black.text}`}
         >{name + '#'}</span
       >
     </div>
@@ -240,7 +240,7 @@
         class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].white.bg}`}
       ></div>
       <span
-        class={`isolate flex items-center justify-center text-xl font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
+        class={`isolate text-center text-xl font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
         >{name}</span
       >
     </div>
