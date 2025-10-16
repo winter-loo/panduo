@@ -72,86 +72,86 @@
   const pianoKeyHighlights: Record<string, PluginKeyStyle> = {
     C: {
       black: {
-        text: 'text-[var(--note-c-300)]',
-        bg: 'bg-[var(--note-c-500)]/40',
-        border: 'bg-[var(--note-c-500)]/30',
+        text: 'text-[var(--note-c)]',
+        bg: 'bg-[var(--note-c-700)]',
+        border: 'bg-[var(--note-c-700)]/30',
       },
       white: {
         text: 'text-[var(--note-c)]',
-        bg: 'bg-[var(--note-c-500)]/40',
-        border: 'bg-[var(--note-c-500)]/30',
+        bg: 'bg-[var(--note-c-400)]',
+        border: 'bg-[var(--note-c-400)]/30',
       },
     },
     D: {
       black: {
-        text: 'text-[var(--note-d-300)]',
-        bg: 'bg-[var(--note-d-500)]/40',
-        border: 'bg-[var(--note-d-500)]/30',
+        text: 'text-[var(--note-d)]',
+        bg: 'bg-[var(--note-d-700)]',
+        border: 'bg-[var(--note-d-700)]/30',
       },
       white: {
         text: 'text-[var(--note-d)]',
-        bg: 'bg-[var(--note-d-500)]/40',
-        border: 'bg-[var(--note-d-500)]/30',
+        bg: 'bg-[var(--note-d-400)]',
+        border: 'bg-[var(--note-d-400)]/30',
       },
     },
     E: {
       black: {
-        text: 'text-[var(--note-e-300)]',
-        bg: 'bg-[var(--note-e-500)]/40',
-        border: 'bg-[var(--note-e-500)]/30',
+        text: 'text-[var(--note-e)]',
+        bg: 'bg-[var(--note-e-700)]',
+        border: 'bg-[var(--note-e-700)]/30',
       },
       white: {
         text: 'text-[var(--note-e)]',
-        bg: 'bg-[var(--note-e-500)]/40',
-        border: 'bg-[var(--note-e-500)]/30',
+        bg: 'bg-[var(--note-e-400)]',
+        border: 'bg-[var(--note-e-400)]/30',
       },
     },
     F: {
       black: {
-        text: 'text-[var(--note-f-300)]',
-        bg: 'bg-[var(--note-f-500)]/40',
-        border: 'bg-[var(--note-f-500)]/30',
+        text: 'text-[var(--note-f)]',
+        bg: 'bg-[var(--note-f-700)]',
+        border: 'bg-[var(--note-f-700)]/30',
       },
       white: {
         text: 'text-[var(--note-f)]',
-        bg: 'bg-[var(--note-f-500)]/40',
-        border: 'bg-[var(--note-f-500)]/30',
+        bg: 'bg-[var(--note-f-400)]',
+        border: 'bg-[var(--note-f-400)]/30',
       },
     },
     G: {
       black: {
-        text: 'text-[var(--note-g-300)]',
-        bg: 'bg-[var(--note-g-500)]/40',
-        border: 'bg-[var(--note-g-500)]/30',
+        text: 'text-[var(--note-g)]',
+        bg: 'bg-[var(--note-g-700)]',
+        border: 'bg-[var(--note-g-700)]/30',
       },
       white: {
         text: 'text-[var(--note-g)]',
-        bg: 'bg-[var(--note-g-500)]/40',
-        border: 'bg-[var(--note-g-500)]/30',
+        bg: 'bg-[var(--note-g-400)]',
+        border: 'bg-[var(--note-g-400)]/30',
       },
     },
     A: {
       black: {
-        text: 'text-[var(--note-a-300)]',
-        bg: 'bg-[var(--note-a-500)]/40',
-        border: 'bg-[var(--note-a-500)]/30',
+        text: 'text-[var(--note-a)]',
+        bg: 'bg-[var(--note-a-700)]',
+        border: 'bg-[var(--note-a-700)]/30',
       },
       white: {
         text: 'text-[var(--note-a)]',
-        bg: 'bg-[var(--note-a-500)]/40',
-        border: 'bg-[var(--note-a-500)]/30',
+        bg: 'bg-[var(--note-a-400)]',
+        border: 'bg-[var(--note-a-400)]/30',
       },
     },
     B: {
       black: {
-        text: 'text-[var(--note-b-300)]',
-        bg: 'bg-[var(--note-b-500)]/40',
-        border: 'bg-[var(--note-b-500)]/30',
+        text: 'text-[var(--note-b)]',
+        bg: 'bg-[var(--note-b-700)]',
+        border: 'bg-[var(--note-b-700)]/30',
       },
       white: {
         text: 'text-[var(--note-b)]',
-        bg: 'bg-[var(--note-b-500)]/40',
-        border: 'bg-[var(--note-b-500)]/30',
+        bg: 'bg-[var(--note-b-400)]',
+        border: 'bg-[var(--note-b-400)]/30',
       },
     },
   };
@@ -240,7 +240,7 @@
         class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].white.bg}`}
       ></div>
       <span
-        class={`isolate  flex items-center justify-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
+        class={`isolate flex items-center justify-center text-xl font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
         >{name}</span
       >
     </div>
