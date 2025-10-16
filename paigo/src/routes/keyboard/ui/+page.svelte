@@ -218,33 +218,17 @@
 </div>
 
 {#snippet pianoKeyPlugin({ name, octave, sharp }: PianoKeyFullName)}
-  {#if sharp}
-    <div class="relative flex h-10 w-10 items-center justify-center">
-      <div
-        class={`absolute inset-0 flex rounded-full ${pianoKeyHighlights[name[0]].black.border}`}
-      ></div>
-      <div
-        class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].black.bg}`}
-      ></div>
-      <span
-        class={`isolate text-center text-lg font-extrabold ${pianoKeyHighlights[name[0]].black.text}`}
-        >{name + '#'}</span
-      >
-    </div>
-  {:else}
-    <div class="relative flex h-12 w-12 items-center justify-center">
-      <div
-        class={`absolute inset-0 flex rounded-full ${pianoKeyHighlights[name[0]].white.border}`}
-      ></div>
-      <div
-        class={`absolute inset-3 flex rounded-full ${pianoKeyHighlights[name[0]].white.bg}`}
-      ></div>
-      <span
-        class={`isolate text-center text-xl font-extrabold ${pianoKeyHighlights[name[0]].white.text}`}
-        >{name}</span
-      >
-    </div>
-  {/if}
+  {@const variant = sharp ? 'black' : 'white'}
+  {@const highlight = pianoKeyHighlights[name[0]][variant]}
+  {@const containerSize = sharp ? 'h-10 w-10' : 'h-12 w-12'}
+  {@const textSize = sharp ? 'text-lg' : 'text-xl'}
+  {@const label = sharp ? `${name}#` : name}
+
+  <div class={`relative flex ${containerSize} items-center justify-center`}>
+    <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div>
+    <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div>
+    <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span>
+  </div>
 {/snippet}
 
 {#snippet pianokey(name: PianoKeyName, octave: number, hideBlack: boolean)}
