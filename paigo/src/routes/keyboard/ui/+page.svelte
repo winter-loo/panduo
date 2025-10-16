@@ -162,11 +162,17 @@
 </div>
 
 {#snippet pianoKeyPlugin({ name, octave }: PianoKeyFullName)}
-  <div
-    class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
-  >
+  <div>
+    <!-- Outer circle -->
+    <div
+      class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
+    ></div>
+    <!-- Inner circle -->
+    <div
+      class={`flex h-12 w-12 items-center justify-center rounded-full border-12 ${pianoKeyHighlights[name[0]].bg} ${pianoKeyHighlights[name[0]].border}`}
+    ></div>
     <span
-      class={`flex h-6 w-6 items-center justify-center text-sm font-bold ${pianoKeyHighlights[name[0]].text}`}
+      class={`flex items-center justify-center text-sm font-extrabold ${pianoKeyHighlights[name[0]].text}`}
       >{name}</span
     >
   </div>
