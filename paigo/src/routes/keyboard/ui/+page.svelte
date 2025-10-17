@@ -16,7 +16,7 @@
   let offsetX = $state(-144);
   let keyboardWidth = $state(960);
   let showHighlight = $state(true);
-  let currentKeys = $state(['C#4', 'E4', 'G4']);
+  let currentKeys = $state(['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4']);
 
   let selectedOctave = $state('4');
   let selectedName = $state('C');
@@ -75,86 +75,86 @@
   const pianoKeyHighlights: Record<string, PluginKeyStyle> = {
     C: {
       black: {
-        text: 'text-[var(--note-c)]',
+        text: 'text-[var(--note-c-300)]',
         bg: 'bg-[var(--note-c-700)]',
         border: 'bg-[var(--note-c-700)]/50',
       },
       white: {
         text: 'text-[var(--note-c)]',
-        bg: 'bg-[var(--note-c-400)]',
-        border: 'bg-[var(--note-c-400)]/30',
+        bg: 'bg-[var(--note-c-300)]/60',
+        border: 'bg-[var(--note-c-300)]/40',
       },
     },
     D: {
       black: {
-        text: 'text-[var(--note-d)]',
+        text: 'text-[var(--note-d-300)]',
         bg: 'bg-[var(--note-d-700)]',
         border: 'bg-[var(--note-d-700)]/50',
       },
       white: {
         text: 'text-[var(--note-d)]',
-        bg: 'bg-[var(--note-d-400)]',
-        border: 'bg-[var(--note-d-400)]/30',
+        bg: 'bg-[var(--note-d-300)]/60',
+        border: 'bg-[var(--note-d-300)]/40',
       },
     },
     E: {
       black: {
-        text: 'text-[var(--note-e)]',
+        text: 'text-[var(--note-e-300)]',
         bg: 'bg-[var(--note-e-700)]',
         border: 'bg-[var(--note-e-700)]/50',
       },
       white: {
         text: 'text-[var(--note-e)]',
-        bg: 'bg-[var(--note-e-400)]',
-        border: 'bg-[var(--note-e-400)]/30',
+        bg: 'bg-[var(--note-e-300)]/60',
+        border: 'bg-[var(--note-e-300)]/40',
       },
     },
     F: {
       black: {
-        text: 'text-[var(--note-f)]',
+        text: 'text-[var(--note-f-300)]',
         bg: 'bg-[var(--note-f-700)]',
         border: 'bg-[var(--note-f-700)]/50',
       },
       white: {
         text: 'text-[var(--note-f)]',
-        bg: 'bg-[var(--note-f-400)]',
-        border: 'bg-[var(--note-f-400)]/30',
+        bg: 'bg-[var(--note-f-300)]/60',
+        border: 'bg-[var(--note-f-300)]/40',
       },
     },
     G: {
       black: {
-        text: 'text-[var(--note-g)]',
+        text: 'text-[var(--note-g-300)]',
         bg: 'bg-[var(--note-g-700)]',
         border: 'bg-[var(--note-g-700)]/50',
       },
       white: {
         text: 'text-[var(--note-g)]',
-        bg: 'bg-[var(--note-g-400)]',
-        border: 'bg-[var(--note-g-400)]/30',
+        bg: 'bg-[var(--note-g-300)]/60',
+        border: 'bg-[var(--note-g-300)]/40',
       },
     },
     A: {
       black: {
-        text: 'text-[var(--note-a)]',
+        text: 'text-[var(--note-a-300)]',
         bg: 'bg-[var(--note-a-700)]',
         border: 'bg-[var(--note-a-700)]/50',
       },
       white: {
         text: 'text-[var(--note-a)]',
-        bg: 'bg-[var(--note-a-400)]',
-        border: 'bg-[var(--note-a-400)]/30',
+        bg: 'bg-[var(--note-a-300)]/60',
+        border: 'bg-[var(--note-a-300)]/40',
       },
     },
     B: {
       black: {
-        text: 'text-[var(--note-b)]',
+        text: 'text-[var(--note-b-300)]',
         bg: 'bg-[var(--note-b-700)]',
         border: 'bg-[var(--note-b-700)]/50',
       },
       white: {
         text: 'text-[var(--note-b)]',
-        bg: 'bg-[var(--note-b-400)]',
-        border: 'bg-[var(--note-b-400)]/30',
+        bg: 'bg-[var(--note-b-300)]/60',
+        border: 'bg-[var(--note-b-300)]/40',
       },
     },
   };
