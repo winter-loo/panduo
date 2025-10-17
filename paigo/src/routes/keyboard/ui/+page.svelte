@@ -7,6 +7,7 @@
   } from '$lib/components/piano-key/piano-key.svelte';
   import { MovableElement } from '$lib/movable';
   import { Select } from 'bits-ui';
+  import { fade } from 'svelte/transition';
   const TemplateKeys: PianoKeyName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
   const numPianoKeys = 52;
 
@@ -14,6 +15,8 @@
   let windowWidth = $state(960);
   let offsetX = $state(-144);
   let keyboardWidth = $state(960);
+  let showHighlight = $state(true);
+  let currentKeys = $state(['C#4', 'E4', 'G4']);
 
   let selectedOctave = $state('4');
   let selectedName = $state('C');
@@ -74,7 +77,7 @@
       black: {
         text: 'text-[var(--note-c)]',
         bg: 'bg-[var(--note-c-700)]',
-        border: 'bg-[var(--note-c-700)]/30',
+        border: 'bg-[var(--note-c-700)]/50',
       },
       white: {
         text: 'text-[var(--note-c)]',
@@ -86,7 +89,7 @@
       black: {
         text: 'text-[var(--note-d)]',
         bg: 'bg-[var(--note-d-700)]',
-        border: 'bg-[var(--note-d-700)]/30',
+        border: 'bg-[var(--note-d-700)]/50',
       },
       white: {
         text: 'text-[var(--note-d)]',
@@ -98,7 +101,7 @@
       black: {
         text: 'text-[var(--note-e)]',
         bg: 'bg-[var(--note-e-700)]',
-        border: 'bg-[var(--note-e-700)]/30',
+        border: 'bg-[var(--note-e-700)]/50',
       },
       white: {
         text: 'text-[var(--note-e)]',
@@ -110,7 +113,7 @@
       black: {
         text: 'text-[var(--note-f)]',
         bg: 'bg-[var(--note-f-700)]',
-        border: 'bg-[var(--note-f-700)]/30',
+        border: 'bg-[var(--note-f-700)]/50',
       },
       white: {
         text: 'text-[var(--note-f)]',
@@ -122,7 +125,7 @@
       black: {
         text: 'text-[var(--note-g)]',
         bg: 'bg-[var(--note-g-700)]',
-        border: 'bg-[var(--note-g-700)]/30',
+        border: 'bg-[var(--note-g-700)]/50',
       },
       white: {
         text: 'text-[var(--note-g)]',
@@ -134,7 +137,7 @@
       black: {
         text: 'text-[var(--note-a)]',
         bg: 'bg-[var(--note-a-700)]',
-        border: 'bg-[var(--note-a-700)]/30',
+        border: 'bg-[var(--note-a-700)]/50',
       },
       white: {
         text: 'text-[var(--note-a)]',
@@ -146,7 +149,7 @@
       black: {
         text: 'text-[var(--note-b)]',
         bg: 'bg-[var(--note-b-700)]',
-        border: 'bg-[var(--note-b-700)]/30',
+        border: 'bg-[var(--note-b-700)]/50',
       },
       white: {
         text: 'text-[var(--note-b)]',
@@ -159,62 +162,51 @@
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
 
-<div class="p-2">
-  <span class="text-[var(--note-e-900)]">Middle Key</span>
-  <Select.Root type="single" bind:value={selectedName}>
-    <Select.Trigger>
-      <span class="w-4 truncate px-2 py-2 text-start outline">
-        {selectedName}
-      </span>
+{#snippet options(options: any[], value: string, onChange: (value: string) => void)}
+  <Select.Root type="single" {value} onValueChange={onChange}>
+    <Select.Trigger
+      class="bg-[var(--app-lightest)] px-3 py-2 text-2xl text-[var(--app-darkest)] outline outline-[var(--app-light)]"
+    >
+      {value}
     </Select.Trigger>
     <Select.Portal>
       <Select.Content>
-        <Select.Viewport>
-          {#each ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as name}
+        <Select.Viewport class="mt-1 p-1">
+          {#each options as option}
+            {@const optionLabel = String(option)}
             <Select.Item
-              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--note-e-200)] px-2 text-sm capitalize
-               outline-hidden select-none data-highlighted:bg-[var(--note-e-400)]"
-              value={name}
-              label={name}
+              class="rounded-button flex items-center justify-center bg-[var(--app-lightest)] px-3
+                text-xl font-thin text-[var(--app-darkest)]
+                outline-hidden select-none data-highlighted:bg-[var(--app-darkest)] data-highlighted:text-[var(--app-lightest)]"
+              value={optionLabel}
+              label={optionLabel}
             >
-              {name}
+              {optionLabel}
             </Select.Item>
           {/each}
         </Select.Viewport>
       </Select.Content>
     </Select.Portal>
   </Select.Root>
-  <Select.Root type="single" bind:value={selectedOctave}>
-    <Select.Trigger>
-      <span class="w-4 truncate px-2 py-2 text-start outline">
-        {selectedOctave}
-      </span>
-    </Select.Trigger>
-    <Select.Portal>
-      <Select.Content>
-        <Select.Viewport>
-          {#each Array.from({ length: 8 }) as _, index}
-            <Select.Item
-              class="rounded-button flex h-10 w-full items-center justify-center bg-[var(--note-e-200)] px-2 text-sm capitalize
-              outline-hidden select-none data-highlighted:bg-[var(--note-e-400)]"
-              value={(index + 1).toString()}
-              label={(index + 1).toString()}
-            >
-              {index + 1}
-            </Select.Item>
-          {/each}
-        </Select.Viewport>
-      </Select.Content>
-    </Select.Portal>
-  </Select.Root>
-</div>
+{/snippet}
 
-<div class="m-10 flex hidden w-400 items-center justify-center">
-  <div class="inline-flex">
-    <PianoKey name="E" octave={4} plugin={pianoKeyPlugin}></PianoKey>
-    <PianoKey name="F" octave={4} plugin={pianoKeyPlugin}></PianoKey>
-    <PianoKey name="E" octave={4} plugin={pianoKeyPlugin}></PianoKey>
+<div class="piano-keybord-config mx-4 mt-10 p-2">
+  <label
+    for="middle-key-control"
+    class="mb-2 block text-[calc(var(--spacing)*4)] text-[var(--app-darkest)]">Middle key</label
+  >
+  <div id="middle-key-control">
+    {@render options(
+      ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+      selectedName,
+      (next) => (selectedName = next),
+    )}
+    {@render options([1, 3, 4, 5, 6, 7], selectedOctave, (next) => (selectedOctave = next))}
   </div>
+  <label class="my-4 block text-[calc(var(--spacing)*4)] text-[var(--app-darkest)]"
+    >Show keys
+    <input type="checkbox" bind:checked={showHighlight} />
+  </label>
 </div>
 
 {#snippet pianoKeyPlugin({ name, octave, sharp }: PianoKeyFullName)}
@@ -223,12 +215,16 @@
   {@const containerSize = sharp ? 'h-10 w-10' : 'h-12 w-12'}
   {@const textSize = sharp ? 'text-lg' : 'text-xl'}
   {@const label = sharp ? `${name}#` : name}
+  {@const fullName = `${label}${octave}`}
 
-  <div class={`relative flex ${containerSize} items-center justify-center`}>
-    <!-- <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div> -->
-    <!-- <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div> -->
-    <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span>
-  </div>
+  {#if showHighlight && currentKeys.includes(fullName)}
+    <div class={`relative flex ${containerSize} items-center justify-center`} transition:fade>
+      <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div>
+      <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div>
+      <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span
+      >
+    </div>
+  {/if}
 {/snippet}
 
 {#snippet pianokey(name: PianoKeyName, octave: number, hideBlack: boolean)}

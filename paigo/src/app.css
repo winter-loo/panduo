@@ -118,12 +118,12 @@
   --note-a: var(--note-a-500);
   --note-b: var(--note-b-500);
 
-  --exp-primary: oklch(72.5% 0.1978 138);
-  --exp-lightest: oklch(99% 0.01 138);
-  --exp-light: oklch(85.75% 0.104 138);
-  --exp-medium: oklch(64.12% 0.1224 138);
-  --exp-dark: oklch(51% 0.133 138);
-  --exp-darkest: oklch(29.49% 0.06875 138);
+  --app-primary: oklch(0.725 0.1978 138);
+  --app-darkest: oklch(0.205 0.062 138);
+  --app-dark: oklch(0.51 0.046 138);
+  --app-medium: oklch(0.64 0.033 138);
+  --app-light: oklch(0.86 0.02 138);
+  --app-lightest: oklch(0.99 0.01 138);
 }
 
 :root :where(.vf-stavenote) {
