@@ -11,19 +11,48 @@
   };
   let { name, octave, hideBlack = false, onnoteon, onnoteoff, plugin }: PianoKeyProps = $props();
 
+  type PressOptions = { sharp?: boolean };
+
+  let whiteActive = $state(false);
+  let blackActive = $state(false);
+
+  export function press(options: PressOptions = {}) {
+    const { sharp = false } = options;
+    const payload: PianoKeyFullName = { name, octave, sharp };
+    if (sharp) {
+      startBlackPress(payload);
+    } else {
+      startWhitePress(payload);
+    }
+  }
+
+  export function release(options: PressOptions = {}) {
+    const { sharp = false } = options;
+    const payload: PianoKeyFullName = { name, octave, sharp };
+    if (sharp) {
+      endBlackPress(payload);
+    } else {
+      endWhitePress(payload);
+    }
+  }
+
   function startWhitePress(name: PianoKeyFullName) {
+    whiteActive = true;
     onnoteon?.(name);
   }
 
   function endWhitePress(name: PianoKeyFullName) {
+    whiteActive = false;
     onnoteoff?.(name);
   }
 
   function startBlackPress(name: PianoKeyFullName) {
+    blackActive = true;
     onnoteon?.(name);
   }
 
   function endBlackPress(name: PianoKeyFullName) {
+    blackActive = false;
     onnoteoff?.(name);
   }
 </script>
@@ -55,12 +84,17 @@
     transition-all
     duration-200
     ease-out
-    hover:bg-[var(--note-black-100)]/50
+    hover:bg-[var(--note-black-100)]/30
     active:h-47
-    active:bg-[var(--note-black-100)]/80
-    active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]`}
+    active:bg-[var(--note-black-100)]/40
+    active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]
+    data-[active=true]:h-47
+    data-[active=true]:bg-[var(--note-black-100)]/40
+    data-[active=true]:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]`}
+    data-active={whiteActive}
     onpointerdown={() => startWhitePress({ name, octave, sharp: false })}
     onpointerup={() => endWhitePress({ name, octave, sharp: false })}
+    onpointercancel={() => endWhitePress({ name, octave, sharp: false })}
   >
     <div
       class="plugin transition-translate -translate-y-1 duration-200 ease-out group-active:translate-y-0"
@@ -77,9 +111,14 @@
       transition-all duration-200
       ease-out hover:bg-[var(--note-black-600)] active:-top-1
       active:bg-[var(--note-black-700)]
-      active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]`}
+      active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]
+      data-[active=true]:-top-1
+      data-[active=true]:bg-[var(--note-black-700)]
+      data-[active=true]:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]`}
+      data-active={blackActive}
       onpointerdown={() => startBlackPress({ name, octave, sharp: true })}
       onpointerup={() => endBlackPress({ name, octave, sharp: true })}
+      onpointercancel={() => endBlackPress({ name, octave, sharp: true })}
     >
       <div
         class="plugin transition-translate -translate-y-2 duration-200 ease-out group-active:translate-y-0"

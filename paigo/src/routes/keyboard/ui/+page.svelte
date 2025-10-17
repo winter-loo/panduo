@@ -6,17 +6,24 @@
     PianoKeyFullName,
   } from '$lib/components/piano-key/piano-key.svelte';
   import { MovableElement } from '$lib/movable';
+  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
   import { Select } from 'bits-ui';
-  import { fade } from 'svelte/transition';
+  import { onMount } from 'svelte';
   const TemplateKeys: PianoKeyName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+  type PianoKeyController = {
+    press?: (options?: { sharp?: boolean }) => void;
+    release?: (options?: { sharp?: boolean }) => void;
+  };
+
   const numPianoKeys = 52;
+  const pianoKeyControllers = new Map<string, PianoKeyController>();
 
   let middleKey = $state<HTMLElement | null>(null);
   let windowWidth = $state(960);
   let offsetX = $state(-144);
   let keyboardWidth = $state(960);
   let showHighlight = $state(true);
-  let currentKeys = $state(['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4']);
+  let currentKeys = $state<string[]>([]);
 
   let selectedOctave = $state('4');
   let selectedName = $state('C');
@@ -27,8 +34,8 @@
   let octave = 0;
 
   for (let i = 0; i < numPianoKeys; i++) {
-    let name = TemplateKeys[i % TemplateKeys.length];
-    if (name == 'C') {
+    const name = TemplateKeys[i % TemplateKeys.length];
+    if (name === 'C') {
       octave += 1;
     }
     pianoKeys.push({ name, octave });
@@ -58,11 +65,19 @@
     }
   });
 
-  function onnoteon({ name, octave }: PianoKeyFullName) {
-    console.log(`key ${name}${octave} pressed`);
+  function noteIdentifier({ name, octave, sharp }: PianoKeyFullName) {
+    return `${name}${sharp ? '#' : ''}${octave}`;
   }
-  function onnoteoff({ name, octave }: PianoKeyFullName) {
-    console.log(`key ${name}${octave} released`);
+
+  function onnoteon(note: PianoKeyFullName) {
+    const id = noteIdentifier(note);
+    if (!currentKeys.includes(id)) {
+      currentKeys = [...currentKeys, id];
+    }
+  }
+  function onnoteoff(note: PianoKeyFullName) {
+    const id = noteIdentifier(note);
+    currentKeys = currentKeys.filter((existing) => existing !== id);
   }
 
   type PluginStyle = { bg: string; border: string; text: string };
@@ -158,6 +173,45 @@
       },
     },
   };
+
+  let midiKeyboard = getVirtualMidiKeyboard();
+  onMount(() => {
+    midiKeyboard.turnOn();
+
+    const resolvePianoKey = (note: string, octave: number) => {
+      if (!note) return null;
+      const sharp = note.includes('#');
+      const baseName = note[0] as PianoKeyName;
+      if (!TemplateKeys.includes(baseName)) return null;
+      const controller = pianoKeyControllers.get(`${baseName}${octave}`);
+      if (!controller) return null;
+      return { controller, sharp };
+    };
+
+    const handleNoteOn = (event: { note: string; octave: number }) => {
+      const resolved = resolvePianoKey(event.note, event.octave);
+      if (!resolved) return;
+      const { controller, sharp } = resolved;
+      controller.press?.(sharp ? { sharp: true } : {});
+    };
+
+    const handleNoteOff = (event: { note: string; octave: number }) => {
+      const resolved = resolvePianoKey(event.note, event.octave);
+      if (!resolved) return;
+      const { controller, sharp } = resolved;
+      controller.release?.(sharp ? { sharp: true } : {});
+    };
+
+    midiKeyboard.on('noteOn', handleNoteOn);
+    midiKeyboard.on('noteOff', handleNoteOff);
+
+    return () => {
+      midiKeyboard.off('noteOn', handleNoteOn);
+      midiKeyboard.off('noteOff', handleNoteOff);
+      midiKeyboard.turnOff();
+      pianoKeyControllers.clear();
+    };
+  });
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
@@ -190,23 +244,50 @@
   </Select.Root>
 {/snippet}
 
-<div class="piano-keybord-config mx-4 mt-10 p-2">
-  <label
-    for="middle-key-control"
-    class="mb-2 block text-[calc(var(--spacing)*4)] text-[var(--app-darkest)]">Middle key</label
-  >
-  <div id="middle-key-control">
-    {@render options(
-      ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
-      selectedName,
-      (next) => (selectedName = next),
-    )}
-    {@render options([1, 3, 4, 5, 6, 7], selectedOctave, (next) => (selectedOctave = next))}
+<div
+  class="piano-keyboard-config mx-4 mt-10 w-full max-w-xl rounded-xl bg-[var(--app-lightest)] p-6 shadow-[0_12px_32px_-20px_rgba(0,0,0,0.35)]"
+>
+  <h2 class="text-xl font-semibold tracking-wide text-[var(--app-darkest)]">Keyboard settings</h2>
+  <p class="mt-1 text-sm text-[var(--app-dark)]">
+    Tune the virtual keyboard to match your instrument.
+  </p>
+
+  <div class="mt-6 space-y-6 text-[var(--app-darkest)]">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <label
+        for="middle-key-control"
+        class="text-sm font-semibold tracking-wide text-[var(--app-darkest)] uppercase"
+        >Middle key</label
+      >
+      <div id="middle-key-control" class="flex gap-2">
+        {@render options(
+          ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          selectedName,
+          (next) => (selectedName = next),
+        )}
+        {@render options([1, 3, 4, 5, 6, 7], selectedOctave, (next) => (selectedOctave = next))}
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="min-w-[10rem]">
+        <p class="text-sm font-semibold tracking-wide uppercase">Highlight keys</p>
+        <p class="text-xs text-[var(--app-dark)]">Show active notes on the keyboard.</p>
+      </div>
+      <label
+        for="keys-highlight-control"
+        class="inline-flex items-center gap-3 text-base font-medium text-[var(--app-darkest)]"
+      >
+        <span>Show</span>
+        <input
+          id="keys-highlight-control"
+          type="checkbox"
+          class="h-6 w-6 rounded border-2 border-[var(--app-dark)] bg-white text-[var(--app-primary)] accent-[var(--app-dark)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-dark)]"
+          bind:checked={showHighlight}
+        />
+      </label>
+    </div>
   </div>
-  <label class="my-4 block text-[calc(var(--spacing)*4)] text-[var(--app-darkest)]"
-    >Show keys
-    <input type="checkbox" bind:checked={showHighlight} />
-  </label>
 </div>
 
 {#snippet pianoKeyPlugin({ name, octave, sharp }: PianoKeyFullName)}
@@ -218,17 +299,30 @@
   {@const fullName = `${label}${octave}`}
 
   {#if showHighlight && currentKeys.includes(fullName)}
-    <div class={`relative flex ${containerSize} items-center justify-center`} transition:fade>
+    <div class={`relative flex ${containerSize} items-center justify-center`}>
       <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div>
       <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div>
       <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span
       >
     </div>
+  {:else if fullName == middleKeyName}
+    <span class={`text-center ${textSize} font-extrabold text-[var(--app-light)]`}>{fullName}</span>
   {/if}
 {/snippet}
 
 {#snippet pianokey(name: PianoKeyName, octave: number, hideBlack: boolean)}
-  <PianoKey {name} {octave} {hideBlack} {onnoteon} {onnoteoff} plugin={pianoKeyPlugin}></PianoKey>
+  <PianoKey
+    {name}
+    {octave}
+    {hideBlack}
+    {onnoteon}
+    {onnoteoff}
+    plugin={pianoKeyPlugin}
+    bind:this={
+      () => pianoKeyControllers.get(`${name}${octave}`),
+      (v) => pianoKeyControllers.set(`${name}${octave}`, v)
+    }
+  ></PianoKey>
 {/snippet}
 
 <div id="piano-keyboard" class="overflow-hidden] fixed bottom-0 w-screen">
