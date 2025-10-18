@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { Metrics, MetricsDefaults, VexFlow, VexflowConfig } from '$lib/vexflow/vexflow-core';
-  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { getPcKeyboard } from '$lib/PcKeyboard';
   import { page } from '$app/state';
   import Button from '$lib/components/ui/button/button.svelte';
 
@@ -43,7 +43,7 @@
     showNote($state.snapshot(currentNotes));
   });
 
-  let midiKeyboard = getVirtualMidiKeyboard();
+  let midiKeyboard = getPcKeyboard();
 
   let OldStaffProps: any;
   onDestroy(() => {

@@ -6,7 +6,9 @@
     PianoKeyFullName,
   } from '$lib/components/piano-key/piano-key.svelte';
   import { MovableElement } from '$lib/movable';
-  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { noteCoordinator } from '$lib/note-events/noteCoordinator';
+  import type { NoteEventType, RoutedNoteEvent } from '$lib/note-events/types';
+  import { getPcKeyboard } from '$lib/PcKeyboard';
   import { Select } from 'bits-ui';
   import { onMount } from 'svelte';
   const TemplateKeys: PianoKeyName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
@@ -17,6 +19,7 @@
 
   const numPianoKeys = 52;
   const pianoKeyControllers = new Map<string, PianoKeyController>();
+  const PIANO_UI_SOURCE_ID = 'piano-ui';
 
   let middleKey = $state<HTMLElement | null>(null);
   let windowWidth = $state(960);
@@ -65,19 +68,27 @@
     }
   });
 
-  function noteIdentifier({ name, octave, sharp }: PianoKeyFullName) {
-    return `${name}${sharp ? '#' : ''}${octave}`;
+  function emitPianoUiEvent(type: NoteEventType, note: PianoKeyFullName) {
+    const normalized = {
+      note: note.sharp ? `${note.name}#` : note.name,
+      octave: note.octave,
+      sharp: note.sharp,
+      sourceId: PIANO_UI_SOURCE_ID,
+      sourceRole: 'sub' as const,
+    };
+    if (type === 'noteon') {
+      noteCoordinator.emitNoteOn(normalized);
+    } else {
+      noteCoordinator.emitNoteOff(normalized);
+    }
   }
 
   function onnoteon(note: PianoKeyFullName) {
-    const id = noteIdentifier(note);
-    if (!currentKeys.includes(id)) {
-      currentKeys = [...currentKeys, id];
-    }
+    emitPianoUiEvent('noteon', note);
   }
+
   function onnoteoff(note: PianoKeyFullName) {
-    const id = noteIdentifier(note);
-    currentKeys = currentKeys.filter((existing) => existing !== id);
+    emitPianoUiEvent('noteoff', note);
   }
 
   type PluginStyle = { bg: string; border: string; text: string };
@@ -174,9 +185,13 @@
     },
   };
 
-  let midiKeyboard = getVirtualMidiKeyboard();
+  let midiKeyboard = getPcKeyboard();
   onMount(() => {
     midiKeyboard.turnOn();
+
+    const unsubscribeActiveNotes = noteCoordinator.activeNotes.subscribe((notes) => {
+      currentKeys = [...notes];
+    });
 
     const resolvePianoKey = (note: string, octave: number) => {
       if (!note) return null;
@@ -188,28 +203,32 @@
       return { controller, sharp };
     };
 
-    const handleNoteOn = (event: { note: string; octave: number }) => {
+    const syncNoteEvent = (type: NoteEventType) => (event: RoutedNoteEvent) => {
+      if (!event.isForwarded) return;
       const resolved = resolvePianoKey(event.note, event.octave);
       if (!resolved) return;
       const { controller, sharp } = resolved;
-      controller.press?.(sharp ? { sharp: true } : {});
+      if (type === 'noteon') {
+        controller.press?.(sharp ? { sharp: true } : {});
+      } else {
+        controller.release?.(sharp ? { sharp: true } : {});
+      }
     };
 
-    const handleNoteOff = (event: { note: string; octave: number }) => {
-      const resolved = resolvePianoKey(event.note, event.octave);
-      if (!resolved) return;
-      const { controller, sharp } = resolved;
-      controller.release?.(sharp ? { sharp: true } : {});
-    };
-
-    midiKeyboard.on('noteOn', handleNoteOn);
-    midiKeyboard.on('noteOff', handleNoteOff);
+    const unregisterControl = noteCoordinator.registerControl({
+      id: PIANO_UI_SOURCE_ID,
+      role: 'sub',
+      sync: {
+        noteon: syncNoteEvent('noteon'),
+        noteoff: syncNoteEvent('noteoff'),
+      },
+    });
 
     return () => {
-      midiKeyboard.off('noteOn', handleNoteOn);
-      midiKeyboard.off('noteOff', handleNoteOff);
+      unregisterControl();
       midiKeyboard.turnOff();
       pianoKeyControllers.clear();
+      unsubscribeActiveNotes();
     };
   });
 </script>

@@ -2,7 +2,7 @@
   import { notu, noteWidth, rest, RestDuration, NoteDuration } from '$lib/notu';
   import { MovableElement } from '$lib/movable';
   import { onMount } from 'svelte';
-  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { getPcKeyboard } from '$lib/PcKeyboard';
 
   //
   // see [layout_measurement.md] for calculation in detail
@@ -420,7 +420,7 @@
     restRafId = requestAnimationFrame(step);
   }
 
-  let midiKeyboard = getVirtualMidiKeyboard();
+  let midiKeyboard = getPcKeyboard();
   // Track held piano keys to start/stop only on first press / last release.
   let heldPianoKeys = $state(new Set<string>());
 

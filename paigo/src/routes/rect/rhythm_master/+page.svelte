@@ -2,7 +2,7 @@
   import { notu, noteWidth, rest, RestDuration, NoteDuration } from '$lib/notu';
   import { MovableElement } from '$lib/movable';
   import { onMount } from 'svelte';
-  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { getPcKeyboard } from '$lib/PcKeyboard';
   import { page } from '$app/state';
   import { Button } from '$lib/components/ui/button/index';
 
@@ -206,7 +206,7 @@
     }
   });
 
-  let midiKeyboard = getVirtualMidiKeyboard();
+  let midiKeyboard = getPcKeyboard();
 
   onMount(() => {
     midiKeyboard.turnOn();

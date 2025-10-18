@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { MetricsDefaults, Metrics, VexFlow } from '$lib/vexflow/vexflow-core';
   import { Accidental } from '$lib/vexflow/src/accidental';
-  import { getVirtualMidiKeyboard } from '$lib/VirtualMidiKeyboard';
+  import { getPcKeyboard } from '$lib/PcKeyboard';
 
   type VFDuration = 'w' | 'h' | 'q' | '8' | '16' | '32';
   type NoteItem = { key: string; duration: VFDuration };
@@ -175,7 +175,7 @@
     }
   }
 
-  let midi = getVirtualMidiKeyboard();
+  let midi = getPcKeyboard();
 
   let OldStaffProps: any;
   onDestroy(() => {

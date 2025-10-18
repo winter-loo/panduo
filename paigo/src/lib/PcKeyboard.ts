@@ -1,16 +1,15 @@
 import { EventEmitter } from 'events';
-import {
-  showPianoLoading,
-  hidePianoLoading,
-  requirePianoUserGesture,
-  clearPianoUserGesture,
-} from '$lib/stores/pianoLoading';
+import { ensurePianoAudioContextReady, preparePianoAudioEngine } from '$lib/audio/pianoAudioEngine';
+import { noteCoordinator } from '$lib/note-events/noteCoordinator';
+import type { NoteEventData, NoteEventType } from '$lib/note-events/types';
 
-export interface VirtualMidiKeyboardOption {
+export interface PcKeyboardOptions {
   audioSamplesUri?: string;
 }
 
-export class VirtualMidiKeyboard extends EventEmitter {
+const PC_KEYBOARD_SOURCE_ID = 'pc-keybord';
+
+export class PcKeyboard extends EventEmitter {
   private NoteNameMap = new Map([
     ['Space', { noteName: 'C', holding: false }],
     ['KeyJ', { noteName: 'D', holding: false }],
@@ -45,52 +44,19 @@ export class VirtualMidiKeyboard extends EventEmitter {
 
   private keydownListener: any;
   private keyupListener: any;
-  private unlockHandler: any;
-  private pianoSound: any;
   private audioSamplesUri?: any;
-  private tone: any;
 
-  constructor(options?: VirtualMidiKeyboardOption) {
+  constructor(options?: PcKeyboardOptions) {
     super();
 
     this.keydownListener = null;
     this.keyupListener = null;
-    this.unlockHandler = null;
-    this.pianoSound = null;
     this.audioSamplesUri = options?.audioSamplesUri;
-    this.tone = null;
-  }
 
-  private async ensureToneReady() {
-    if (typeof window === 'undefined') return;
-    if (!this.tone) {
-      try {
-        const Tone = await import('tone');
-        // Create a low-latency context and set as global Tone context
-        const ctx = new Tone.Context({ latencyHint: 'interactive', lookAhead: 0 });
-        Tone.setContext(ctx);
-        this.tone = Tone;
-      } catch (e) {
-        // no-op if Tone couldn't be loaded; piano will still emit events without sound
-      }
-    }
-    // If context is not running, do not block; request user gesture via overlay button.
-    if (this.tone && this.tone.getContext().state !== 'running') {
-      requirePianoUserGesture(() => {
-        // Called in a user gesture. Try to start; don't rely on outer awaits.
-        showPianoLoading('Enabling audio...');
-        void this.tone
-          .start()
-          .then(() => {
-            clearPianoUserGesture();
-          })
-          .catch(() => {
-            // Keep the button visible if it still fails
-          });
-      });
-      return;
-    }
-    clearPianoUserGesture();
+    noteCoordinator.registerControl({
+      id: PC_KEYBOARD_SOURCE_ID,
+      role: 'main',
+    });
   }
 
   _addListeners() {
@@ -99,7 +65,7 @@ export class VirtualMidiKeyboard extends EventEmitter {
     this.keydownListener = async function (event: any) {
       event.preventDefault();
       // Make sure audio context is ready ASAP on first interaction
-      void self.ensureToneReady();
+      void ensurePianoAudioContextReady();
       let validKeyDown = self.NoteNameMap.get(event.code);
 
       if (validKeyDown != undefined && !validKeyDown.holding) {
@@ -108,14 +74,19 @@ export class VirtualMidiKeyboard extends EventEmitter {
         self.OctaveNumberMap.forEach(({ octave, holding }, _key) => {
           if (holding) {
             octaveNumberHolding = true;
-            if (self.pianoSound)
-              self.pianoSound.keyDown({ note: `${validKeyDown.noteName}${octave}` });
-            self.emit('noteOn', { note: validKeyDown.noteName, octave: octave });
+            self.emitNoteEvent('noteon', {
+              note: validKeyDown.noteName,
+              octave,
+              sharp: validKeyDown.noteName.includes('#'),
+            });
           }
         });
         if (!octaveNumberHolding) {
-          if (self.pianoSound) self.pianoSound.keyDown({ note: `${validKeyDown.noteName}4` });
-          self.emit('noteOn', { note: validKeyDown.noteName, octave: 4 });
+          self.emitNoteEvent('noteon', {
+            note: validKeyDown.noteName,
+            octave: 4,
+            sharp: validKeyDown.noteName.includes('#'),
+          });
         }
       } else if (validKeyDown == undefined) {
         let validKeyDown = self.OctaveNumberMap.get(event.code);
@@ -123,9 +94,11 @@ export class VirtualMidiKeyboard extends EventEmitter {
           validKeyDown.holding = true;
           self.NoteNameMap.forEach(({ noteName, holding }, _key) => {
             if (holding) {
-              if (self.pianoSound)
-                self.pianoSound.keyDown({ note: `${noteName}${validKeyDown.octave}` });
-              self.emit('noteOn', { note: noteName, octave: validKeyDown.octave });
+              self.emitNoteEvent('noteon', {
+                note: noteName,
+                octave: validKeyDown.octave,
+                sharp: noteName.includes('#'),
+              });
             }
           });
         }
@@ -140,13 +113,19 @@ export class VirtualMidiKeyboard extends EventEmitter {
         self.OctaveNumberMap.forEach(({ octave, holding }, _key) => {
           if (holding) {
             hasOctaveNumberHolding = true;
-            if (self.pianoSound) self.pianoSound.keyUp({ note: `${state.noteName}${octave}` });
-            self.emit('noteOff', { note: state.noteName, octave });
+            self.emitNoteEvent('noteoff', {
+              note: state.noteName,
+              octave,
+              sharp: state.noteName.includes('#'),
+            });
           }
         });
         if (!hasOctaveNumberHolding) {
-          if (self.pianoSound) self.pianoSound.keyUp({ note: `${state.noteName}4` });
-          self.emit('noteOff', { note: state.noteName, octave: 4 });
+          self.emitNoteEvent('noteoff', {
+            note: state.noteName,
+            octave: 4,
+            sharp: state.noteName.includes('#'),
+          });
         }
       } else {
         let state = self.OctaveNumberMap.get(event.code);
@@ -154,8 +133,11 @@ export class VirtualMidiKeyboard extends EventEmitter {
           state.holding = false;
           self.NoteNameMap.forEach(({ noteName, holding }, _key) => {
             if (holding) {
-              if (self.pianoSound) self.pianoSound.keyUp({ note: `${noteName}${state.octave}` });
-              self.emit('noteOff', { note: noteName, octave: state.octave });
+              self.emitNoteEvent('noteoff', {
+                note: noteName,
+                octave: state.octave,
+                sharp: noteName.includes('#'),
+              });
             }
           });
         }
@@ -179,23 +161,8 @@ export class VirtualMidiKeyboard extends EventEmitter {
     // Avoid loading audio libraries during SSR
     if (typeof window === 'undefined') return;
     if (this.audioSamplesUri) {
-      showPianoLoading('Loading piano sound...');
-      // Prepare Tone with low-latency settings before creating the piano
-      await this.ensureToneReady();
-      // Dynamically import the piano library only in the browser to avoid SSR errors.
-      const mod = await import('@tonejs/piano');
-      const PianoSound = mod.Piano as any;
-      this.pianoSound = new PianoSound({
-        url: this.audioSamplesUri,
-        velocities: 5,
-      });
-      this.pianoSound.toDestination();
-      console.log('[VirtualMidiKeyboard] loading audio samples...');
-      try {
-        await this.pianoSound.load();
-      } finally {
-        hidePianoLoading();
-      }
+      await preparePianoAudioEngine({ audioSamplesUri: this.audioSamplesUri });
+      console.log('[PcKeyboard] piano audio prepared');
     }
   }
 
@@ -217,17 +184,33 @@ export class VirtualMidiKeyboard extends EventEmitter {
     });
     return km;
   }
+
+  private emitNoteEvent(type: NoteEventType, data: NoteEventData) {
+    const payload = {
+      ...data,
+      sourceId: PC_KEYBOARD_SOURCE_ID,
+      sourceRole: 'main' as const,
+    };
+    if (type === 'noteon') {
+      noteCoordinator.emitNoteOn(payload);
+    } else {
+      noteCoordinator.emitNoteOff(payload);
+    }
+    // Preserve legacy camelCase events for existing listeners until all consumers migrate.
+    this.emit(type === 'noteon' ? 'noteOn' : 'noteOff', data);
+    this.emit(type, data);
+  }
 }
 
-let virtualMidiKeyboard: VirtualMidiKeyboard;
+let pcKeyboard: PcKeyboard;
 
-export function getVirtualMidiKeyboard(): VirtualMidiKeyboard {
-  if (!virtualMidiKeyboard) {
-    virtualMidiKeyboard = new VirtualMidiKeyboard({ audioSamplesUri: '/audio/' });
+export function getPcKeyboard(): PcKeyboard {
+  if (!pcKeyboard) {
+    pcKeyboard = new PcKeyboard({ audioSamplesUri: '/audio/' });
 
-    virtualMidiKeyboard.charge().then(() => {
-      console.log('midi keyboard connected');
+    pcKeyboard.charge().then(() => {
+      console.log('pc keyboard controller connected');
     });
   }
-  return virtualMidiKeyboard;
+  return pcKeyboard;
 }
