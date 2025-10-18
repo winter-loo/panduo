@@ -1,6 +1,6 @@
 <script lang="ts">
   export type PianoKeyName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
-  export type PianoKeyFullName = { name: string; octave: number; sharp: boolean };
+  export type PianoKeyFullName = { name: PianoKeyName; octave: number; sharp: boolean };
   export type PianoKeyProps = {
     name: PianoKeyName;
     octave: number;

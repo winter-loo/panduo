@@ -6,6 +6,7 @@
   import TempoSlider from '$lib/components/ui/TempoSlider.svelte';
   import MovingStaff from '$lib/components/staff/MovingStaff.svelte';
   import type { DebugGridPlugin } from '$lib/staff/plugins/debug-grid';
+  import PianoKeyboard from '$lib/components/piano-keyboord/piano-keyboard.svelte';
 
   const { data }: PageProps = $props();
 
@@ -97,9 +98,11 @@
   >
 </div>
 
-<div class="bg-[#f3f3f3] ml-2 w-42 h-16 flex items-center justify-center rounded-xl">
+<div class="ml-2 flex h-16 w-42 items-center justify-center rounded-xl bg-[#f3f3f3]">
   <TempoSlider bind:value={tempo} min={40} max={200} step={5} />
 </div>
+
+<PianoKeyboard />
 
 <style>
   .controls-row {
