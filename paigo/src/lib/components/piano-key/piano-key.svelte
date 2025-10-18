@@ -85,6 +85,7 @@
     duration-200
     ease-out
     hover:bg-[var(--note-black-100)]/30
+    focus:outline-none
     active:h-47
     active:bg-[var(--note-black-100)]/40
     active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]
@@ -108,8 +109,9 @@
       items-end justify-center rounded-sm bg-[var(--note-black)]
       text-white
       shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-black-900)]
-      transition-all duration-200
-      ease-out hover:bg-[var(--note-black-600)] active:-top-1
+      transition-all
+      duration-200 ease-out
+      hover:bg-[var(--note-black-600)] focus:outline-none active:-top-1
       active:bg-[var(--note-black-700)]
       active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]
       data-[active=true]:-top-1
