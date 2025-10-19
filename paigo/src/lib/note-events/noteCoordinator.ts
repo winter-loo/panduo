@@ -41,6 +41,16 @@ class NoteCoordinator {
   private activeNoteSources: ActiveNoteSources = new Map();
   // Svelte store exposing currently active note identifiers for UI consumers.
   private activeNotesStore = writable<NoteIdentifier[]>([]);
+  // Lazily loaded piano audio helpers – kept local to avoid circular imports.
+  private audioHelpersPromise:
+    | Promise<{
+        ensurePianoAudioContextReady: () => Promise<void>;
+        preparePianoAudioEngine: (options?: { preload?: 'none' | 'full' }) => Promise<void>;
+      }>
+    | null = null;
+  private warmupPromise: Promise<void> | null = null;
+  private hasScheduledFullPreload = false;
+  private primaryDispatchChain: Promise<void> = Promise.resolve();
 
   get activeNotes(): Readable<NoteIdentifier[]> {
     return this.activeNotesStore;
@@ -88,15 +98,87 @@ class NoteCoordinator {
     };
 
     this.updateActiveNotes(type, originEvent, event.sourceId);
-    this.dispatchPrimary(originEvent);
+    this.enqueuePrimaryDispatch(originEvent);
     this.forwardToSyncedControls(type, originEvent);
   }
 
-  private dispatchPrimary(event: RoutedNoteEvent) {
+  private enqueuePrimaryDispatch(event: RoutedNoteEvent) {
+    this.primaryDispatchChain = this.primaryDispatchChain
+      .catch(() => {
+        /* swallow previous errors to keep chain alive */
+      })
+      .then(() => this.dispatchPrimary(event));
+
+    void this.primaryDispatchChain.catch(() => {
+      /* prevent unhandled rejection warnings */
+    });
+  }
+
+  private async dispatchPrimary(event: RoutedNoteEvent) {
+    await this.ensureAudioPrepared(event);
     // Primary handlers perform side-effects exactly once (audio playback, notation updates, etc.).
     this.primaryHandlers.forEach((handler) => {
       handler(event);
     });
+  }
+
+  private loadAudioHelpers() {
+    if (typeof window === 'undefined') return null;
+    if (!this.audioHelpersPromise) {
+      this.audioHelpersPromise = import('$lib/audio/pianoAudioEngine');
+    }
+    return this.audioHelpersPromise;
+  }
+
+  private async ensureAudioPrepared(event: RoutedNoteEvent): Promise<void> {
+    if (event.type !== 'noteon') return;
+    const helpersPromise = this.loadAudioHelpers();
+    if (!helpersPromise) return;
+
+    let helpers:
+      | {
+          ensurePianoAudioContextReady: () => Promise<void>;
+          preparePianoAudioEngine: (options?: { preload?: 'none' | 'full' }) => Promise<void>;
+        }
+      | null = null;
+    try {
+      helpers = await helpersPromise;
+    } catch {
+      return;
+    }
+    if (!helpers) return;
+
+    const { ensurePianoAudioContextReady, preparePianoAudioEngine } = helpers;
+
+    try {
+      await ensurePianoAudioContextReady();
+    } catch {
+      // Audio context unlock failed – keep trying on the next user gesture.
+    }
+
+    if (!this.warmupPromise) {
+      const warmup = preparePianoAudioEngine({ preload: 'none' }).catch(() => {
+        // best-effort warmup – ignore failures to avoid blocking the note
+      });
+      this.warmupPromise = warmup.finally(() => {
+        this.warmupPromise = null;
+      });
+    }
+
+    if (this.warmupPromise) {
+      try {
+        await this.warmupPromise;
+      } catch {
+        // ignore warmup failures
+      }
+    }
+
+    if (!this.hasScheduledFullPreload) {
+      this.hasScheduledFullPreload = true;
+      void preparePianoAudioEngine({ preload: 'full' }).catch(() => {
+        this.hasScheduledFullPreload = false;
+      });
+    }
   }
 
   private forwardToSyncedControls(type: NoteEventType, event: RoutedNoteEvent) {

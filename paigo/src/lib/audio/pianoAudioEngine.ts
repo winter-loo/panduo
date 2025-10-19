@@ -8,10 +8,11 @@ import {
 } from '$lib/stores/pianoLoading';
 
 export interface PianoAudioEngineOptions {
-  audioSamplesUri?: string;
+  preload?: 'none' | 'full';
 }
 
 type ToneType = typeof import('tone');
+type PianoModule = typeof import('@tonejs/piano');
 
 function buildNoteId({ note, octave, sharp }: NoteEventData): string | null {
   if (!note) return null;
@@ -24,16 +25,10 @@ function buildNoteId({ note, octave, sharp }: NoteEventData): string | null {
 
 class PianoAudioEngine {
   private tone: ToneType | null = null;
-  private piano: any = null;
+  private piano: InstanceType<PianoModule['Piano']> | null = null;
   private activeNotes = new Set<string>();
-  private audioSamplesUri?: string;
-  private loadPromise: Promise<void> | null = null;
-
-  configure(options?: PianoAudioEngineOptions) {
-    if (options?.audioSamplesUri) {
-      this.audioSamplesUri = options.audioSamplesUri;
-    }
-  }
+  private initializationPromise: Promise<void> | null = null;
+  private fullLoadPromise: Promise<void> | null = null;
 
   async ensureToneReady(): Promise<void> {
     if (typeof window === 'undefined') return;
@@ -67,36 +62,69 @@ class PianoAudioEngine {
     clearPianoUserGesture();
   }
 
-  async prepare(options?: PianoAudioEngineOptions): Promise<void> {
+  async prepare(
+    options?: PianoAudioEngineOptions,
+  ): Promise<void> {
     if (typeof window === 'undefined') return;
-    this.configure(options);
-    if (!this.audioSamplesUri) return;
-    if (this.piano) return;
-    if (!this.loadPromise) {
-      this.loadPromise = this.loadSamples();
-    }
-    try {
-      await this.loadPromise;
-    } finally {
-      this.loadPromise = null;
+
+    await this.ensurePianoReady();
+
+    if (options?.preload === 'full') {
+      await this.preloadAllSamples();
     }
   }
 
-  private async loadSamples(): Promise<void> {
-    if (!this.audioSamplesUri) return;
-    showPianoLoading('Loading piano sound...');
-    try {
+  private async ensurePianoReady(): Promise<void> {
+    if (this.piano) return;
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+      return;
+    }
+
+    const init = async () => {
       await this.ensureToneReady();
       const mod = await import('@tonejs/piano');
-      const PianoSound = mod.Piano as any;
+      const PianoSound = mod.Piano as PianoModule['Piano'];
       this.piano = new PianoSound({
-        url: this.audioSamplesUri,
+        url: '/audio/',
         velocities: 5,
       });
       this.piano.toDestination();
-      await this.piano.load();
+    };
+
+    try {
+      this.initializationPromise = init();
+      await this.initializationPromise;
     } finally {
-      hidePianoLoading();
+      this.initializationPromise = null;
+    }
+  }
+
+  private async preloadAllSamples(): Promise<void> {
+    if (!this.piano) {
+      await this.ensurePianoReady();
+    }
+    if (!this.piano) return;
+
+    if (this.fullLoadPromise) {
+      await this.fullLoadPromise;
+      return;
+    }
+
+    const load = async () => {
+      showPianoLoading('Loading piano sound...');
+      try {
+        await this.piano?.load();
+      } finally {
+        hidePianoLoading();
+      }
+    };
+
+    try {
+      this.fullLoadPromise = load();
+      await this.fullLoadPromise;
+    } finally {
+      this.fullLoadPromise = null;
     }
   }
 

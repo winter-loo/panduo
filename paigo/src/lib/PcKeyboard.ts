@@ -1,11 +1,6 @@
 import { EventEmitter } from 'events';
-import { ensurePianoAudioContextReady, preparePianoAudioEngine } from '$lib/audio/pianoAudioEngine';
 import { noteCoordinator } from '$lib/note-events/noteCoordinator';
 import type { NoteEventData, NoteEventType } from '$lib/note-events/types';
-
-export interface PcKeyboardOptions {
-  audioSamplesUri?: string;
-}
 
 const PC_KEYBOARD_SOURCE_ID = 'pc-keybord';
 
@@ -44,14 +39,12 @@ export class PcKeyboard extends EventEmitter {
 
   private keydownListener: any;
   private keyupListener: any;
-  private audioSamplesUri?: any;
 
-  constructor(options?: PcKeyboardOptions) {
+  constructor() {
     super();
 
     this.keydownListener = null;
     this.keyupListener = null;
-    this.audioSamplesUri = options?.audioSamplesUri;
 
     noteCoordinator.registerControl({
       id: PC_KEYBOARD_SOURCE_ID,
@@ -62,10 +55,8 @@ export class PcKeyboard extends EventEmitter {
   _addListeners() {
     if (typeof document === 'undefined') return;
     let self = this;
-    this.keydownListener = async function (event: any) {
+    this.keydownListener = function (event: any) {
       event.preventDefault();
-      // Make sure audio context is ready ASAP on first interaction
-      void ensurePianoAudioContextReady();
       let validKeyDown = self.NoteNameMap.get(event.code);
 
       if (validKeyDown != undefined && !validKeyDown.holding) {
@@ -157,15 +148,6 @@ export class PcKeyboard extends EventEmitter {
     // No unlock handler to remove; handled by overlay button
   }
 
-  async charge(): Promise<void> {
-    // Avoid loading audio libraries during SSR
-    if (typeof window === 'undefined') return;
-    if (this.audioSamplesUri) {
-      await preparePianoAudioEngine({ audioSamplesUri: this.audioSamplesUri });
-      console.log('[PcKeyboard] piano audio prepared');
-    }
-  }
-
   turnOn() {
     this._addListeners();
   }
@@ -206,11 +188,7 @@ let pcKeyboard: PcKeyboard;
 
 export function getPcKeyboard(): PcKeyboard {
   if (!pcKeyboard) {
-    pcKeyboard = new PcKeyboard({ audioSamplesUri: '/audio/' });
-
-    pcKeyboard.charge().then(() => {
-      console.log('pc keyboard controller connected');
-    });
+    pcKeyboard = new PcKeyboard();
   }
   return pcKeyboard;
 }
