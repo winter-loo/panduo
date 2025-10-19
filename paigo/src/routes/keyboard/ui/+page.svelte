@@ -1,9 +1,15 @@
 <script lang="ts">
   import { Select } from 'bits-ui';
   import PianoKeyboard from '$lib/components/piano-keyboord/piano-keyboard.svelte';
+  import type { PianoKeyName } from '$lib/components/piano-key/piano-key.svelte';
+
   let selectedOctave = $state('4');
-  let selectedName = $state('C');
-  let showHighlight = $state(true);
+  let selectedName = $state<PianoKeyName>('C');
+  let keyboardRef = $state<PianoKeyboard | null>(null);
+
+  $effect(() => {
+    keyboardRef?.pkHighlight({ name: 'A', octave: 4, sharp: false }, true);
+  });
 </script>
 
 {#snippet options(options: any[], value: string, onChange: (value: string) => void)}
@@ -51,33 +57,17 @@
       >
       <div id="middle-key-control" class="flex gap-2">
         {@render options(
-          ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+          ['A', 'B', 'C', 'D', 'E', 'F', 'G'] as PianoKeyName[],
           selectedName,
-          (next) => (selectedName = next),
+          (next) => (selectedName = next as PianoKeyName),
         )}
         {@render options([1, 3, 4, 5, 6, 7], selectedOctave, (next) => (selectedOctave = next))}
       </div>
     </div>
-
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div class="min-w-[10rem]">
-        <p class="text-sm font-semibold tracking-wide uppercase">Highlight keys</p>
-        <p class="text-xs text-[var(--app-dark)]">Show active notes on the keyboard.</p>
-      </div>
-      <label
-        for="keys-highlight-control"
-        class="inline-flex items-center gap-3 text-base font-medium text-[var(--app-darkest)]"
-      >
-        <span>Show</span>
-        <input
-          id="keys-highlight-control"
-          type="checkbox"
-          class="h-6 w-6 rounded border-2 border-[var(--app-dark)] bg-white text-[var(--app-primary)] accent-[var(--app-dark)] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-dark)]"
-          bind:checked={showHighlight}
-        />
-      </label>
-    </div>
   </div>
 </div>
 
-<PianoKeyboard />
+<PianoKeyboard
+  bind:this={keyboardRef}
+  middleKeyName={{ name: selectedName, octave: Number(selectedOctave) }}
+/>

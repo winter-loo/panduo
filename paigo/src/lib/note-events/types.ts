@@ -3,6 +3,7 @@ export type NoteEventType = 'noteon' | 'noteoff';
 export type NoteSourceRole = 'main' | 'sub';
 
 export interface NoteEventData {
+  // C or C#
   note: string;
   octave: number;
   /**

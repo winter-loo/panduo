@@ -1,15 +1,26 @@
 <script lang="ts">
   export type PianoKeyName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
   export type PianoKeyFullName = { name: PianoKeyName; octave: number; sharp: boolean };
+  export type PianoPluginOptions = Record<string, unknown>;
+  export type PianoPluginNameOptions = { name: PianoKeyFullName; options?: PianoPluginOptions };
   export type PianoKeyProps = {
     name: PianoKeyName;
     octave: number;
     hideBlack?: boolean;
     onnoteon?: (name: PianoKeyFullName) => void;
     onnoteoff?: (name: PianoKeyFullName) => void;
-    plugin?: import('svelte').Snippet<[PianoKeyFullName]>;
+    plugin?: import('svelte').Snippet<[PianoPluginNameOptions]>;
+    pluginOptions?: PianoPluginOptions;
   };
-  let { name, octave, hideBlack = false, onnoteon, onnoteoff, plugin }: PianoKeyProps = $props();
+  let {
+    name,
+    octave,
+    hideBlack = false,
+    onnoteon,
+    onnoteoff,
+    plugin,
+    pluginOptions,
+  }: PianoKeyProps = $props();
 
   type PressOptions = { sharp?: boolean };
 
@@ -100,7 +111,7 @@
     <div
       class="plugin transition-translate -translate-y-1 duration-200 ease-out group-active:translate-y-0"
     >
-      {@render plugin?.({ name, octave, sharp: false })}
+      {@render plugin?.({ name: { name, octave, sharp: false }, options: pluginOptions })}
     </div>
   </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
@@ -125,7 +136,7 @@
       <div
         class="plugin transition-translate -translate-y-2 duration-200 ease-out group-active:translate-y-0"
       >
-        {@render plugin?.({ name, octave, sharp: true })}
+        {@render plugin?.({ name: { name, octave, sharp: true }, options: pluginOptions })}
       </div>
     </button>
   {/if}
