@@ -49,6 +49,7 @@
 
   function startWhitePress(name: PianoKeyFullName) {
     whiteActive = true;
+    window.addEventListener('pointerup', () => endWhitePress(name));
     onnoteon?.(name);
   }
 
@@ -59,6 +60,7 @@
 
   function startBlackPress(name: PianoKeyFullName) {
     blackActive = true;
+    window.addEventListener('pointerup', () => endBlackPress(name));
     onnoteon?.(name);
   }
 
