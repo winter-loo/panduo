@@ -39,6 +39,13 @@ export function cloneLayout(overrides: Partial<StaffLayout> = {}): StaffLayout {
 
 type ConfigInstance = ReturnType<typeof VexFlow.Config.defaults>;
 
+export type StaffNoteMetadata = {
+  pitch: string;
+  octave: number;
+  isRest: boolean;
+  normalized: string;
+};
+
 export class MovingStaffController extends MovableElement {
   private layout: StaffLayout;
   private config: ConfigInstance;
@@ -66,6 +73,7 @@ export class MovingStaffController extends MovableElement {
   private readonly dragStartListeners = new Set<() => void>();
   private readonly dragEndListeners = new Set<() => void>();
   private readonly resetListeners = new Set<() => void>();
+  private noteMetadata: Array<StaffNoteMetadata | null> = [];
 
   constructor(
     layout: StaffLayout,
@@ -196,6 +204,7 @@ export class MovingStaffController extends MovableElement {
     this.lastAdvanceTimestamp = 0;
     this.lastRecordedOffset = this.currentOffsetX;
     this.scrollAnchorX = null;
+    this.noteMetadata = [];
   }
 
   private getCursorAnchor(): number | null {
@@ -277,6 +286,7 @@ export class MovingStaffController extends MovableElement {
         staveNote.addModifier(dot, 0);
       }
       this.notes.push(staveNote);
+      this.noteMetadata.push(this.parseNoteMetadata(note));
       return staveNote;
     });
 
@@ -296,6 +306,40 @@ export class MovingStaffController extends MovableElement {
         this.scrollAnchorX = this.notes[0].getAbsoluteX();
       }
     }
+  }
+
+  private parseNoteMetadata(note: StaveNoteStruct): StaffNoteMetadata | null {
+    const duration = typeof note.duration === 'string' ? note.duration.toLowerCase() : '';
+    const isRest = duration.includes('r');
+    const [firstKey] = note.keys ?? [];
+    if (!firstKey) {
+      return isRest
+        ? { pitch: '', octave: 0, isRest: true, normalized: '' }
+        : null;
+    }
+    const [rawPitch = '', rawOctave = ''] = firstKey.split('/');
+    const pitchToken = rawPitch.trim();
+    const letter = pitchToken.charAt(0)?.toUpperCase();
+    if (!letter) {
+      return isRest
+        ? { pitch: '', octave: 0, isRest: true, normalized: '' }
+        : null;
+    }
+    const accidentalToken = pitchToken.slice(1).trim();
+    const accidental = accidentalToken.startsWith('#')
+      ? '#'
+      : accidentalToken.startsWith('b')
+        ? 'b'
+        : '';
+    const pitch = `${letter}${accidental}`;
+    const octave = Number.parseInt(rawOctave, 10);
+    if (!Number.isFinite(octave)) {
+      return isRest
+        ? { pitch, octave: 0, isRest: true, normalized: `${pitch}` }
+        : null;
+    }
+    const normalized = `${pitch}${octave}`;
+    return { pitch, octave, isRest, normalized };
   }
 
   setNoteSpanVisible(visible: boolean) {
@@ -580,6 +624,22 @@ export class MovingStaffController extends MovableElement {
     this.lastAdvanceTimestamp = now;
     this.scrollToNote(nextIndex, { immediate, easing: false });
     this.pendingNoteIndex = nextIndex;
+  }
+
+  getCurrentNoteMetadata(): StaffNoteMetadata | null {
+    return this.getNoteMetadataAt(this.currentNoteIndex);
+  }
+
+  getPendingNoteMetadata(): StaffNoteMetadata | null {
+    if (this.pendingNoteIndex === null) return null;
+    return this.getNoteMetadataAt(this.pendingNoteIndex);
+  }
+
+  private getNoteMetadataAt(index: number): StaffNoteMetadata | null {
+    if (index < 0 || index >= this.noteMetadata.length) {
+      return null;
+    }
+    return this.noteMetadata[index];
   }
 
   startScalePulseAnimation(): StaveNote | null {

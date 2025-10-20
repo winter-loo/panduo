@@ -6,6 +6,7 @@
     cloneLayout,
     type StaffLayout,
     type StaffSong,
+    type StaffNoteMetadata,
   } from '$lib/staff/moving-staff-controller';
   import { createDebugGridPlugin, type DebugGridPluginConfig } from '$lib/staff/plugins/debug-grid';
   import { createCursorPlugin, type CursorPluginOptions } from '$lib/staff/plugins/cursor';
@@ -372,6 +373,14 @@
 
   export function getConfig(): ConfigInstance | null {
     return config;
+  }
+
+  export function getCurrentNoteMetadata(): StaffNoteMetadata | null {
+    return controller?.getCurrentNoteMetadata() ?? null;
+  }
+
+  export function getPendingNoteMetadata(): StaffNoteMetadata | null {
+    return controller?.getPendingNoteMetadata() ?? null;
   }
 
   export function onNoteOn() {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { VexFlow, type DebugGridOptions } from '$lib/vexflow/vexflow-core';
   import type { PageProps } from './$types';
   import { Button } from '$lib/components/ui/button/index';
@@ -7,6 +8,8 @@
   import MovingStaff from '$lib/components/staff/MovingStaff.svelte';
   import type { DebugGridPlugin } from '$lib/staff/plugins/debug-grid';
   import PianoKeyboard from '$lib/components/piano-keyboord/piano-keyboard.svelte';
+  import { noteCoordinator } from '$lib/note-events/noteCoordinator';
+  import type { RoutedNoteEvent } from '$lib/note-events/types';
 
   const { data }: PageProps = $props();
 
@@ -21,6 +24,8 @@
   }
 
   let movingStaff = $state<MovingStaff | null>(null);
+  let matchedNoteId: string | null = null;
+  const noteSourceAllowList = new Set(['pc-keybord', 'piano-ui']);
 
   let tempo = $state(data.song.tempo ?? 60);
 
@@ -37,6 +42,7 @@
     movingStaff?.getPlugin<DebugGridPlugin>('debug-grid');
 
   function onStaffReady() {
+    matchedNoteId = null;
     const plugin = getDebugGridPlugin();
     // get the initial plugin configuration
     gridOptions = plugin?.getOptions() ?? {};
@@ -57,6 +63,59 @@
   // ]
 
   let version = $state(0);
+
+  const normalizeEventNote = (event: RoutedNoteEvent): string | null => {
+    const raw = event.note?.trim();
+    if (!raw) return null;
+    const letter = raw.charAt(0)?.toUpperCase();
+    if (!letter) return null;
+    const hasSharp = event.sharp === true || raw.includes('#');
+    const hasFlat = !hasSharp && raw.includes('b');
+    const accidental = hasSharp ? '#' : hasFlat ? 'b' : '';
+    const octave = Number.isFinite(event.octave) ? event.octave : Number.NaN;
+    if (!Number.isFinite(octave)) return null;
+    return `${letter}${accidental}${octave}`;
+  };
+
+  const getExpectedNote = (): string | null => {
+    const metadata = movingStaff?.getCurrentNoteMetadata();
+    if (!metadata) return null;
+    if (metadata.isRest) return null;
+    return metadata.normalized || null;
+  };
+
+  const handlePrimaryNoteEvent = (event: RoutedNoteEvent) => {
+    if (!noteSourceAllowList.has(event.originId)) return;
+    const normalizedEvent = normalizeEventNote(event);
+    if (!normalizedEvent) return;
+
+    if (event.type === 'noteon') {
+      if (matchedNoteId) return;
+      const expected = getExpectedNote();
+      if (!expected) return;
+      if (normalizedEvent === expected) {
+        movingStaff?.onNoteOn();
+        matchedNoteId = normalizedEvent;
+      }
+      return;
+    }
+
+    if (event.type === 'noteoff') {
+      if (!matchedNoteId) return;
+      if (normalizedEvent === matchedNoteId) {
+        movingStaff?.onNoteOff();
+        matchedNoteId = null;
+      }
+    }
+  };
+
+  onMount(() => {
+    const unsubscribe = noteCoordinator.onPrimary(handlePrimaryNoteEvent);
+    return () => {
+      unsubscribe();
+      matchedNoteId = null;
+    };
+  });
 </script>
 
 <Button variant="link" href="/layout">layout</Button>
@@ -64,7 +123,10 @@
 
 <svelte:document
   onkeydown={(e) => {
-    if (e.key === 'r') movingStaff?.reset();
+    if (e.key === 'r') {
+      matchedNoteId = null;
+      movingStaff?.reset();
+    }
   }}
 />
 
@@ -87,14 +149,23 @@
 
 <div class="controls-row">
   <GridOverlayControl bind:enabled={debugGridEnabled} bind:options={gridOptions} />
-  <Button id="renderButton" type="button" onclick={() => (version += 1)}>rerender</Button>
+  <Button
+    id="renderButton"
+    type="button"
+    onclick={() => {
+      matchedNoteId = null;
+      version += 1;
+    }}>rerender</Button
+  >
   <Button id="pauseButton" type="button" onclick={() => movingStaff?.stop()}>pause</Button>
   <Button id="resumeButton" type="button" onclick={() => movingStaff?.move()}>resume</Button>
-  <Button id="resetButton" type="button" onclick={() => movingStaff?.reset()}>reset</Button>
   <Button
+    id="resetButton"
     type="button"
-    onpointerdown={() => movingStaff?.onNoteOn()}
-    onpointerup={() => movingStaff?.onNoteOff()}>next note</Button
+    onclick={() => {
+      matchedNoteId = null;
+      movingStaff?.reset();
+    }}>reset</Button
   >
 </div>
 
