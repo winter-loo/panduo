@@ -383,7 +383,20 @@
     return controller?.getPendingNoteMetadata() ?? null;
   }
 
+  // Track the pending timeout that hides the note span preview so fresh note-on events can cancel it.
+  let noteSpanPreviewTimeout: number | null = null;
+
+  // Co-locate timeout cleanup to avoid missing a place that should null the handle.
+  const clearNoteSpanPreviewTimeout = () => {
+    if (noteSpanPreviewTimeout !== null) {
+      clearTimeout(noteSpanPreviewTimeout);
+      noteSpanPreviewTimeout = null;
+    }
+  };
+
   export function onNoteOn() {
+    // Starting a new note should keep the highlight alive, so cancel any pending hide.
+    clearNoteSpanPreviewTimeout();
     controller?.startNoteSpanPreview();
     controller?.goToNextNote();
   }
@@ -400,9 +413,12 @@
     } = {},
   ) {
     const { scaleDuration = 200, spanExpandDelay = 60, spanHoldDuration = 200 } = options;
+    // Guard against late-running timeouts from previous notes that could hide the span early.
+    clearNoteSpanPreviewTimeout();
     const note = controller?.startScalePulseAnimation();
     if (!note) {
       controller?.stopNoteSpanPreview();
+      clearNoteSpanPreviewTimeout();
       return;
     }
 
@@ -413,14 +429,21 @@
     if (typeof window === 'undefined') {
       note.setScalePulseState(false);
       controller?.stopNoteSpanPreview();
+      clearNoteSpanPreviewTimeout();
       return;
     }
 
     window.setTimeout(() => note.setScalePulseState(false), scaleDuration);
-    window.setTimeout(() => controller?.stopNoteSpanPreview(), spanExpandDelay + spanHoldDuration);
+    // Store timeout id so note-on can cancel it if another note starts before the hide runs.
+    noteSpanPreviewTimeout = window.setTimeout(() => {
+      controller?.stopNoteSpanPreview();
+      clearNoteSpanPreviewTimeout();
+    }, spanExpandDelay + spanHoldDuration);
   }
 
   export function reset() {
+    // Reset wipes UI state; make sure the pending hide matches the cleared staff.
+    clearNoteSpanPreviewTimeout();
     controller?.reset();
   }
 
