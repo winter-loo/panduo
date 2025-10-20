@@ -47,12 +47,11 @@ export const createTrailingStavesPlugin: MovingStaffPluginFactory<{}, {}> = ({
     if (!song.measures?.length) return;
     if (!controller.context) return;
 
-    const rightBar = config.get('Stave.rightBar');
     const trailingStaveCount = deriveTrailingStaveCount(controller.context, layout.measureWidth);
 
     for (let index = 0; index < trailingStaveCount; index++) {
       // traling notes have only right bar
-      const trailingStave = new Stave(config, controller.staveX, 0, layout.measureWidth, { leftBar: false, rightBar });
+      const trailingStave = new Stave(config, controller.staveX, 0, layout.measureWidth);
       trailingStave.setContext(controller.context).draw();
 
       if (index === 0) {
