@@ -84,7 +84,7 @@
       - need set `translate-y-0` on an inner child
 -->
 <div
-  class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-48 items-end last:mr-1"
+  class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-48 md:h-32 items-end last:mr-1"
   data-name={name}
   data-octave={octave}
 >
@@ -92,7 +92,7 @@
   <!-- Instead, change only what should be changed -->
   <button
     class={`white-key group z-1 flex
-    h-48 w-18 items-end justify-center rounded-sm
+    h-48 w-18 md:h-32 items-end justify-center rounded-sm
     bg-white text-[var(--note-black)] shadow-[0_0_0_var(--spacing)_var(--border),inset_0_calc(var(--spacing)*-1)_0_0_var(--border)]
     transition-all
     duration-200
@@ -100,6 +100,7 @@
     hover:bg-[var(--note-black-100)]/30
     focus:outline-none
     active:h-47
+    md:active:h-31
     active:bg-[var(--note-black-100)]/40
     active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]
     data-[active=true]:h-47
@@ -118,7 +119,7 @@
   </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
     <button
-      class={`black-key group absolute -top-2 left-11 z-2 flex h-24 w-13
+      class={`black-key group absolute -top-2 left-11 z-2 flex md:h-16 h-24 w-13
       items-end justify-center rounded-sm bg-[var(--note-black)]
       text-white
       shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-black-900)]
