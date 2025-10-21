@@ -109,85 +109,85 @@
     C: [
       {
         text: 'text-[var(--note-c)]',
-        bg: 'bg-[var(--note-c-300)]/60',
-        border: 'bg-[var(--note-c-300)]/40',
+        bg: 'bg-[var(--note-c)]/20',
+        border: 'bg-[var(--note-c)]/20',
       },
       {
         text: 'text-[var(--note-c-300)]',
-        bg: 'bg-[var(--note-c-700)]',
-        border: 'bg-[var(--note-c-700)]/50',
+        bg: 'bg-[var(--note-c-300)]/20',
+        border: 'bg-[var(--note-c-300)]/20',
       },
     ],
     D: [
       {
         text: 'text-[var(--note-d)]',
-        bg: 'bg-[var(--note-d-300)]/60',
-        border: 'bg-[var(--note-d-300)]/40',
+        bg: 'bg-[var(--note-d)]/20',
+        border: 'bg-[var(--note-d)]/20',
       },
       {
         text: 'text-[var(--note-d-300)]',
-        bg: 'bg-[var(--note-d-700)]',
-        border: 'bg-[var(--note-d-700)]/50',
+        bg: 'bg-[var(--note-d-300)]/20',
+        border: 'bg-[var(--note-d-300)]/20',
       },
     ],
     E: [
       {
         text: 'text-[var(--note-e)]',
-        bg: 'bg-[var(--note-e-300)]/60',
-        border: 'bg-[var(--note-e-300)]/40',
+        bg: 'bg-[var(--note-e)]/20',
+        border: 'bg-[var(--note-e)]/20',
       },
       {
         text: 'text-[var(--note-e-300)]',
-        bg: 'bg-[var(--note-e-700)]',
-        border: 'bg-[var(--note-e-700)]/50',
+        bg: 'bg-[var(--note-e-300)]/20',
+        border: 'bg-[var(--note-e-300)]/20',
       },
     ],
     F: [
       {
         text: 'text-[var(--note-f)]',
-        bg: 'bg-[var(--note-f-300)]/60',
-        border: 'bg-[var(--note-f-300)]/40',
+        bg: 'bg-[var(--note-f)]/20',
+        border: 'bg-[var(--note-f)]/20',
       },
       {
         text: 'text-[var(--note-f-300)]',
-        bg: 'bg-[var(--note-f-700)]',
-        border: 'bg-[var(--note-f-700)]/50',
+        bg: 'bg-[var(--note-f-300)]/20',
+        border: 'bg-[var(--note-f-300)]/20',
       },
     ],
     G: [
       {
         text: 'text-[var(--note-g)]',
-        bg: 'bg-[var(--note-g-300)]/60',
-        border: 'bg-[var(--note-g-300)]/40',
+        bg: 'bg-[var(--note-g)]/20',
+        border: 'bg-[var(--note-g)]/20',
       },
       {
         text: 'text-[var(--note-g-300)]',
-        bg: 'bg-[var(--note-g-700)]',
-        border: 'bg-[var(--note-g-700)]/50',
+        bg: 'bg-[var(--note-g-300)]/20',
+        border: 'bg-[var(--note-g-300)]/20',
       },
     ],
     A: [
       {
         text: 'text-[var(--note-a)]',
-        bg: 'bg-[var(--note-a-300)]/60',
-        border: 'bg-[var(--note-a-300)]/40',
+        bg: 'bg-[var(--note-a)]/20',
+        border: 'bg-[var(--note-a)]/20',
       },
       {
         text: 'text-[var(--note-a-300)]',
-        bg: 'bg-[var(--note-a-700)]',
-        border: 'bg-[var(--note-a-700)]/50',
+        bg: 'bg-[var(--note-a-300)]/20',
+        border: 'bg-[var(--note-a-300)]/20',
       },
     ],
     B: [
       {
         text: 'text-[var(--note-b)]',
-        bg: 'bg-[var(--note-b-300)]/60',
-        border: 'bg-[var(--note-b-300)]/40',
+        bg: 'bg-[var(--note-b)]/20',
+        border: 'bg-[var(--note-b)]/20',
       },
       {
         text: 'text-[var(--note-b-300)]',
-        bg: 'bg-[var(--note-b-700)]',
-        border: 'bg-[var(--note-b-700)]/50',
+        bg: 'bg-[var(--note-b-300)]/20',
+        border: 'bg-[var(--note-b-300)]/20',
       },
     ],
   };
@@ -263,7 +263,8 @@
 {#snippet pianoKeyPlugin({ name: { name, octave, sharp }, options }: PianoPluginNameOptions)}
   {@const variant = bowKeyIndex(sharp)}
   {@const highlight = pianoKeyHighlights[name[0]][variant]}
-  {@const containerSize = sharp ? 'h-10 w-10' : 'h-12 w-12'}
+  {@const containerSize = sharp ? 'h-8 w-8' : 'h-12 w-12'}
+  {@const borderSize = sharp ? 'inset-2' : 'inset-3'}
   {@const textSize = sharp ? 'text-lg' : 'text-xl'}
   {@const label = sharp ? `${name}#` : name}
   {@const fullName = `${label}${octave}`}
@@ -274,8 +275,8 @@
 
   {#if shouldHighlight}
     <div class={`relative flex ${containerSize} items-center justify-center`}>
-      <div class={`absolute inset-0 flex rounded-full ${highlight.border}`}></div>
-      <div class={`absolute inset-3 flex rounded-full ${highlight.bg}`}></div>
+      <div class={`absolute -inset-1 flex rounded-full ${highlight.border}`}></div>
+      <div class={`absolute ${borderSize} flex rounded-full ${highlight.bg}`}></div>
       <span class={`isolate text-center ${textSize} font-extrabold ${highlight.text}`}>{label}</span
       >
     </div>

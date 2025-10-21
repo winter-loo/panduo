@@ -8,7 +8,18 @@
   let keyboardRef = $state<PianoKeyboard | null>(null);
 
   $effect(() => {
+    keyboardRef?.pkHighlight({ name: 'C', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'C', octave: 4, sharp: true }, true);
+    keyboardRef?.pkHighlight({ name: 'D', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'D', octave: 4, sharp: true }, true);
+    keyboardRef?.pkHighlight({ name: 'E', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'F', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'F', octave: 4, sharp: true }, true);
+    keyboardRef?.pkHighlight({ name: 'G', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'G', octave: 4, sharp: true }, true);
     keyboardRef?.pkHighlight({ name: 'A', octave: 4, sharp: false }, true);
+    keyboardRef?.pkHighlight({ name: 'A', octave: 4, sharp: true }, true);
+    keyboardRef?.pkHighlight({ name: 'B', octave: 4, sharp: false }, true);
   });
 </script>
 
