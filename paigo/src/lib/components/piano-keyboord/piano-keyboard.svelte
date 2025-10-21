@@ -29,7 +29,19 @@
   let currentKeys = $state<string[]>([]);
   const movable = new MovableElement(0);
 
-  let { middleKeyName = { name: 'C', octave: 4 } } = $props();
+  type AlignMode = 'left' | 'middle' | 'right';
+
+  type PianoKeyboardProps = {
+    middleKeyName: { name: PianoKeyName; octave: number };
+    groupGap: string;
+    align: AlignMode;
+  };
+
+  let {
+    middleKeyName = { name: 'C', octave: 4 },
+    groupGap = 'w-6',
+    align = 'left',
+  }: PianoKeyboardProps = $props();
 
   let pianoKeys: PianoKeyProps[] = [];
   let octave = 0;
@@ -64,13 +76,21 @@
 
   $effect(() => {
     if (middleKey) {
+      const extra = 16;
       const middleKeyOffsetLeft = middleKey.offsetLeft;
       const middleKeyWidth = middleKey.offsetWidth;
       // compute how far we need to shift the rail so the chosen key sits at the viewport center:
       // (windowWidth / 2) gives the viewport midpoint, subtracting the key's midpoint gives
       // a signed offset; negative means slide the keyboard left. We then clamp that offset
       // into [-movable.maxOffsetX, 0] so we never go past either rail limit.
-      const computedOffset = windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
+      let computedOffset = 0;
+      if (align == 'middle') {
+        computedOffset = windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
+      } else if (align == 'left') {
+        computedOffset = -middleKey.offsetLeft + extra;
+      } else if (align == 'right') {
+        computedOffset = windowWidth - middleKeyOffsetLeft - middleKeyWidth - extra;
+      }
       const minOffset = -movable.maxOffsetX;
       const clampedOffset = Math.max(minOffset, Math.min(0, computedOffset));
       offsetX = clampedOffset;
@@ -316,13 +336,16 @@
       bind:clientWidth={keyboardWidth}
     ></div>
     {#each pianoKeys as { name, octave, hideBlack }}
+      {#if name == 'F' || name == 'C'}
+        <div class={`h-12 ${groupGap}`}></div>
+      {/if}
       {#if name == middleKeyName.name && octave == middleKeyName.octave}
         <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
         <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
-          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
+          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`name${octave}`))}
         </div>
       {:else}
-        {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
+        {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`name${octave}`))}
       {/if}
     {/each}
   </div>
