@@ -24,6 +24,7 @@
 
   type PressOptions = { sharp?: boolean };
 
+  // we need trigger piano key programatically
   let whiteActive = $state(false);
   let blackActive = $state(false);
 
@@ -73,7 +74,7 @@
 <!--
   * use 'my-2 ml-1 last:mr-1' to have exactly width taken visually by this piano key, i.e.,
     to include shadow spacing
-  * keep 'h-48' to decouple the black key from the white key's active height change
+  * the CSS custom property keeps the black key decoupled from the white key's active height change
   * implementation notes: use shadown and inset shadow and height transition to create a
     slide up/down effect on click.
     Pros:
@@ -84,7 +85,7 @@
       - need set `translate-y-0` on an inner child
 -->
 <div
-  class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-56 items-end last:mr-1 md:h-32 lg:h-56"
+  class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-[var(--white-key-height)] items-end last:mr-1"
   data-name={name}
   data-octave={octave}
 >
@@ -92,21 +93,15 @@
   <!-- Instead, change only what should be changed -->
   <button
     class={`white-key group z-1 flex
-    h-56 w-18 items-end justify-center rounded-sm bg-white text-[var(--note-black)]
+    h-[var(--white-key-height)] w-18 items-end justify-center rounded-sm bg-white text-[var(--note-black)]
     shadow-[0_0_0_var(--spacing)_var(--border),inset_0_calc(var(--spacing)*-1)_0_0_var(--border)] transition-all duration-200
     ease-out
-    hover:bg-[var(--note-black-100)]/30
+    hover:bg-[var(--note-black-50)]
     focus:outline-none
-    active:h-55
-    active:bg-[var(--note-black-100)]/40
-    active:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]
-    data-[active=true]:h-47
-    data-[active=true]:bg-[var(--note-black-100)]/40
+    data-[active=true]:h-[var(--white-key-height-active)]
+    data-[active=true]:bg-[var(--note-black-50)]
     data-[active=true]:shadow-[0_0_0_var(--spacing)_var(--border),inset_0_0_0_var(--border)]
-    md:h-32
-    md:active:h-31
-    lg:h-56
-    lg:active:h-55`}
+    `}
     data-active={whiteActive}
     onpointerdown={() => startWhitePress({ name, octave, sharp: false })}
     onpointerup={() => endWhitePress({ name, octave, sharp: false })}
@@ -120,18 +115,16 @@
   </button>
   {#if name != 'E' && name != 'B' && !hideBlack}
     <button
-      class={`black-key group absolute -top-2 left-11 z-2 flex h-32 w-13 items-end justify-center
+      class={`black-key group absolute -top-2 left-11 z-2 flex h-[var(--black-key-height)] w-13 items-end justify-center
       rounded-sm bg-[var(--note-black)] text-white shadow-[inset_0_calc(var(--spacing)*-2)_0_var(--note-black-900)]
       transition-all
       duration-200
       ease-out
       hover:bg-[var(--note-black-600)] focus:outline-none
-      active:-top-1 active:bg-[var(--note-black-700)] active:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]
       data-[active=true]:-top-1
       data-[active=true]:bg-[var(--note-black-700)]
       data-[active=true]:shadow-[inset_0_calc(var(--spacing)*-1)_0_var(--note-black-900)]
-      md:h-16
-      lg:h-32`}
+      `}
       data-active={blackActive}
       onpointerdown={() => startBlackPress({ name, octave, sharp: true })}
       onpointerup={() => endBlackPress({ name, octave, sharp: true })}
@@ -145,3 +138,19 @@
     </button>
   {/if}
 </div>
+
+<style>
+  .piano-key {
+    --white-key-height: 10rem;
+    --white-key-height-active: 9.75rem;
+    --black-key-height: 6rem;
+  }
+
+  @media (min-height: 500px) {
+    .piano-key {
+      --white-key-height: 14rem;
+      --white-key-height-active: 13.75rem;
+      --black-key-height: 8rem;
+    }
+  }
+</style>

@@ -38,6 +38,7 @@
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
 
+  --note-black-50: oklch(0.96 0 138);
   --note-black-100: oklch(0.91 0 138);
   --note-black-200: oklch(0.71 0 138);
   --note-black-400: oklch(0.41 0 138);
