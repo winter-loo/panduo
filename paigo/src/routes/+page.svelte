@@ -7,7 +7,7 @@
   import TempoSlider from '$lib/components/ui/TempoSlider.svelte';
   import MovingStaff from '$lib/components/staff/MovingStaff.svelte';
   import type { DebugGridPlugin } from '$lib/staff/plugins/debug-grid';
-  import PianoKeyboard from '$lib/components/piano-keyboord/piano-keyboard.svelte';
+  import PianoKeyboard from '$lib/components/piano-keyboard/piano-keyboard.svelte';
   import { noteCoordinator } from '$lib/note-events/noteCoordinator';
   import type { RoutedNoteEvent } from '$lib/note-events/types';
 

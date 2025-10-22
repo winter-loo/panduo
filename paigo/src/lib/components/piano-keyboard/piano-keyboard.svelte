@@ -32,9 +32,9 @@
   type AlignMode = 'left' | 'middle' | 'right';
 
   type PianoKeyboardProps = {
-    middleKeyName: { name: PianoKeyName; octave: number };
-    groupGap: string;
-    align: AlignMode;
+    middleKeyName?: { name: PianoKeyName; octave: number };
+    groupGap?: string;
+    align?: AlignMode;
   };
 
   let {
@@ -342,10 +342,10 @@
       {#if name == middleKeyName.name && octave == middleKeyName.octave}
         <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
         <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
-          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`name${octave}`))}
+          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
         </div>
       {:else}
-        {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`name${octave}`))}
+        {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
       {/if}
     {/each}
   </div>
