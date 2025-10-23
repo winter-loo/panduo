@@ -2,6 +2,7 @@
   import { Select } from 'bits-ui';
   import PianoKeyboard from '$lib/components/piano-keyboard/piano-keyboard.svelte';
   import type { PianoKeyName } from '$lib/components/piano-key/piano-key.svelte';
+  import { onMount } from 'svelte';
 
   type AlignMode = 'left' | 'middle' | 'right';
 
@@ -42,7 +43,7 @@
     }
   }
 
-  $effect(() => {
+  onMount(() => {
     keyboardRef?.pkHighlight({ name: 'C', octave: 4, sharp: false }, true);
     keyboardRef?.pkHighlight({ name: 'C', octave: 4, sharp: true }, true);
     keyboardRef?.pkHighlight({ name: 'D', octave: 4, sharp: false }, true);
@@ -55,6 +56,41 @@
     keyboardRef?.pkHighlight({ name: 'A', octave: 4, sharp: false }, true);
     keyboardRef?.pkHighlight({ name: 'A', octave: 4, sharp: true }, true);
     keyboardRef?.pkHighlight({ name: 'B', octave: 4, sharp: false }, true);
+
+    function loading() {
+      let lastTime = performance.now();
+      let keyIndex = 0;
+      const keys = [
+        { name: 'C' as PianoKeyName, octave: 4, sharp: false, active: true },
+        { name: 'D' as PianoKeyName, octave: 4, sharp: false, active: false },
+        { name: 'E' as PianoKeyName, octave: 4, sharp: false, active: false },
+        { name: 'F' as PianoKeyName, octave: 4, sharp: false, active: false },
+        { name: 'G' as PianoKeyName, octave: 4, sharp: false, active: false },
+        { name: 'A' as PianoKeyName, octave: 4, sharp: false, active: false },
+        { name: 'B' as PianoKeyName, octave: 4, sharp: false, active: false },
+      ];
+      keyboardRef?.activateKeys(keys[0].active, [keys[0]]);
+      const animate = () => {
+        let now = performance.now();
+        if (now - lastTime > 200) {
+          let key = keys[keyIndex];
+          key.active = !key.active;
+          keyboardRef?.activateKeys(key.active, [key]);
+
+          keyIndex = (keyIndex + 1) % keys.length;
+
+          key = keys[keyIndex];
+          key.active = !key.active;
+          keyboardRef?.activateKeys(key.active, [key]);
+          lastTime = now;
+        }
+
+        requestAnimationFrame(animate);
+      };
+      animate();
+    }
+
+    loading();
   });
 </script>
 

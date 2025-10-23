@@ -13,13 +13,9 @@
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   export const TemplateKeys: PianoKeyName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-  type PianoKeyController = {
-    press?: (options?: { sharp?: boolean }) => void;
-    release?: (options?: { sharp?: boolean }) => void;
-  };
 
   const numPianoKeys = 52;
-  const pianoKeyControllers = new Map<string, PianoKeyController>();
+  const pianoKeyRefs = new Map<string, PianoKey>();
   const PIANO_UI_SOURCE_ID = 'piano-ui';
 
   let middleKey = $state<HTMLElement | null>(null);
@@ -212,6 +208,14 @@
     ],
   };
 
+  const resolvePianoKey = (note: string, octave: number) => {
+    const sharp = note.includes('#');
+    const baseName = note[0] as PianoKeyName;
+    const keyRef = pianoKeyRefs.get(`${baseName}${octave}`);
+    if (!keyRef) throw new Error('invalid note name');
+    return { keyRef, sharp };
+  };
+
   let pcKeyboard = getPcKeyboard();
   onMount(() => {
     pcKeyboard.turnOn();
@@ -220,25 +224,15 @@
       currentKeys = [...notes];
     });
 
-    const resolvePianoKey = (note: string, octave: number) => {
-      if (!note) return null;
-      const sharp = note.includes('#');
-      const baseName = note[0] as PianoKeyName;
-      if (!TemplateKeys.includes(baseName)) return null;
-      const controller = pianoKeyControllers.get(`${baseName}${octave}`);
-      if (!controller) return null;
-      return { controller, sharp };
-    };
-
     const syncNoteEvent = (type: NoteEventType) => (event: RoutedNoteEvent) => {
       if (!event.isForwarded) return;
       const resolved = resolvePianoKey(event.note, event.octave);
       if (!resolved) return;
-      const { controller, sharp } = resolved;
+      const { keyRef, sharp } = resolved;
       if (type === 'noteon') {
-        controller.press?.(sharp ? { sharp: true } : {});
+        keyRef.press?.(sharp ? { sharp: true } : {});
       } else {
-        controller.release?.(sharp ? { sharp: true } : {});
+        keyRef.release?.(sharp ? { sharp: true } : {});
       }
     };
 
@@ -254,7 +248,7 @@
     return () => {
       unregisterControl();
       pcKeyboard.turnOff();
-      pianoKeyControllers.clear();
+      pianoKeyRefs.clear();
       unsubscribeActiveNotes();
     };
   });
@@ -275,6 +269,13 @@
   // black or white key index
   function bowKeyIndex(sharp: boolean): number {
     return sharp ? 1 : 0;
+  }
+
+  export function activateKeys(value: boolean, keys: PianoKeyFullName[]) {
+    keys.forEach(({ name, octave, sharp }) => {
+      const { keyRef } = resolvePianoKey(name, octave);
+      keyRef.activateUI(value, sharp);
+    });
   }
 </script>
 
@@ -320,8 +321,7 @@
     plugin={pianoKeyPlugin}
     {pluginOptions}
     bind:this={
-      () => pianoKeyControllers.get(`${name}${octave}`),
-      (v) => pianoKeyControllers.set(`${name}${octave}`, v)
+      () => pianoKeyRefs.get(`${name}${octave}`), (v) => pianoKeyRefs.set(`${name}${octave}`, v)
     }
   ></PianoKey>
 {/snippet}

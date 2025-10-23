@@ -50,6 +50,14 @@
     }
   }
 
+  export function activateUI(value: boolean, sharp: boolean = false) {
+    if (sharp) {
+      blackActive = value;
+    } else {
+      whiteActive = value;
+    }
+  }
+
   function startWhitePress(name: PianoKeyFullName) {
     whiteActive = true;
     window.addEventListener('pointerup', () => endWhitePress(name));
