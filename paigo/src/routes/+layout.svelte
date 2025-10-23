@@ -51,6 +51,13 @@
         {/snippet}
       </NavigationMenu.Link>
     </NavigationMenu.Item>
+    <NavigationMenu.Item>
+      <NavigationMenu.Link>
+        {#snippet child()}
+          <a href="/animation" class={navigationMenuTriggerStyle()}>animation</a>
+        {/snippet}
+      </NavigationMenu.Link>
+    </NavigationMenu.Item>
   </NavigationMenu.List>
 </NavigationMenu.Root>
 
