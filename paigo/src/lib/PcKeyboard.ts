@@ -6,18 +6,18 @@ const PC_KEYBOARD_SOURCE_ID = 'pc-keybord';
 
 export class PcKeyboard extends EventEmitter {
   private NoteNameMap = new Map([
-    ['Space', { noteName: 'C', holding: false }],
-    ['KeyJ', { noteName: 'D', holding: false }],
-    ['KeyK', { noteName: 'E', holding: false }],
-    ['KeyL', { noteName: 'F', holding: false }],
-    ['Semicolon', { noteName: 'G', holding: false }],
-    ['Quote', { noteName: 'A', holding: false }],
-    ['Enter', { noteName: 'B', holding: false }],
-    ['KeyN', { noteName: 'C#', holding: false }],
-    ['KeyI', { noteName: 'D#', holding: false }],
-    ['KeyO', { noteName: 'F#', holding: false }],
-    ['KeyP', { noteName: 'G#', holding: false }],
-    ['BracketLeft', { noteName: 'A#', holding: false }],
+    ['KeyN', { noteName: 'C', holding: false }],
+    ['KeyI', { noteName: 'D', holding: false }],
+    ['KeyO', { noteName: 'E', holding: false }],
+    ['KeyP', { noteName: 'F', holding: false }],
+    ['BracketLeft', { noteName: 'G', holding: false }],
+    ['BracketRight', { noteName: 'A', holding: false }],
+    ['Backslash', { noteName: 'B', holding: false }],
+    ['KeyJ', { noteName: 'C#', holding: false }],
+    ['Digit9', { noteName: 'D#', holding: false }],
+    ['Digit0', { noteName: 'F#', holding: false }],
+    ['Minus', { noteName: 'G#', holding: false }],
+    ['Equal', { noteName: 'A#', holding: false }],
   ]);
 
   // 'A', 'S', 'D' for increment octaves
