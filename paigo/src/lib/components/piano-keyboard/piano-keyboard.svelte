@@ -10,6 +10,7 @@
   import { noteCoordinator } from '$lib/note-events/noteCoordinator';
   import type { NoteEventType, RoutedNoteEvent } from '$lib/note-events/types';
   import { getPcKeyboard } from '$lib/PcKeyboard';
+  import { pianoLoading } from '$lib/stores/pianoLoading';
   import { onMount } from 'svelte';
   import { SvelteMap } from 'svelte/reactivity';
   export const TemplateKeys: PianoKeyName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
@@ -36,7 +37,7 @@
   let {
     middleKeyName = { name: 'C', octave: 4 },
     groupGap = 'w-6',
-    align = 'left',
+    align = 'middle',
   }: PianoKeyboardProps = $props();
 
   let pianoKeys: PianoKeyProps[] = [];
@@ -46,6 +47,10 @@
     highlight: boolean[];
   };
   let pluginOptions = new SvelteMap<string, PluginOptions>();
+  let stopLoadingAnimation: (() => void) | null = null;
+  let wasLoading = false;
+  let completionRelease: number | null = null;
+  let completionNoteActive = false;
 
   for (let i = 0; i < numPianoKeys; i++) {
     const name = TemplateKeys[i % TemplateKeys.length];
@@ -212,7 +217,7 @@
     const sharp = note.includes('#');
     const baseName = note[0] as PianoKeyName;
     const keyRef = pianoKeyRefs.get(`${baseName}${octave}`);
-    if (!keyRef) throw new Error('invalid note name');
+    if (!keyRef) throw new Error(`Invalid key: ${note}${octave}`);
     return { keyRef, sharp };
   };
 
@@ -226,9 +231,7 @@
 
     const syncNoteEvent = (type: NoteEventType) => (event: RoutedNoteEvent) => {
       if (!event.isForwarded) return;
-      const resolved = resolvePianoKey(event.note, event.octave);
-      if (!resolved) return;
-      const { keyRef, sharp } = resolved;
+      const { keyRef, sharp } = resolvePianoKey(event.note, event.octave);
       if (type === 'noteon') {
         keyRef.press?.(sharp ? { sharp: true } : {});
       } else {
@@ -248,6 +251,17 @@
     return () => {
       unregisterControl();
       pcKeyboard.turnOff();
+      stopLoadingAnimation?.();
+      stopLoadingAnimation = null;
+      if (completionRelease !== null) {
+        clearTimeout(completionRelease);
+        completionRelease = null;
+      }
+      if (completionNoteActive && completionNote) {
+        onnoteoff(completionNote);
+        completionNoteActive = false;
+        completionNote = null;
+      }
       pianoKeyRefs.clear();
       unsubscribeActiveNotes();
     };
@@ -274,9 +288,161 @@
   export function activateKeys(value: boolean, keys: PianoKeyFullName[]) {
     keys.forEach(({ name, octave, sharp }) => {
       const { keyRef } = resolvePianoKey(name, octave);
-      keyRef.activateUI(value, sharp);
+      keyRef.activateUI(value, { highlight: value, sharp });
     });
   }
+
+  function buildLoadingSequence(
+    alignMode: AlignMode,
+    middle: { name: PianoKeyName; octave: number },
+  ): PianoKeyFullName[] {
+    const baseIndex = pianoKeys.findIndex(
+      (key) => key.name === middle.name && key.octave === middle.octave,
+    );
+    if (baseIndex === -1) return [];
+
+    const windowByAlign: Record<AlignMode, { start: number; end: number }> = {
+      left: { start: 0, end: 6 },
+      middle: { start: -3, end: 3 },
+      right: { start: -6, end: 0 },
+    };
+
+    const { start, end } = windowByAlign[alignMode];
+    const sequence: PianoKeyFullName[] = [];
+
+    for (let offset = start; offset <= end; offset += 1) {
+      const index = baseIndex + offset;
+      if (index < 0 || index >= pianoKeys.length) continue;
+      const key = pianoKeys[index];
+      sequence.push({ name: key.name, octave: key.octave, sharp: false });
+    }
+
+    return sequence;
+  }
+
+  function startLoadingAnimation(
+    alignMode: AlignMode,
+    middle: { name: PianoKeyName; octave: number },
+    baseSequence?: PianoKeyFullName[],
+  ): () => void {
+    if (typeof window === 'undefined') {
+      return () => {};
+    }
+
+    const sequence = (baseSequence ?? buildLoadingSequence(alignMode, middle)).slice();
+    if (sequence.length === 0) {
+      return () => {};
+    }
+
+    let keyIndex = 0;
+    let lastTime = performance.now();
+    let rafId: number | null = null;
+    let stopped = false;
+
+    activateKeys(true, [sequence[keyIndex]]);
+
+    const animate = () => {
+      if (stopped) return;
+
+      const now = performance.now();
+      if (now - lastTime > 150) {
+        activateKeys(false, [sequence[keyIndex]]);
+        keyIndex = (keyIndex + 1) % sequence.length;
+        activateKeys(true, [sequence[keyIndex]]);
+        lastTime = now;
+      }
+
+      rafId = window.requestAnimationFrame(animate);
+    };
+
+    rafId = window.requestAnimationFrame(animate);
+
+    return () => {
+      stopped = true;
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      sequence.forEach((key) => activateKeys(false, [key]));
+    };
+  }
+
+  let completionNote: PianoKeyFullName | null = null;
+
+  $effect(() => {
+    const isLoading = $pianoLoading.loading;
+    const alignMode = align;
+    const middle = {
+      name: middleKeyName.name,
+      octave: middleKeyName.octave,
+    };
+    const middleNote: PianoKeyFullName = { ...middle, sharp: false };
+
+    stopLoadingAnimation?.();
+    stopLoadingAnimation = null;
+
+    if (!isLoading) {
+      if (wasLoading && typeof window !== 'undefined') {
+        if (completionRelease !== null) {
+          clearTimeout(completionRelease);
+          completionRelease = null;
+        }
+        if (completionNoteActive && completionNote) {
+          onnoteoff(completionNote);
+          completionNoteActive = false;
+          completionNote = null;
+        }
+        onnoteon(middleNote);
+        completionNote = { ...middleNote };
+        completionNoteActive = true;
+        completionRelease = window.setTimeout(() => {
+          if (completionNoteActive && completionNote) {
+            onnoteoff(completionNote);
+          }
+          completionNoteActive = false;
+          completionNote = null;
+          completionRelease = null;
+        }, 1000);
+      }
+      wasLoading = false;
+      return;
+    }
+
+    if (completionRelease !== null) {
+      clearTimeout(completionRelease);
+      completionRelease = null;
+    }
+    if (completionNoteActive && completionNote) {
+      onnoteoff(completionNote);
+      completionNoteActive = false;
+      completionNote = null;
+    }
+
+    const sequence = buildLoadingSequence(alignMode, middle);
+    const hasAllRefs = () => sequence.every((key) => pianoKeyRefs.has(`${key.name}${key.octave}`));
+
+    if (!hasAllRefs()) {
+      let rafId: number | null = null;
+      const attemptStart = () => {
+        if (!hasAllRefs()) {
+          rafId = window.requestAnimationFrame(attemptStart);
+          return;
+        }
+        rafId = null;
+        stopLoadingAnimation = startLoadingAnimation(alignMode, middle, sequence);
+      };
+      rafId = typeof window === 'undefined' ? null : window.requestAnimationFrame(attemptStart);
+      stopLoadingAnimation = () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+      };
+      wasLoading = true;
+      return;
+    }
+
+    stopLoadingAnimation = startLoadingAnimation(alignMode, middle, sequence);
+    wasLoading = true;
+  });
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
@@ -326,28 +492,60 @@
   ></PianoKey>
 {/snippet}
 
-<div id="piano-keyboard" class="overflow-hidden] fixed bottom-0 w-screen">
-  <div
-    class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
-    {@attach movable.draggable('.handle')}
-  >
-    <div
-      class="handle absolute -top-1 left-0 h-2 w-full cursor-move"
-      bind:clientWidth={keyboardWidth}
-    ></div>
-    {#each pianoKeys as { name, octave, hideBlack }}
-      {#if name == 'F' || name == 'C'}
-        <div class={`h-12 ${groupGap}`}></div>
-      {/if}
-      {#if name == middleKeyName.name && octave == middleKeyName.octave}
-        <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
-        <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
-          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
+<div class="piano-keyboard fixed bottom-0 w-screen overflow-hidden">
+  <div class="relative w-full">
+    {#if $pianoLoading.loading}
+      <div
+        class="pointer-events-auto absolute inset-0 z-20 flex items-center justify-center bg-[var(--note-black-900)]/40
+        backdrop-blur-[2px]"
+        role="status"
+        aria-live="polite"
+        aria-label={$pianoLoading.message || 'Loading piano sound'}
+      >
+        <div
+          class="flex max-w-[80vw] min-w-[240px] flex-col items-center gap-4 rounded-xl bg-white/95 p-5 text-center text-sm text-[var(--note-black)] shadow-2xl shadow-black/25"
+        >
+          <span class="text-base font-semibold text-[var(--app-primary)]">
+            {$pianoLoading.message || 'Loading piano sound...'}
+          </span>
+          <p class="max-w-[28ch] text-xs text-[var(--note-black-600)]">
+            Warming up the keys, hang tight!
+          </p>
+          {#if $pianoLoading.needsUnlock}
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-lg bg-[var(--app-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--app-primary)]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--app-primary)]"
+              onclick={() => $pianoLoading.onUnlock?.()}
+              aria-label="Enable audio"
+            >
+              Enable Audio
+            </button>
+          {/if}
         </div>
-      {:else}
-        {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
-      {/if}
-    {/each}
+      </div>
+    {/if}
+    <div
+      class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
+      {@attach movable.draggable('.handle')}
+    >
+      <div
+        class="handle absolute -top-1 left-0 h-2 w-full cursor-move"
+        bind:clientWidth={keyboardWidth}
+      ></div>
+      {#each pianoKeys as { name, octave, hideBlack }}
+        {#if name == 'F' || name == 'C'}
+          <div class={`h-12 ${groupGap}`}></div>
+        {/if}
+        {#if name == middleKeyName.name && octave == middleKeyName.octave}
+          <!-- Pull the wrapper left so the middle key keeps the same gap as its neighbours -->
+          <div bind:this={middleKey} class="-mr-[var(--spacing)]" data-middle-key>
+            {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
+          </div>
+        {:else}
+          {@render pianokey(name, octave, hideBlack!, pluginOptions.get(`${name}${octave}`))}
+        {/if}
+      {/each}
+    </div>
   </div>
 </div>
 

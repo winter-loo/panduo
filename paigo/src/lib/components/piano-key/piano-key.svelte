@@ -50,11 +50,17 @@
     }
   }
 
-  export function activateUI(value: boolean, sharp: boolean = false) {
+  type ActivateUiOptions = { highlight?: boolean; sharp?: boolean };
+
+  export function activateUI(value: boolean, options: ActivateUiOptions = {}) {
+    const { sharp = false, highlight: highlightOverride } = options;
     if (sharp) {
       blackActive = value;
     } else {
       whiteActive = value;
+    }
+    if (highlightOverride !== undefined) {
+      highlight = highlightOverride;
     }
   }
 

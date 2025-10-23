@@ -1,5 +1,4 @@
 <script lang="ts">
-  import PianoLoadingOverlay from '$lib/ui/PianoLoadingOverlay.svelte';
   import * as NavigationMenu from '$lib/components/ui/navigation-menu/index.js';
   import { navigationMenuTriggerStyle } from '$lib/components/ui/navigation-menu/navigation-menu-trigger.svelte';
   import '../app.css';
@@ -60,7 +59,5 @@
     </NavigationMenu.Item>
   </NavigationMenu.List>
 </NavigationMenu.Root>
-
-<PianoLoadingOverlay />
 
 {@render children?.()}
