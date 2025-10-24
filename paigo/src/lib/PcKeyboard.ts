@@ -20,6 +20,20 @@ export class PcKeyboard extends EventEmitter {
     ['Equal', { noteName: 'A#', holding: false }],
   ]);
 
+  private LeftHandNoteNameMap = new Map([
+    ['KeyQ', { noteName: 'C', holding: false }],
+    ['KeyW', { noteName: 'D', holding: false }],
+    ['KeyE', { noteName: 'E', holding: false }],
+    ['KeyR', { noteName: 'F', holding: false }],
+    ['Space', { noteName: 'G', holding: false }],
+    ['KeyB', { noteName: 'A', holding: false }],
+    ['KeyN', { noteName: 'B', holding: false }],
+    ['Digit2', { noteName: 'C#', holding: false }],
+    ['Digit3', { noteName: 'D#', holding: false }],
+    ['Digit5', { noteName: 'F#', holding: false }],
+    ['KeyV', { noteName: 'G#', holding: false }],
+    ['KeyH', { noteName: 'A#', holding: false }],
+  ]);
   // 'A', 'S', 'D' for increment octaves
   // A: C5, S: C6, D: C7
   // 'Z', 'X', 'C' for decrement octaves
