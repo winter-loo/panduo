@@ -231,9 +231,9 @@
       if (!event.isForwarded) return;
       const { keyRef, sharp } = resolvePianoKey(event.note, event.octave);
       if (type === 'noteon') {
-        keyRef.press?.(sharp ? { sharp: true } : {});
+        keyRef.activateUI(true, { sharp });
       } else {
-        keyRef.release?.(sharp ? { sharp: true } : {});
+        keyRef.activateUI(false, { sharp });
       }
     };
 
