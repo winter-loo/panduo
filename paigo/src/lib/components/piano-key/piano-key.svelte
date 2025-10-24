@@ -29,6 +29,11 @@
   // we need trigger piano key programatically
   let whiteActive = $state(false);
   let blackActive = $state(false);
+  let _dom = $state<HTMLElement | null>(null);
+
+  export function dom(): HTMLElement|null {
+    return _dom;
+  }
 
   export function press(options: PressOptions = {}) {
     const { sharp = false } = options;
@@ -130,6 +135,7 @@
   class="piano-key relative mt-2 mb-1 ml-1 inline-flex h-[var(--white-key-height)] items-end last:mr-1"
   data-name={name}
   data-octave={octave}
+  bind:this={_dom}
 >
   <!-- shadow-[0_0_0_var(--spacing)_var(--border)]  -->
   <button

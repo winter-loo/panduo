@@ -21,10 +21,9 @@
 
   let middleKey = $state<HTMLElement | null>(null);
   let windowWidth = $state(960);
-  let offsetX = $state(-144);
   let keyboardWidth = $state(960);
   let currentKeys = $state<string[]>([]);
-  const movable = new MovableElement(0);
+  const moveHandle = new MovableElement(0);
 
   type AlignMode = 'left' | 'middle' | 'right';
 
@@ -69,9 +68,9 @@
 
   $effect(() => {
     const maxOffset = Math.max(0, keyboardWidth - windowWidth);
-    movable.maxOffsetX = maxOffset;
-    if (movable.currentOffsetX > maxOffset) {
-      movable.moveTo(maxOffset, 0, false);
+    moveHandle.maxOffsetX = maxOffset;
+    if (moveHandle.currentOffsetX > maxOffset) {
+      moveHandle.moveTo(maxOffset, 0, false);
     }
   });
 
@@ -83,7 +82,7 @@
       // compute how far we need to shift the rail so the chosen key sits at the viewport center:
       // (windowWidth / 2) gives the viewport midpoint, subtracting the key's midpoint gives
       // a signed offset; negative means slide the keyboard left. We then clamp that offset
-      // into [-movable.maxOffsetX, 0] so we never go past either rail limit.
+      // into [-moveHandle.maxOffsetX, 0] so we never go past either rail limit.
       let computedOffset = 0;
       if (align == 'middle') {
         computedOffset = windowWidth / 2 - middleKeyOffsetLeft - middleKeyWidth / 2;
@@ -92,10 +91,9 @@
       } else if (align == 'right') {
         computedOffset = windowWidth - middleKeyOffsetLeft - middleKeyWidth - extra;
       }
-      const minOffset = -movable.maxOffsetX;
+      const minOffset = -moveHandle.maxOffsetX;
       const clampedOffset = Math.max(minOffset, Math.min(0, computedOffset));
-      offsetX = clampedOffset;
-      movable.moveTo(-clampedOffset);
+      moveHandle.moveTo(-clampedOffset);
     }
   });
 
@@ -443,6 +441,16 @@
     stopLoadingAnimation = startLoadingAnimation(alignMode, middle, sequence);
     wasLoading = true;
   });
+
+  function handleGlobalKeyDown(event: any) {
+    let octaveKeyMap = pcKeyboard.getOctaveKeyMap();
+    let octave = octaveKeyMap.get(event.code);
+    if (octave != undefined) {
+      let name = octave == 0 ? 'A' : octave == 8 ? 'C' : middleKeyName.name;
+      // change on this prop will trigger $effect: move this middle key into viewport
+      middleKeyName = { octave, name };
+    }
+  }
 </script>
 
 <div class="middle-line fixed top-0 left-[50%] z-10 hidden h-screen w-0.5 bg-red-500"></div>
@@ -526,7 +534,7 @@
     {/if}
     <div
       class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
-      {@attach movable.draggable('.handle')}
+      {@attach moveHandle.draggable('.handle')}
     >
       <div
         class="handle absolute -top-1 left-0 h-2 w-full cursor-move"
@@ -549,4 +557,4 @@
   </div>
 </div>
 
-<svelte:window bind:innerWidth={windowWidth} />
+<svelte:window bind:innerWidth={windowWidth} onkeydown={handleGlobalKeyDown} />
