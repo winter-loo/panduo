@@ -7,7 +7,7 @@ import {
   showPianoLoading,
 } from '$lib/stores/pianoLoading';
 
-export interface PianoAudioEngineOptions {
+export interface PianoToneEngineOptions {
   preload?: 'none' | 'full';
 }
 
@@ -23,9 +23,9 @@ function buildNoteId({ note, octave, sharp }: NoteEventData): string | null {
   return `${withoutAccidental}${isSharp ? '#' : ''}${octave}`;
 }
 
-class PianoAudioEngine {
+class PianoToneEngine {
   private tone: ToneType | null = null;
-  private piano: InstanceType<PianoModule['Piano']> | null = null;
+  private pianoTone: InstanceType<PianoModule['Piano']> | null = null;
   private activeNotes = new Set<string>();
   private initializationPromise: Promise<void> | null = null;
   private fullLoadPromise: Promise<void> | null = null;
@@ -63,7 +63,7 @@ class PianoAudioEngine {
   }
 
   async prepare(
-    options?: PianoAudioEngineOptions,
+    options?: PianoToneEngineOptions,
   ): Promise<void> {
     if (typeof window === 'undefined') return;
 
@@ -75,7 +75,7 @@ class PianoAudioEngine {
   }
 
   private async ensurePianoReady(): Promise<void> {
-    if (this.piano) return;
+    if (this.pianoTone) return;
     if (this.initializationPromise) {
       await this.initializationPromise;
       return;
@@ -84,13 +84,13 @@ class PianoAudioEngine {
     const init = async () => {
       await this.ensureToneReady();
       const mod = await import('tone-piano-next');
-      const PianoSound = mod.Piano as PianoModule['Piano'];
-      this.piano = new PianoSound({
+      const PianoToneLib = mod.Piano as PianoModule['Piano'];
+      this.pianoTone = new PianoToneLib({
         url: '/audio/',
         velocities: 5,
         pedal: false,
       });
-      this.piano.toDestination();
+      this.pianoTone.toDestination();
     };
 
     try {
@@ -102,10 +102,10 @@ class PianoAudioEngine {
   }
 
   private async preloadAllSamples(): Promise<void> {
-    if (!this.piano) {
+    if (!this.pianoTone) {
       await this.ensurePianoReady();
     }
-    if (!this.piano) return;
+    if (!this.pianoTone) return;
 
     if (this.fullLoadPromise) {
       await this.fullLoadPromise;
@@ -115,7 +115,7 @@ class PianoAudioEngine {
     const load = async () => {
       showPianoLoading('Loading piano sound...');
       try {
-        await this.piano?.load();
+        await this.pianoTone?.load();
       } catch (e) {
         console.trace('failed to load piano audio', e);
       } finally {
@@ -132,25 +132,25 @@ class PianoAudioEngine {
   }
 
   isReady(): boolean {
-    return Boolean(this.piano);
+    return Boolean(this.pianoTone);
   }
 
   play(data: NoteEventData) {
-    if (!this.piano) return;
+    if (!this.pianoTone) return;
     const noteId = buildNoteId(data);
     if (!noteId) return;
     if (this.activeNotes.has(noteId)) return;
     this.activeNotes.add(noteId);
-    this.piano.keyDown({ note: noteId, velocity: data.velocity });
+    this.pianoTone.keyDown({ note: noteId, velocity: data.velocity });
   }
 
   stop(data: NoteEventData) {
-    if (!this.piano) return;
+    if (!this.pianoTone) return;
     const noteId = buildNoteId(data);
     if (!noteId) return;
     if (!this.activeNotes.has(noteId)) return;
     this.activeNotes.delete(noteId);
-    this.piano.keyUp({ note: noteId });
+    this.pianoTone.keyUp({ note: noteId });
   }
 
   handlePrimaryEvent(event: RoutedNoteEvent) {
@@ -162,30 +162,30 @@ class PianoAudioEngine {
   }
 }
 
-const pianoAudioEngine = new PianoAudioEngine();
+const pianoToneEngine = new PianoToneEngine();
 
 noteCoordinator.onPrimary((event) => {
-  pianoAudioEngine.handlePrimaryEvent(event);
+  pianoToneEngine.handlePrimaryEvent(event);
 });
 
 export async function ensurePianoAudioContextReady(): Promise<void> {
-  await pianoAudioEngine.ensureToneReady();
+  await pianoToneEngine.ensureToneReady();
 }
 
 export async function preparePianoAudioEngine(
-  options?: PianoAudioEngineOptions,
+  options?: PianoToneEngineOptions,
 ): Promise<void> {
-  await pianoAudioEngine.prepare(options);
+  await pianoToneEngine.prepare(options);
 }
 
 export function playPianoNote(data: NoteEventData) {
-  pianoAudioEngine.play(data);
+  pianoToneEngine.play(data);
 }
 
 export function stopPianoNote(data: NoteEventData) {
-  pianoAudioEngine.stop(data);
+  pianoToneEngine.stop(data);
 }
 
 export function isPianoAudioReady(): boolean {
-  return pianoAudioEngine.isReady();
+  return pianoToneEngine.isReady();
 }

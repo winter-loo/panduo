@@ -252,13 +252,19 @@ export class PcKeyboard extends EventEmitter {
 
   getOctaveKeyMap(): Map<string, number> {
     let m = new Map<string, number>();
-    this.octaveMap.forEach(({octave}, key) => {
+    this.octaveMap.forEach(({ octave }, key) => {
       m.set(key, octave);
     });
     return m;
   }
 
   private emitNoteEvent(type: NoteEventType, data: NoteEventData) {
+    if (data.octave == 0 && data.note != 'A' && data.note != 'A#' && data.note != 'B') {
+      return;
+    }
+    if (data.octave == 8 && data.note != 'C') {
+      return;
+    }
     const payload = {
       ...data,
       sourceId: PC_KEYBOARD_SOURCE_ID,

@@ -125,7 +125,7 @@ class NoteCoordinator {
   private loadAudioHelpers() {
     if (typeof window === 'undefined') return null;
     if (!this.audioHelpersPromise) {
-      this.audioHelpersPromise = import('$lib/audio/pianoAudioEngine');
+      this.audioHelpersPromise = import('$lib/audio/pianoToneEngine');
     }
     return this.audioHelpersPromise;
   }

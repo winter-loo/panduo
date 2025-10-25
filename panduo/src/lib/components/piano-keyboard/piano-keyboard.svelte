@@ -333,32 +333,29 @@
     }
 
     let keyIndex = 0;
-    let lastTime = performance.now();
-    let rafId: number | null = null;
-    let stopped = false;
+    let intervalId: number | null = null;
 
-    activateKeys(true, [sequence[keyIndex]]);
-
-    const animate = () => {
-      if (stopped) return;
-
-      const now = performance.now();
-      if (now - lastTime > 150) {
-        activateKeys(false, [sequence[keyIndex]]);
-        keyIndex = (keyIndex + 1) % sequence.length;
-        activateKeys(true, [sequence[keyIndex]]);
-        lastTime = now;
-      }
-
-      rafId = window.requestAnimationFrame(animate);
+    const highlightCurrentKey = () => {
+      activateKeys(true, [sequence[keyIndex]]);
     };
 
-    rafId = window.requestAnimationFrame(animate);
+    const advanceHighlight = () => {
+      const currentKey = sequence[keyIndex];
+      const nextIndex = (keyIndex + 1) % sequence.length;
+      const nextKey = sequence[nextIndex];
+      activateKeys(false, [currentKey]);
+      activateKeys(true, [nextKey]);
+      keyIndex = nextIndex;
+    };
+
+    highlightCurrentKey();
+    // Use a timer instead of requestAnimationFrame so we only run work when the key needs
+    // to change, keeping the animation inexpensive when loading takes a long time.
+    intervalId = window.setInterval(advanceHighlight, 180);
 
     return () => {
-      stopped = true;
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
+      if (intervalId !== null) {
+        clearInterval(intervalId);
       }
       sequence.forEach((key) => activateKeys(false, [key]));
     };
@@ -416,28 +413,6 @@
     }
 
     const sequence = buildLoadingSequence(alignMode, middle);
-    const hasAllRefs = () => sequence.every((key) => pianoKeyRefs.has(`${key.name}${key.octave}`));
-
-    if (!hasAllRefs()) {
-      let rafId: number | null = null;
-      const attemptStart = () => {
-        if (!hasAllRefs()) {
-          rafId = window.requestAnimationFrame(attemptStart);
-          return;
-        }
-        rafId = null;
-        stopLoadingAnimation = startLoadingAnimation(alignMode, middle, sequence);
-      };
-      rafId = typeof window === 'undefined' ? null : window.requestAnimationFrame(attemptStart);
-      stopLoadingAnimation = () => {
-        if (rafId !== null) {
-          cancelAnimationFrame(rafId);
-        }
-      };
-      wasLoading = true;
-      return;
-    }
-
     stopLoadingAnimation = startLoadingAnimation(alignMode, middle, sequence);
     wasLoading = true;
   });
@@ -533,7 +508,7 @@
       </div>
     {/if}
     <div
-      class="relative inline-flex items-end justify-around transition-transform duration-100 ease-out"
+      class="relative inline-flex items-end justify-around px-2 transition-transform duration-100 ease-out"
       {@attach moveHandle.draggable('.handle')}
     >
       <div

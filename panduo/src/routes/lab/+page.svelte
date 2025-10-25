@@ -14,6 +14,7 @@
   <Button variant="link" href={`${PagePath}/abcjs`}>abcjs</Button>
   <Button variant="link" href={`${PagePath}/bits-ui`}>bits ui</Button>
   <Button variant="link" href={`${PagePath}/motion`}>framer motion</Button>
+  <Button variant="link" href={`${PagePath}/piano-tone`}>piano tone</Button>
 </nav>
 
 <div class="relative flex justify-center items-center w-16 h-20 bg-neutral-800 rounded-lg overflow-hidden">
