@@ -20,12 +20,13 @@
   "dependencies": {
     "@neodrag/svelte": "^3.0.0-next.8",
     "@tailwindcss/vite": "^4.1.13",
-    "@tonejs/piano": "^0.2.1",
     "abcjs": "^6.5.2",
     "events": "^3.3.0",
     "motion": "^12.23.24",
     "opentype.js": "^1.3.4",
-    "tailwindcss": "^4.1.13"
+    "tailwindcss": "^4.1.13",
+    "tone": "^15.1.22",
+    "tone-piano-next": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

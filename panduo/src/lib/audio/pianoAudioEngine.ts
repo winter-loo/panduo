@@ -12,7 +12,7 @@ export interface PianoAudioEngineOptions {
 }
 
 type ToneType = typeof import('tone');
-type PianoModule = typeof import('@tonejs/piano');
+type PianoModule = typeof import('tone-piano-next');
 
 function buildNoteId({ note, octave, sharp }: NoteEventData): string | null {
   if (!note) return null;
@@ -83,11 +83,12 @@ class PianoAudioEngine {
 
     const init = async () => {
       await this.ensureToneReady();
-      const mod = await import('@tonejs/piano');
+      const mod = await import('tone-piano-next');
       const PianoSound = mod.Piano as PianoModule['Piano'];
       this.piano = new PianoSound({
         url: '/audio/',
         velocities: 5,
+        pedal: false,
       });
       this.piano.toDestination();
     };
@@ -115,6 +116,8 @@ class PianoAudioEngine {
       showPianoLoading('Loading piano sound...');
       try {
         await this.piano?.load();
+      } catch (e) {
+        console.trace('failed to load piano audio', e);
       } finally {
         hidePianoLoading();
       }
