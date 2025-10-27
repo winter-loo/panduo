@@ -57,6 +57,13 @@
         {/snippet}
       </NavigationMenu.Link>
     </NavigationMenu.Item>
+    <NavigationMenu.Item>
+      <NavigationMenu.Link>
+        {#snippet child()}
+          <a href="/publish" class={navigationMenuTriggerStyle()}>PUBLISH</a>
+        {/snippet}
+      </NavigationMenu.Link>
+    </NavigationMenu.Item>
   </NavigationMenu.List>
 </NavigationMenu.Root>
 

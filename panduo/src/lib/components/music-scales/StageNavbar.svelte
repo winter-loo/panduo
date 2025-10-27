@@ -1,21 +1,15 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { ArrowLeft, Notebook } from '@lucide/svelte';
 
   type StageNavbarProps = {
     stageLabel?: string;
     songTitle?: string;
+    onback: () => void;
   };
 
-  const props = $props<StageNavbarProps>();
+  const props: StageNavbarProps = $props();
   const stageLabel = $derived(props.stageLabel ?? '');
   const songTitle = $derived(props.songTitle ?? '');
-
-  const dispatch = createEventDispatcher<{ back: void }>();
-
-  function handleBack() {
-    dispatch('back');
-  }
 </script>
 
 <header
@@ -26,12 +20,12 @@
       type="button"
       class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#58cc02] transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       aria-label="Go back"
-      onclick={handleBack}
+      onclick={() => props.onback()}
     >
       <ArrowLeft class="h-5 w-5" />
     </button>
     <div class="flex min-w-0 flex-col">
-      <span class="text-sm font-medium uppercase tracking-wide text-[#e8ffe1]">{stageLabel}</span>
+      <span class="text-sm font-medium tracking-wide text-[#e8ffe1] uppercase">{stageLabel}</span>
       <h2 class="truncate text-2xl font-semibold">{songTitle}</h2>
     </div>
   </div>

@@ -64,7 +64,7 @@
           <RoadmapSection title="roadmap" items={roadmapItems} />
         </div>
         <div
-          class="pointer-events-none w-[220px] rounded-full bg-white/80 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] backdrop-blur-sm lg:absolute lg:-right-10 lg:top-36"
+          class="pointer-events-none w-[220px] rounded-full bg-white/80 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] backdrop-blur-sm lg:absolute lg:top-36 lg:-right-10"
         >
           <img
             alt="Illustration of a panda practicing piano"
