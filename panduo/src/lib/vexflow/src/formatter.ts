@@ -231,34 +231,36 @@ export class Formatter {
     ctx: RenderContext,
     stave: Stave,
     mm: MusicMeasure,
-    config: VexflowConfigInstance,
-    params?: FormatParams | boolean,
+    options: {
+      config?: VexflowConfigInstance,
+      params?: FormatParams | boolean,
+    }
   ): BoundingBox | undefined {
     const baseOptions: Partial<FormatParams> = {};
-    if (typeof params === 'object') {
-      Object.assign(baseOptions, params);
-    } else if (typeof params === 'boolean') {
-      baseOptions.autoBeam = params;
+    if (typeof options.params === 'object') {
+      Object.assign(baseOptions, options.params);
+    } else if (typeof options.params === 'boolean') {
+      baseOptions.autoBeam = options.params;
     }
 
-    const options = {
+    const config = {
       autoBeam: baseOptions.autoBeam ?? false,
       alignRests: baseOptions.alignRests ?? false,
     };
 
     // Start by creating a voice and adding all the notes to it.
-    const voice = new Voice(config, mm.timeSignature).setMode(Voice.Mode.SOFT).addTickables(mm.notes);
+    const voice = new Voice(options.config, mm.timeSignature).setMode(Voice.Mode.SOFT).addTickables(mm.notes);
 
     // Then create beams, if requested.
-    const beams = options.autoBeam ? Beam.applyAndGetBeams(voice, config) : [];
+    const beams = config.autoBeam ? Beam.applyAndGetBeams(voice, options.config) : [];
 
     // Instantiate a `Formatter` and format the notes.
-    new Formatter(config, { softmaxFactor: 1 })
+    new Formatter(options.config, { softmaxFactor: 1 })
       .joinVoices([voice]) // , { alignRests: options.alignRests })
       .formatToStave([voice], stave, {
-        alignRests: options.alignRests,
+        alignRests: config.alignRests,
         stave,
-        config,
+        config: options.config,
       });
 
     // Render the voice and beams to the stave.
@@ -377,7 +379,7 @@ export class Formatter {
     });
   }
 
-  constructor(config: VexflowConfigInstance, options?: FormatterOptions) {
+  constructor(config?: VexflowConfigInstance, options?: FormatterOptions) {
     const resolvedOptions = options ?? {};
     const { ...formatterOptions } = resolvedOptions;
     this.config = config ?? VexflowConfig.defaults();

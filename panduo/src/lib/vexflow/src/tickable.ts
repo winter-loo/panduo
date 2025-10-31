@@ -54,7 +54,7 @@ export abstract class Tickable extends Element {
   private _preFormatted: boolean = false;
   private _postFormatted: boolean = false;
 
-  constructor(config: VexflowConfigInstance) {
+  constructor(config?: VexflowConfigInstance) {
     super(config);
 
     // These properties represent the duration of

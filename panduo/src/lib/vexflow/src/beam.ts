@@ -155,7 +155,7 @@ export class Beam extends Element {
    * @param stemDirection a stem direction to apply to the entire voice
    * @param groups an array of `Fraction` representing beat groupings for the beam
    */
-  static applyAndGetBeams(voice: Voice, guc: VexflowConfigInstance, stemDirection?: number, groups?: Fraction[]): Beam[] {
+  static applyAndGetBeams(voice: Voice, guc?: VexflowConfigInstance, stemDirection?: number, groups?: Fraction[]): Beam[] {
     return Beam.generateBeams(voice.getTickables() as StemmableNote[], guc, { groups, stemDirection });
   }
 
@@ -186,7 +186,7 @@ export class Beam extends Element {
    */
   static generateBeams(
     notes: StemmableNote[],
-    guc: VexflowConfigInstance,
+    guc?: VexflowConfigInstance,
     config: {
       flatBeamOffset?: number;
       flatBeams?: boolean;
@@ -421,7 +421,7 @@ export class Beam extends Element {
     // Create a VexFlow.Beam from each group of notes to be beamed
     const beams: Beam[] = [];
     beamedNoteGroups.forEach((group) => {
-      const beam = new Beam(guc, group);
+      const beam = new Beam(group, false, guc);
 
       if (config.showStemlets) {
         beam.renderOptions.showStemlets = true;
@@ -460,7 +460,7 @@ export class Beam extends Element {
     return beams;
   }
 
-  constructor(config: VexflowConfigInstance, notes: StemmableNote[], autoStem: boolean = false) {
+  constructor(notes: StemmableNote[], autoStem: boolean = false, config?: VexflowConfigInstance) {
     super(config);
 
     if (!notes || notes.length === 0) {

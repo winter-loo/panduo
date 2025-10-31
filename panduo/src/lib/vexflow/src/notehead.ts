@@ -58,8 +58,8 @@ export class NoteHead extends Note {
     '\ue4e4' /*restHalf*/: '\ue4f5' /*restHalfLegerLine*/,
   };
 
-  constructor(config: VexflowConfigInstance, noteStruct: NoteHeadStruct) {
-    super(config, noteStruct);
+  constructor(noteStruct: NoteHeadStruct, config: VexflowConfigInstance) {
+    super(noteStruct, config);
 
     this.index = noteStruct.index;
     this.x = noteStruct.x || 0;

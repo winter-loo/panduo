@@ -45,7 +45,7 @@ export class Renderer {
     height: number,
     background: string = '#FFF',
   ): RenderContext {
-    const renderer = new Renderer(config, elementId, backend);
+    const renderer = new Renderer(elementId, backend, config);
     if (width && height) {
       renderer.resize(width, height);
     }
@@ -124,18 +124,24 @@ export class Renderer {
    *   - a div element, which will contain the SVG output
    * @param backend Renderer.Backends.CANVAS or Renderer.Backends.SVG
    */
-  constructor(config: VexflowConfigInstance, context: RenderContext);
-  constructor(config: VexflowConfigInstance, canvas: string | HTMLCanvasElement | HTMLDivElement, backend: number);
-  constructor(config: VexflowConfigInstance, arg0: string | HTMLCanvasElement | HTMLDivElement | RenderContext, arg1?: number) {
+  constructor(context: RenderContext, config?: VexflowConfigInstance);
+  constructor(canvas: string | HTMLCanvasElement | HTMLDivElement, backend: number, config?: VexflowConfigInstance);
+  constructor(
+    arg0: string | HTMLCanvasElement | HTMLDivElement | RenderContext,
+    arg1?: number | VexflowConfigInstance,
+    arg2?: VexflowConfigInstance,
+  ) {
     if (isRenderContext(arg0)) {
       // The user has provided what looks like a RenderContext, let's just use it.
       this.ctx = arg0;
     } else {
-      if (arg1 === undefined) {
+      const backend = typeof arg1 === 'number' ? arg1 : undefined;
+      const config = typeof arg1 === 'number' ? arg2 : arg1;
+
+      if (backend === undefined) {
         // The backend must be specified if the render context isn't directly provided.
         throw new RuntimeError('InvalidArgument', 'Missing backend argument');
       }
-      const backend: number = arg1;
 
       let element: HTMLElement;
       if (typeof arg0 === 'string') {
@@ -162,7 +168,7 @@ export class Renderer {
         if (!isHTMLDiv(element)) {
           throw new RuntimeError('BadElement', 'SVG context requires an HTMLDivElement.');
         }
-        this.ctx = new SVGContext(config, element);
+        this.ctx = new SVGContext(element, config);
       } else {
         throw new RuntimeError('InvalidBackend', `No support for backend: ${backend}`);
       }

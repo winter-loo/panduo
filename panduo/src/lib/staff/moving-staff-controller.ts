@@ -218,18 +218,18 @@ export class MovingStaffController extends MovableElement {
   private drawFixedStave() {
     // this.fixedElement.innerHTML = '';
     const renderer = new VexFlow.Renderer(
-      this.config,
       this.fixedElement,
       VexFlow.Renderer.Backends.SVG,
+      this.config,
     );
     const fixedWidth = this.computeFixedStaveWidth();
     // add small spaces
     const renderWidth = fixedWidth + 4;
     renderer.resize(renderWidth, this.layout.staveHeight);
-    const fixedStave = new Stave(this.config, 0, 0, renderWidth, {
+    const fixedStave = new Stave(0, 0, renderWidth, {
       leftBar: this.config.get('Stave.rightBar'),
       rightBar: false,
-    });
+    }, this.config);
     fixedStave.addClef('treble');
     if (this.keySignature) {
       fixedStave.addKeySignature(this.keySignature);
@@ -241,9 +241,9 @@ export class MovingStaffController extends MovableElement {
     this.releaseActiveVisualState();
     this.clearContainer(this.notesElement);
     this.renderer = new VexFlow.Renderer(
-      this.config,
       this.notesElement,
       VexFlow.Renderer.Backends.SVG,
+      this.config,
     );
     this.renderer.resize(this.layout.measureWidth, this.layout.staveHeight);
     this.context = this.renderer.getContext();
@@ -264,7 +264,7 @@ export class MovingStaffController extends MovableElement {
     if (this.staves.length === 0 && timeSignature) {
       measureWidth += this.computeTimeSignatureExtraWidth(config.fork(), timeSignature);
     }
-    const measureStave = new Stave(config, this.staveX, 0, measureWidth);
+    const measureStave = new Stave(this.staveX, 0, measureWidth, {}, config);
     this.staves.push(measureStave);
     this.staveX += measureWidth;
     // resize render width so that this render can have enough space to show this stave
@@ -275,7 +275,7 @@ export class MovingStaffController extends MovableElement {
     measureStave.setContext(this.context).draw();
 
     const staveNotes = notes.map((note) => {
-      const staveNote = new VexFlow.StaveNote(config, { ...note, autoStem: true });
+      const staveNote = new VexFlow.StaveNote({ ...note, autoStem: true }, config);
       if (this.noteSpanAllVisible) {
         staveNote.showNoteSpan();
       } else {
@@ -295,10 +295,12 @@ export class MovingStaffController extends MovableElement {
         this.context,
         measureStave,
         { timeSignature, notes: staveNotes },
-        config,
         {
-          autoBeam: true,
-        },
+          config,
+          params: {
+            autoBeam: true,
+          }
+        }
       );
       this.registerNoteInteractions(staveNotes);
 
@@ -480,11 +482,11 @@ export class MovingStaffController extends MovableElement {
   }
 
   private computeFixedStaveWidth(): number {
-    const scratch = new Stave(this.config, 0, 0, 0, {
+    const scratch = new Stave(0, 0, 0, {
       leftBar: {
         width: 4,
       },
-    });
+    }, this.config);
     scratch.addClef('treble');
     if (this.keySignature) {
       scratch.addKeySignature(this.keySignature);
@@ -500,9 +502,9 @@ export class MovingStaffController extends MovableElement {
 
   private computeTimeSignatureExtraWidth(config: ConfigInstance, timeSignature: string): number {
     if (!timeSignature) return 0;
-    const baseStave = new Stave(config, 0, 0, 1000);
+    const baseStave = new Stave(0, 0, 1000, {}, config);
     const baseStart = baseStave.getNoteStartX();
-    const withTimeSignature = new Stave(config, 0, 0, 1000);
+    const withTimeSignature = new Stave(0, 0, 1000, {}, config);
     withTimeSignature.addTimeSignature(timeSignature);
     const timeSignatureStart = withTimeSignature.getNoteStartX();
     const extra =

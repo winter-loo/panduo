@@ -275,7 +275,7 @@ export abstract class Note extends Tickable {
    *
    * @param noteStruct To create a new note you need to provide a `noteStruct`.
    */
-  constructor(config: VexflowConfigInstance, noteStruct: NoteStruct) {
+  constructor(noteStruct: NoteStruct, config?: VexflowConfigInstance) {
     super(config);
 
     if (!noteStruct) {

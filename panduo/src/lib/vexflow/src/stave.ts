@@ -83,7 +83,7 @@ export class Stave extends Element {
     return this.config.get('Stave.endPaddingMax');
   }
 
-  constructor(config: VexflowConfigInstance, x: number, y: number, width: number, options?: StaveOptions) {
+  constructor(x: number, y: number, width: number, options?: StaveOptions, config?: VexflowConfigInstance) {
     super(config);
 
     this.x = x;

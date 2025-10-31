@@ -61,7 +61,7 @@ export interface State {
  * SVG rendering context with an API similar to CanvasRenderingContext2D.
  */
 export class SVGContext extends RenderContext {
-  protected static measureTextElement = new Element(VexflowConfig.defaults());
+  protected static measureTextElement = new Element();
 
   element: HTMLElement; // the parent DOM object
   svg: SVGSVGElement;
@@ -88,7 +88,7 @@ export class SVGContext extends RenderContext {
   /** Formatted as CSS font shorthand (e.g., 'italic bold 12pt Arial') */
   protected fontCSSString: string = '';
 
-  constructor(config: VexflowConfigInstance, element: HTMLElement) {
+  constructor(element: HTMLElement, config?: VexflowConfigInstance) {
     super();
     this.element = element;
     SVGContext.measureTextElement = new Element(config);

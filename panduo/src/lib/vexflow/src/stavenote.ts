@@ -414,8 +414,8 @@ export class StaveNote extends StemmableNote {
   // Sorted variant of keyProps used internally.
   private sortedKeyProps: { keyProps: KeyProps; index: number }[] = [];
 
-  constructor(config: VexflowConfigInstance, noteStruct: StaveNoteStruct) {
-    super(config, noteStruct);
+  constructor(noteStruct: StaveNoteStruct, config?: VexflowConfigInstance) {
+    super(noteStruct, config);
 
     this.ledgerLineStyle = {};
 
@@ -550,7 +550,7 @@ export class StaveNote extends StemmableNote {
       }
       lastLine = line;
 
-      const notehead = new NoteHead(this.config, {
+      const notehead = new NoteHead({
         pitch: keys[i],
         duration: this.duration,
         noteType: this.noteType,
@@ -558,7 +558,7 @@ export class StaveNote extends StemmableNote {
         stemDirection,
         customGlyphCode: noteProps.code,
         line: noteProps.line,
-      });
+      }, this.config);
 
       notehead.fontInfo = this.fontInfo;
       console.log(`notehead is built, line=${line}, width=${notehead.width}`);

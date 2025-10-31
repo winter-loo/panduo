@@ -26,8 +26,8 @@ export abstract class StemmableNote extends Note {
   protected flag?: Flag;
   protected stemExtensionOverride?: number;
 
-  constructor(config: VexflowConfigInstance, noteStruct: NoteStruct) {
-    super(config, noteStruct);
+  constructor(noteStruct: NoteStruct, config?: VexflowConfigInstance) {
+    super(noteStruct, config);
     this.flag = new Flag(config);
   }
 

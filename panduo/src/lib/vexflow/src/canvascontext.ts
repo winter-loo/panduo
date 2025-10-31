@@ -1,6 +1,7 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
+import { VexflowConfigInstance } from './config';
 import { Font, FontInfo } from './font';
 import { RenderContext, TextMeasure } from './rendercontext';
 import { globalObject, warn } from './util';
@@ -83,7 +84,7 @@ export class CanvasContext extends RenderContext {
     return [width, height];
   }
 
-  constructor(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D) {
+  constructor(context: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, config?: VexflowConfigInstance) {
     super();
     this.context2D = context;
     this.curTransfrom = context.getTransform();

@@ -51,11 +51,11 @@ export const createTrailingStavesPlugin: MovingStaffPluginFactory<{}, {}> = ({
 
     for (let index = 0; index < trailingStaveCount; index++) {
       // traling notes have only right bar
-      const trailingStave = new Stave(config, controller.staveX, 0, layout.measureWidth);
+      const trailingStave = new Stave(controller.staveX, 0, layout.measureWidth, {}, config);
       trailingStave.setContext(controller.context).draw();
 
       if (index === 0) {
-        const trailingNote = new StaveNote(config, { ...CORE_NOTE });
+        const trailingNote = new StaveNote({ ...CORE_NOTE }, config);
         // push this trailingNote into 'notes' array so that the cursor could move pass the actual last note
         controller.notes.push(trailingNote);
         // use the spacing system but not draw the note

@@ -4,7 +4,7 @@
 
 import { BoundingBox } from './boundingbox';
 import { Font, FontInfo } from './font';
-import { type VexflowConfigInstance } from './config';
+import { VexflowConfig, type VexflowConfigInstance } from './config';
 import { Registry } from './registry';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
@@ -148,14 +148,14 @@ export class Element {
   protected x: number = 0;
   protected y: number = 0;
 
-  constructor(config: VexflowConfigInstance, category?: string) {
+  constructor(config?: VexflowConfigInstance, category?: string) {
     this.attrs = {
       id: Element.newID(),
       type: category ?? (<typeof Element>this.constructor).CATEGORY,
       class: '',
     };
 
-    this.config = config;
+    this.config = config ?? VexflowConfig.defaults();
     this.rendered = false;
     this._fontInfo = this.config.getFontInfo(this.attrs.type);
     this.style = this.config.getStyle(this.attrs.type);
