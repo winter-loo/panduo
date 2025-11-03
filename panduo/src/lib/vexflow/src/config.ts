@@ -74,7 +74,6 @@ export interface StaveConfigValues {
   rightBar: BarlineOptions | boolean;
   style: ElementStyle;
   fontSize: number;
-  padding: number;
   paddingLeft: number;
   paddingRight: number;
   endPaddingMax: number;
@@ -147,15 +146,15 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
   Stave: {
     spacingBetweenModsPx: 6,
     spacingBetweenLinesPx: Tables.STAVE_LINE_DISTANCE,
-    spaceAboveStaffLn: 4,
-    spaceBelowStaffLn: 4,
+    spaceAboveStaffLn: 2,
+    spaceBelowStaffLn: 2,
     topTextPosition: 1,
     bottomTextPosition: 4,
     verticalBarWidth: 10,
     numLines: 5,
     lineConfig: [],
-    leftBar: false,
-    rightBar: false,
+    leftBar: true,
+    rightBar: true,
     style: {
       shadowColor: 'black',
       shadowBlur: 0,
@@ -164,13 +163,12 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
       lineWidth: 1,
       lineDash: 'none',
     },
-    fontSize: 8,
-    padding: 0,
-    paddingLeft: 0,
+    fontSize: 32,
+    paddingLeft: 8,
     paddingRight: 0,
     endPaddingMax: 0,
     endPaddingMin: 0,
-    unalignedNotePadding: 10,
+    unalignedNotePadding: 8,
   },
   Clef: {
     defaults: {

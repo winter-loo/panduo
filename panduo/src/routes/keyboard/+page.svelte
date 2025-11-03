@@ -17,24 +17,24 @@
     VexFlow.NoteHead.DEBUG = true;
     VexFlow.NoteSpan.DEBUG = true;
 
-    const renderer = new VexFlow.Renderer(config, outputContainer, VexFlow.Renderer.Backends.SVG);
+    const renderer = new VexFlow.Renderer(outputContainer, VexFlow.Renderer.Backends.SVG, config);
     const width = 160;
     // 200 = 20 * (3 + 4 + 3)
     renderer.resize(width, 600);
-    const stave = new VexFlow.Stave(config, 0, 0, width, {
+    const stave = new VexFlow.Stave(0, 0, width, {
       spacingBetweenLinesPx: 10,
       spaceAboveStaffLn: 17,
       spaceBelowStaffLn: 17,
       style: { lineWidth: 1 },
-    });
+    }, config);
     stave.addClef('treble');
     const context = renderer.getContext();
     stave.setContext(context).draw();
 
     if (noteNames.length > 0) {
       // see note type in validNoteTypes in tables.ts
-      let staveNote = new VexFlow.StaveNote(config, { keys: noteNames, duration: 'q' });
-      VexFlow.Formatter.FormatAndDraw(context, stave, { notes: [staveNote] }, config);
+      let staveNote = new VexFlow.StaveNote({ keys: noteNames, duration: 'q' }, config);
+      VexFlow.Formatter.FormatAndDraw(context, stave, { notes: [staveNote] }, { config });
     }
   }
 
@@ -45,20 +45,9 @@
 
   let midiKeyboard = getPcKeyboard();
 
-  let OldStaffProps: any;
-  onDestroy(() => {
-    if (OldStaffProps) MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
-  });
-
   onMount(() => {
     // clear the internal cache of VexFlow
     Metrics.clear();
-    OldStaffProps = {
-      Stave: {
-        padding: MetricsDefaults.Stave.padding,
-      },
-    };
-    MetricsDefaults.Stave.padding = 30;
 
     midiKeyboard.turnOn();
 

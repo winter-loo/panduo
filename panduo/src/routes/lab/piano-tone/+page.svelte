@@ -1,16 +1,16 @@
 <script lang="ts">
   import Button from '$lib/components/ui/button/button.svelte';
   import { LoadState } from '$lib/enum';
-  type PianoModule = typeof import('@tonejs/piano');
+  type PianoModule = typeof import('tone-piano-next');
 
   let ls = $state<LoadState>(LoadState.ToLoad);
   let loadTime = $state(0);
   let tone: InstanceType<PianoModule['Piano']> | null = null;
 
   async function loadTone() {
-    type PianoModule = typeof import('@tonejs/piano');
+    type PianoModule = typeof import('tone-piano-next');
 
-    const mod = await import('@tonejs/piano');
+    const mod = await import('tone-piano-next');
     const PianoTone = mod.Piano as PianoModule['Piano'];
 
     tone = new PianoTone({

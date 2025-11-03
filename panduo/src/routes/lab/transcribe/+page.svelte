@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { MetricsDefaults, Metrics, VexFlow } from '$lib/vexflow/vexflow-core';
+  import { Metrics, VexFlow } from '$lib/vexflow/vexflow-core';
   import { Accidental } from '$lib/vexflow/src/accidental';
   import { getPcKeyboard } from '$lib/PcKeyboard';
 
@@ -87,7 +87,7 @@
       if (letter.includes('b') && !letter.includes('#')) sn.addModifier(new Accidental('b'));
       return sn;
     });
-    VexFlow.Formatter.FormatAndDraw(ctx, stave, vfNotes);
+    VexFlow.Formatter.FormatAndDraw(ctx, stave, { notes: vfNotes }, {});
   }
 
   $effect(() => {
@@ -177,19 +177,9 @@
 
   let midi = getPcKeyboard();
 
-  let OldStaffProps: any;
-  onDestroy(() => {
-    if (OldStaffProps) MetricsDefaults.Stave.padding = OldStaffProps.Stave.padding;
-  });
   onMount(() => {
     // clear the internal cache of VexFlow
     Metrics.clear();
-    OldStaffProps = {
-      Stave: {
-        padding: MetricsDefaults.Stave.padding,
-      },
-    };
-    MetricsDefaults.Stave.padding = 30;
     // Load saved scores
     try {
       const s = localStorage.getItem('transcribe:scores');
