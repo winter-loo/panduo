@@ -20,7 +20,6 @@ export enum BarlineType {
 }
 
 export interface BarlineOptions {
-  lineWidth?: number;
   style?: ElementStyle;
 }
 
@@ -182,8 +181,7 @@ export class Barline extends StaveModifier {
   private resolveVisualStyle(stave: Stave): { lineWidth: number; color: string } {
     const staveStyle = stave.getBarlineStyle();
     const optionStyle = this.options?.style ?? {};
-    const optionLineWidth =
-      this.options?.lineWidth ?? optionStyle.lineWidth;
+    const optionLineWidth = optionStyle.lineWidth;
     const lineWidth =
       optionLineWidth ??
       staveStyle.lineWidth ??

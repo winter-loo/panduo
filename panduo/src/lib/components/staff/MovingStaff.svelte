@@ -198,6 +198,7 @@
     const padding = computeDerivedPadding(candidate);
     return VexFlow.Config.create({
       quarterNoteWidth: 112,
+      fontFamily: 'Bravura Playful',
       fontSize: 60,
       Stem: {
         width: 6,
@@ -212,18 +213,18 @@
         spaceBelowStaffLn: padding,
         style: {
           lineWidth: 4,
-          strokeStyle: '#dadada',
+          backgroundColor: '#dadada',
         },
         leftBar: {
-          width: 4,
           style: {
-            fillStyle: '#dadada',
+            lineWidth: 4,
+            backgroundColor: '#dadada',
           },
         },
         rightBar: {
-          width: 4,
           style: {
-            fillStyle: '#dadada',
+            lineWidth: 4,
+            backgroundColor: '#dadada',
           },
         },
         paddingLeft: 4,

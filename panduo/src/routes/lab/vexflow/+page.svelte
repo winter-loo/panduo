@@ -96,6 +96,7 @@
       let staffLineSpacing = Font.convertSizeToPixelValue(fontSize) / 4;
       let numSpacesPerStaff = 8;
       let cfg = VexflowConfig.create({
+        fontFamily: 'Bravura Playful',
         fontSize,
         Stave: {
           spaceAboveStaffLn: 2,

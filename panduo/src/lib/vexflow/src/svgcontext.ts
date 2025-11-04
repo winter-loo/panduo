@@ -8,7 +8,7 @@ import { Metrics } from './metrics';
 import { RenderContext, TextMeasure } from './rendercontext';
 import { Tables } from './tables';
 import { normalizeAngle, prefix, RuntimeError } from './util';
-import { VexflowConfigInstance } from './config';
+import { VexflowConfig, VexflowConfigInstance } from './config';
 
 export type Attributes = {
   [name: string]: string | number | undefined;
@@ -107,7 +107,7 @@ export class SVGContext extends RenderContext {
     this.pen = { x: NaN, y: NaN };
 
     const defaultFontAttributes = {
-      'font-family': Metrics.get('fontFamily') as string,
+      'font-family': (config ?? VexflowConfig.defaults()).get('fontFamily') as string,
       'font-size': '10pt',
       'font-weight': FontWeight.NORMAL,
       'font-style': FontStyle.NORMAL,

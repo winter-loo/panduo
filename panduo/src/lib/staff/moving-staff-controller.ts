@@ -268,7 +268,7 @@ export class MovingStaffController extends MovableElement {
     this.staves.push(measureStave);
     this.staveX += measureWidth;
     // resize render width so that this render can have enough space to show this stave
-    this.renderer.resize(this.staveX + config.get('Stave.rightBar.width'), this.context.height);
+    this.renderer.resize(this.staveX + config.get('Stave.rightBar.style.lineWidth'), this.context.height);
     if (this.staves.length == 1 && timeSignature) {
       measureStave.addTimeSignature(timeSignature);
     }
@@ -484,7 +484,7 @@ export class MovingStaffController extends MovableElement {
   private computeFixedStaveWidth(): number {
     const scratch = new Stave(0, 0, 0, {
       leftBar: {
-        width: 4,
+        style: { lineWidth: 4, },
       },
     }, this.config);
     scratch.addClef('treble');

@@ -17,7 +17,7 @@ export class ClefNote extends Note {
   protected clef!: Clef;
 
   constructor(type: string, config: VexflowConfigInstance, annotation?: string) {
-    super(config, { duration: 'b' });
+    super({ duration: 'b' }, config);
     this.setType(type, annotation);
     this.ignoreTicks = true;
   }

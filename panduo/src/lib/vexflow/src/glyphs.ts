@@ -4116,8 +4116,7 @@ export enum Glyphs {
   // U+E0B7  Void notehead with X
   noteheadVoidWithX = '\ue0b7',
   // U+E0A2  Whole (semibreve) notehead
-  // noteheadWhole = '\ue0a2',
-  noteheadWhole = '\ue0a3',
+  noteheadWhole = '\ue0a2',
   // U+E0FA  Filled whole (semibreve) notehead
   noteheadWholeFilled = '\ue0fa',
   // U+E0B5  Whole notehead with X

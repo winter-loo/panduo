@@ -13,16 +13,6 @@
 
   const { data }: PageProps = $props();
 
-  // initialize Vexflow
-  let vexflowError = $state('');
-  try {
-    const musicFontName = 'Bravura';
-    VexFlow.setFonts(`${musicFontName}`);
-  } catch (error) {
-    console.error('VexFlow initialization error:', error);
-    vexflowError = error instanceof Error ? error.message : 'Unknown error';
-  }
-
   let movingStaff = $state<MovingStaff | null>(null);
   let matchedNoteId: string | null = null;
   const noteSourceAllowList = new Set(['pc-keybord', 'piano-ui']);
@@ -129,12 +119,6 @@
     }
   }}
 />
-
-{#if vexflowError}
-  <div class="error">
-    <p>VexFlow Error: {vexflowError}</p>
-  </div>
-{/if}
 
 {#key version}
   <MovingStaff
