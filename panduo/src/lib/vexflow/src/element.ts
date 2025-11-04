@@ -160,7 +160,6 @@ export class Element {
     this._fontInfo = this.config.getFontInfo(this.attrs.type);
     this.style = this.config.getStyle(this.attrs.type);
     this.fontScale = this.config.get(`${this.attrs.type}.fontScale`);
-    console.trace('xxx fontInfo: ', this._fontInfo, `fontScale: ${this.fontScale}`);
     this.shouldDrawPointerRect = this.config.get(`${this.attrs.type}.pointerRect`);
 
     // If a default registry exist, then register with it right away.
@@ -419,7 +418,6 @@ export class Element {
     style?: string,
   ): this {
     const defaultTextFont: Required<FontInfo> = this.config.getFontInfo(this.attrs.type);
-    console.log(`xxx setFont set font size to ${size}`);
 
     const fontIsObject = typeof font === 'object';
     const fontIsString = typeof font === 'string';

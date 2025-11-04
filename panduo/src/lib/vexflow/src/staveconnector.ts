@@ -196,13 +196,13 @@ export class StaveConnector extends Element {
     const element = new Element();
     switch (this.type) {
       case StaveConnector.type.SINGLE:
-        width = 1;
+        width = this.style.lineWidth ?? 1;
         break;
       case StaveConnector.type.SINGLE_LEFT:
-        width = 1;
+        width = this.style.lineWidth ?? 1;
         break;
       case StaveConnector.type.SINGLE_RIGHT:
-        width = 1;
+        width = this.style.lineWidth ?? 1;
         break;
       case StaveConnector.type.DOUBLE:
         topX -= 5;

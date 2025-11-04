@@ -30,7 +30,7 @@
     (() => {
       let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG);
       renderer.resize(800, 80);
-      const staff = new Stave(16, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
+      const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
       staff.addClef('treble');
       staff.setContext(renderer.getContext()).draw();
       const g4 = new VexFlow.StaveNote({
@@ -62,7 +62,7 @@
     (() => {
       let renderer = new VexFlow.Renderer(bassStaffRef!, VexFlow.Renderer.Backends.SVG);
       renderer.resize(800, 80);
-      const staff = new Stave(16, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
+      const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
       staff.addClef('bass');
       staff.setContext(renderer.getContext()).draw();
       const f3 = new VexFlow.StaveNote({
@@ -99,15 +99,36 @@
         fontSize,
         Stave: {
           spacingBetweenLinesPx: staffLineSpacing,
+          style: {
+            lineWidth: 2,
+            strokeStyle: 'var(--app-color-200)',
+          },
+          leftBar: {
+            width: 2,
+            style: {
+              fillStyle: 'var(--app-color-200)',
+            },
+          },
+          rightBar: {
+            width: 2,
+            style: {
+              fillStyle: 'var(--app-color-200)',
+            },
+          },
+        },
+        Stem: {
+          width: 2,
+          strokeStyle: 'var(--app-color-200)',
         },
       });
       let renderer = new VexFlow.Renderer(grandStaffRef!, VexFlow.Renderer.Backends.SVG);
-      renderer.resize(1400, 20 * staffLineSpacing);
+      let staveWidth = 1400;
+      renderer.resize(staveWidth + cfg.get('Stave.rightBar.width'), 20 * staffLineSpacing);
       let ctx = renderer.getContext();
       const treble = new Stave(
-        16,
         0,
-        1400,
+        0,
+        staveWidth,
         {
           spaceAboveStaffLn: 2,
           spaceBelowStaffLn: 2,
@@ -117,9 +138,9 @@
       );
       treble.addClef('treble');
       const bass = new Stave(
-        16,
+        0,
         (numSpacesPerStaff - 2) * staffLineSpacing,
-        1400,
+        staveWidth,
         {
           spaceAboveStaffLn: 2,
           spaceBelowStaffLn: 2,
@@ -138,6 +159,7 @@
       treble.drawWithStyle();
       bass.drawWithStyle();
 
+      connector.setStyle({ lineWidth: 2, fillStyle: 'var(--app-color-200)' });
       connector.drawWithStyle();
 
       const bassNotes = createStaveNotes(
@@ -261,19 +283,19 @@
 
 <section class="m-4">
   <div
-    class="treble-staff flex items-center justify-start ring ring-[var(--app-color-400)]"
+    class="treble-staff flex items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
     bind:this={trebleStaffRef}
   ></div>
 </section>
 <section class="m-4">
   <div
-    class="bass-staff flex items-center justify-start ring ring-[var(--app-color-400)]"
+    class="bass-staff flex items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
     bind:this={bassStaffRef}
   ></div>
 </section>
 <section class="m-4">
   <div
-    class="grand-staff items-center justify-start ring ring-[var(--app-color-400)]"
+    class="grand-staff items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
     bind:this={grandStaffRef}
   ></div>
 </section>

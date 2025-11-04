@@ -395,7 +395,7 @@ export class SVGContext extends RenderContext {
     height: number,
     optional_attributes?: Attributes,
   ): this {
-    const attributes = { fill: 'currentColor', stroke: 'none', ...optional_attributes };
+    const attributes = { fill: 'currentColor', ...this.attributes, ...optional_attributes, stroke: 'none' };
     this.rect(x, y, width, height, attributes);
     return this;
   }

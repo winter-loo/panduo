@@ -168,7 +168,7 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     paddingRight: 0,
     endPaddingMax: 0,
     endPaddingMin: 0,
-    unalignedNotePadding: 8,
+    unalignedNotePadding: 0,
   },
   Clef: {
     defaults: {
