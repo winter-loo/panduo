@@ -33,7 +33,7 @@
     {#each items as item (item.label)}
       <div class={`flex w-full ${ALIGN_CLASS[item.align ?? 'start']}`}>
         <RoadmapCapsule label={item.label} showLoop={item.showLoop ?? false}>
-          <item.icon class="h-6 w-6" />
+          <item.icon class="h-6 w-6 text-white" />
         </RoadmapCapsule>
       </div>
     {/each}

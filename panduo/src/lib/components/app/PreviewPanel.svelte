@@ -5,7 +5,7 @@
     matrix?: boolean[][];
   };
 
-  const props = $props<PreviewPanelProps>();
+  const props: PreviewPanelProps = $props();
   const matrix = $derived(props.matrix ?? []);
 </script>
 

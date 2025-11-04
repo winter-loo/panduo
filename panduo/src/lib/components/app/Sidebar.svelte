@@ -16,7 +16,7 @@
 </script>
 
 <aside
-  class="flex h-full w-full flex-col border-b border-[#e0e0e0] bg-[#f3f3f3] px-5 py-6 lg:max-w-[256px] lg:border-r lg:border-b-0"
+  class="flex h-full w-full flex-col border-b border-[#e0e0e0] bg-[var(--app-color-100)] px-5 py-6 lg:max-w-[256px] lg:border-r lg:border-b-0"
 >
   <div class="px-8 pt-14 pb-8">
     <p class="text-[48px] leading-none font-normal text-[#58cc02]">panduo</p>
