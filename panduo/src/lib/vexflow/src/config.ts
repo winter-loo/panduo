@@ -60,6 +60,11 @@ const merge = <T>(base: T, overrides?: DeepPartial<T>): T => {
   return result;
 };
 
+export interface StaveStyleConfig extends ElementStyle {
+  barline?: ElementStyle & { lineWidth?: number; backgroundColor?: string };
+  connector?: ElementStyle & { lineWidth?: number; backgroundColor?: string };
+}
+
 export interface StaveConfigValues {
   spacingBetweenModsPx: number;
   spacingBetweenLinesPx: number;
@@ -72,7 +77,7 @@ export interface StaveConfigValues {
   lineConfig: StaveLineConfig[];
   leftBar: BarlineOptions | boolean;
   rightBar: BarlineOptions | boolean;
-  style: ElementStyle;
+  style: StaveStyleConfig;
   fontSize: number;
   paddingLeft: number;
   paddingRight: number;
@@ -158,10 +163,19 @@ const DEFAULT_CONFIG: VexflowConfigShape = {
     style: {
       shadowColor: 'black',
       shadowBlur: 0,
+      backgroundColor: 'black',
       fillStyle: 'black',
       strokeStyle: 'black',
       lineWidth: 1,
       lineDash: 'none',
+      barline: {
+        backgroundColor: 'black',
+        lineWidth: 1,
+      },
+      connector: {
+        backgroundColor: 'black',
+        lineWidth: 1,
+      },
     },
     fontSize: 32,
     paddingLeft: 8,

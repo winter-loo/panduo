@@ -98,42 +98,27 @@
       let cfg = VexflowConfig.create({
         fontSize,
         Stave: {
+          spaceAboveStaffLn: 2,
+          spaceBelowStaffLn: 2,
           spacingBetweenLinesPx: staffLineSpacing,
           style: {
             lineWidth: 2,
-            strokeStyle: 'var(--app-color-200)',
-          },
-          leftBar: {
-            width: 2,
-            style: {
-              fillStyle: 'var(--app-color-200)',
-            },
-          },
-          rightBar: {
-            width: 2,
-            style: {
-              fillStyle: 'var(--app-color-200)',
-            },
+            backgroundColor: 'var(--app-color-200)',
           },
         },
         Stem: {
           width: 2,
-          strokeStyle: 'var(--app-color-200)',
         },
       });
       let renderer = new VexFlow.Renderer(grandStaffRef!, VexFlow.Renderer.Backends.SVG);
       let staveWidth = 1400;
-      renderer.resize(staveWidth + cfg.get('Stave.rightBar.width'), 20 * staffLineSpacing);
+      renderer.resize(staveWidth + (cfg.get('Stave.style.lineWidth') ?? 0), 20 * staffLineSpacing);
       let ctx = renderer.getContext();
       const treble = new Stave(
         0,
         0,
         staveWidth,
-        {
-          spaceAboveStaffLn: 2,
-          spaceBelowStaffLn: 2,
-          spacingBetweenLinesPx: staffLineSpacing,
-        },
+        {},
         cfg,
       );
       treble.addClef('treble');
@@ -141,11 +126,7 @@
         0,
         (numSpacesPerStaff - 2) * staffLineSpacing,
         staveWidth,
-        {
-          spaceAboveStaffLn: 2,
-          spaceBelowStaffLn: 2,
-          spacingBetweenLinesPx: staffLineSpacing,
-        },
+        {},
         cfg,
       );
       bass.addClef('bass');

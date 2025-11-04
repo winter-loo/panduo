@@ -138,6 +138,7 @@ export class StaveConnector extends Element {
     // 2. Offset BRACE type not to overlap with another StaveConnector
     this.xShift = 0;
     this.texts = [];
+    this.setStyle(structuredClone(this.topStave.getConnectorStyle()));
   }
 
   /**
@@ -178,9 +179,28 @@ export class StaveConnector extends Element {
     const ctx = this.checkContext();
     this.setRendered();
 
+    const fallbackStyle = this.topStave.getConnectorStyle();
+    const connectorColor =
+      this.style.backgroundColor ??
+      this.style.strokeStyle ??
+      this.style.fillStyle ??
+      fallbackStyle.backgroundColor ??
+      fallbackStyle.strokeStyle ??
+      fallbackStyle.fillStyle ??
+      'currentColor';
+    const connectorLineWidth =
+      this.style.lineWidth ??
+      fallbackStyle.lineWidth ??
+      this.topStave.getStyle().lineWidth ??
+      1;
+
+    ctx.setFillStyle?.(connectorColor);
+    ctx.setStrokeStyle?.(connectorColor);
+    ctx.setLineWidth?.(connectorLineWidth);
+
     let topY = this.topStave.getYForLine(0);
     let botY = this.bottomStave.getYForLine(this.bottomStave.getNumLines() - 1) + this.thickness;
-    let width = 3;
+    let width = connectorLineWidth;
     let topX = this.topStave.getX();
 
     const isRightSidedConnector =
@@ -196,13 +216,13 @@ export class StaveConnector extends Element {
     const element = new Element();
     switch (this.type) {
       case StaveConnector.type.SINGLE:
-        width = this.style.lineWidth ?? 1;
+        width = connectorLineWidth;
         break;
       case StaveConnector.type.SINGLE_LEFT:
-        width = this.style.lineWidth ?? 1;
+        width = connectorLineWidth;
         break;
       case StaveConnector.type.SINGLE_RIGHT:
-        width = this.style.lineWidth ?? 1;
+        width = connectorLineWidth;
         break;
       case StaveConnector.type.DOUBLE:
         topX -= 5;
@@ -261,7 +281,7 @@ export class StaveConnector extends Element {
         drawBoldDoubleLine(ctx, this.type, topX, topY, botY - this.thickness);
         break;
       case StaveConnector.type.THIN_DOUBLE:
-        width = 1;
+        width = connectorLineWidth;
         attachmentHeight -= this.thickness;
         break;
       case StaveConnector.type.NONE:
@@ -284,7 +304,7 @@ export class StaveConnector extends Element {
 
     // If the connector is a thin double barline, draw the paralell line
     if (this.type === StaveConnector.type.THIN_DOUBLE) {
-      ctx.fillRect(topX - 3, topY, width, attachmentHeight);
+      ctx.fillRect(topX - connectorLineWidth * 3, topY, width, attachmentHeight);
     }
 
     // Add stave connector text

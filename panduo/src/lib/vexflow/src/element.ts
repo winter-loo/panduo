@@ -58,6 +58,10 @@ export interface ElementStyle {
    * See: [SVG `stroke-dasharray` attribute](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray)
    */
   lineDash?: string;
+  /**
+   * A convenience color applied to both fill & stroke if specific values are not supplied.
+   */
+  backgroundColor?: string;
 }
 
 /**
@@ -235,10 +239,20 @@ export class Element {
     style: ElementStyle = this.getStyle(),
   ): this {
     if (!context) return this;
+    const backgroundColor = style.backgroundColor;
+
     if (style.shadowColor) context.setShadowColor(style.shadowColor);
     if (style.shadowBlur) context.setShadowBlur(style.shadowBlur);
-    if (style.fillStyle) context.setFillStyle(style.fillStyle);
-    if (style.strokeStyle) context.setStrokeStyle(style.strokeStyle);
+    if (style.fillStyle) {
+      context.setFillStyle(style.fillStyle);
+    } else if (backgroundColor) {
+      context.setFillStyle(backgroundColor);
+    }
+    if (style.strokeStyle) {
+      context.setStrokeStyle(style.strokeStyle);
+    } else if (backgroundColor) {
+      context.setStrokeStyle(backgroundColor);
+    }
     if (style.lineWidth) context.setLineWidth(style.lineWidth);
     if (style.lineDash) context.setLineDash(style.lineDash.split(' ').map(Number));
 

@@ -3,7 +3,7 @@
 
 import { BoundingBox, Bounds } from './boundingbox';
 import { Clef } from './clef';
-import type { DeepPartial, StaveConfigValues, VexflowConfigInstance } from './config';
+import type { DeepPartial, StaveConfigValues, StaveStyleConfig, VexflowConfigInstance } from './config';
 import { Element, ElementStyle } from './element';
 import { KeySignature } from './keysignature';
 import { Barline, BarlineOptions, BarlineType } from './stavebarline';
@@ -13,7 +13,6 @@ import { StaveSection } from './stavesection';
 import { StaveTempo, StaveTempoOptions } from './stavetempo';
 import { StaveText } from './stavetext';
 import { Volta } from './stavevolta';
-import { SVGContext } from './svgcontext';
 import { TimeSignature } from './timesignature';
 import { Category, isBarline } from './typeguard';
 import { RuntimeError } from './util';
@@ -33,7 +32,7 @@ export interface StaveOptions {
   spacingBetweenLinesPx?: number;
   topTextPosition?: number;
   numLines?: number;
-  style?: ElementStyle;
+  style?: StaveStyleConfig;
 }
 
 // Used by Stave.format() to sort the modifiers at the beginning and end of a stave.
@@ -71,6 +70,8 @@ export class Stave extends Element {
   protected readonly modifiers: StaveModifier[];
 
   protected defaultLedgerLineStyle: ElementStyle;
+  protected barlineStyle: ElementStyle = {};
+  protected connectorStyle: ElementStyle = {};
 
   // This is the sum of the padding that normally goes on left + right of a stave during
   // drawing. Used to size staves correctly with content width.
@@ -108,28 +109,25 @@ export class Stave extends Element {
     this.bounds = { x: this.x, y: this.y, w: this.width, h: 0 };
     this.defaultLedgerLineStyle = { strokeStyle: '#444', lineWidth: 3 };
 
-    this.setStyle(this.options.style);
-
+    this.initializeStyleTree(this.options.style);
     this.resetLines();
 
     // beg bar
     if (this.options.leftBar) {
+      const leftOptions = this.normalizeBarlineOptions(
+        typeof this.options.leftBar === 'boolean' ? undefined : this.options.leftBar,
+      );
       this.addModifier(
-        new Barline(
-          this.config,
-          BarlineType.SINGLE,
-          typeof this.options.leftBar == 'boolean' ? undefined : this.options.leftBar,
-        ),
+        new Barline(this.config, BarlineType.SINGLE, leftOptions),
       );
     }
     // end bar
     if (this.options.rightBar) {
+      const rightOptions = this.normalizeBarlineOptions(
+        typeof this.options.rightBar === 'boolean' ? undefined : this.options.rightBar,
+      );
       this.addEndModifier(
-        new Barline(
-          this.config,
-          BarlineType.SINGLE,
-          typeof this.options.rightBar == 'boolean' ? undefined : this.options.rightBar,
-        ),
+        new Barline(this.config, BarlineType.SINGLE, rightOptions),
       );
     }
   }
@@ -142,6 +140,76 @@ export class Stave extends Element {
   /** Get default style for ledger lines. */
   getDefaultLedgerLineStyle(): ElementStyle {
     return { ...this.getStyle(), ...this.defaultLedgerLineStyle };
+  }
+
+  protected initializeStyleTree(style?: StaveStyleConfig): void {
+    const resolvedStyle: StaveStyleConfig = style ? { ...style } : {};
+    const { barline, connector, ...base } = resolvedStyle;
+
+    const lineColor =
+      base.backgroundColor ?? base.strokeStyle ?? base.fillStyle ?? 'currentColor';
+    const lineWidth = base.lineWidth ?? 1;
+
+    const normalizedBase: ElementStyle = {
+      ...base,
+      backgroundColor: lineColor,
+      lineWidth,
+    };
+
+    this.setStyle(normalizedBase);
+
+    const barlineSource = barline ?? {};
+    const connectorSource = connector ?? {};
+
+    this.barlineStyle = {
+      ...normalizedBase,
+      ...barlineSource,
+      backgroundColor: barlineSource.backgroundColor ?? normalizedBase.backgroundColor,
+      lineWidth: barlineSource.lineWidth ?? normalizedBase.lineWidth,
+    };
+
+    this.connectorStyle = {
+      ...normalizedBase,
+      ...connectorSource,
+      backgroundColor: connectorSource.backgroundColor ?? normalizedBase.backgroundColor,
+      lineWidth: connectorSource.lineWidth ?? normalizedBase.lineWidth,
+    };
+  }
+
+  getBarlineStyle(): ElementStyle {
+    return structuredClone(this.barlineStyle);
+  }
+
+  getConnectorStyle(): ElementStyle {
+    return structuredClone(this.connectorStyle);
+  }
+
+  protected normalizeBarlineOptions(options?: BarlineOptions): BarlineOptions {
+    const baseStyle = this.getBarlineStyle();
+    const optionStyle = options?.style ?? {};
+    const mergedStyle: ElementStyle = {
+      ...baseStyle,
+      ...optionStyle,
+    };
+
+    if (!mergedStyle.backgroundColor) {
+      mergedStyle.backgroundColor =
+        optionStyle.backgroundColor ??
+        optionStyle.strokeStyle ??
+        optionStyle.fillStyle ??
+        baseStyle.backgroundColor;
+    }
+
+    if (!mergedStyle.lineWidth) {
+      mergedStyle.lineWidth = baseStyle.lineWidth;
+    }
+
+    const baseOptions = options ? { ...options } : {};
+    return {
+      ...baseOptions,
+      lineWidth: baseOptions.lineWidth ?? baseStyle.lineWidth,
+      style: mergedStyle,
+    };
   }
 
   space(spacing: number): number {
@@ -735,7 +803,7 @@ export class Stave extends Element {
         ctx.moveTo(x, y + lineWidthCorrection);
         ctx.lineTo(x + width, y + lineWidthCorrection);
         ctx.stroke({
-          stroke: this.getStyle().strokeStyle ?? 'currentColor',
+          stroke: this.getStyle().backgroundColor ?? this.getStyle().strokeStyle ?? 'currentColor',
           'stroke-width': lineWidth,
         });
       }

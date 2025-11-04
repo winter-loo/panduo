@@ -20,7 +20,7 @@ export enum BarlineType {
 }
 
 export interface BarlineOptions {
-  width?: number;
+  lineWidth?: number;
   style?: ElementStyle;
 }
 
@@ -29,7 +29,7 @@ export class Barline extends StaveModifier {
     return Category.Barline;
   }
 
-  protected widths: Record<string, number>;
+  protected lineWidths: Record<string, number>;
   protected paddings: Record<string, number>;
   protected layoutMetricsMap: Record<number, LayoutMetrics>;
 
@@ -60,14 +60,14 @@ export class Barline extends StaveModifier {
     this.options = options;
 
     const TYPE = BarlineType;
-    this.widths = {};
-    this.widths[TYPE.SINGLE] = this.config.get('Stave.style.lineWidth');
-    this.widths[TYPE.DOUBLE] = 5;
-    this.widths[TYPE.END] = 5;
-    this.widths[TYPE.REPEAT_BEGIN] = 5;
-    this.widths[TYPE.REPEAT_END] = 5;
-    this.widths[TYPE.REPEAT_BOTH] = 5;
-    this.widths[TYPE.NONE] = 5;
+    this.lineWidths = {};
+    this.lineWidths[TYPE.SINGLE] = this.config.get('Stave.style.lineWidth');
+    this.lineWidths[TYPE.DOUBLE] = 5;
+    this.lineWidths[TYPE.END] = 5;
+    this.lineWidths[TYPE.REPEAT_BEGIN] = 5;
+    this.lineWidths[TYPE.REPEAT_END] = 5;
+    this.lineWidths[TYPE.REPEAT_BOTH] = 5;
+    this.lineWidths[TYPE.NONE] = 5;
 
     this.paddings = {};
     this.paddings[TYPE.SINGLE] = 0;
@@ -132,7 +132,7 @@ export class Barline extends StaveModifier {
   setType(type: string | number): this {
     this.type = typeof type === 'string' ? Barline.typeString[type] : type;
 
-    this.setWidth(this.widths[this.type]);
+    this.setWidth(this.lineWidths[this.type]);
     this.setPadding(this.paddings[this.type]);
     this.setLayoutMetrics(this.layoutMetricsMap[this.type]);
     return this;
@@ -179,29 +179,64 @@ export class Barline extends StaveModifier {
     ctx.closeGroup();
   }
 
+  private resolveVisualStyle(stave: Stave): { lineWidth: number; color: string } {
+    const staveStyle = stave.getBarlineStyle();
+    const optionStyle = this.options?.style ?? {};
+    const optionLineWidth =
+      this.options?.lineWidth ?? optionStyle.lineWidth;
+    const lineWidth =
+      optionLineWidth ??
+      staveStyle.lineWidth ??
+      this.lineWidths[BarlineType.SINGLE] ??
+      this.config.get('Stave.style.lineWidth');
+    const color =
+      optionStyle.backgroundColor ??
+      optionStyle.fillStyle ??
+      optionStyle.strokeStyle ??
+      staveStyle.backgroundColor ??
+      staveStyle.fillStyle ??
+      staveStyle.strokeStyle ??
+      'currentColor';
+    return { lineWidth, color };
+  }
+
+  override setStave(stave: Stave): this {
+    super.setStave(stave);
+    const { lineWidth } = this.resolveVisualStyle(stave);
+    this.lineWidths[BarlineType.SINGLE] = lineWidth;
+    if (this.type === BarlineType.SINGLE) {
+      this.setWidth(lineWidth);
+    }
+    return this;
+  }
+
   drawVerticalBar(stave: Stave, x: number, doubleBar?: boolean): void {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    const barLineWidth = this.widths[BarlineType.SINGLE];
+    const { lineWidth, color } = this.resolveVisualStyle(stave);
+    const staveLineWidth = stave.getStyle().lineWidth ?? lineWidth;
+    const height = botY - topY;
+    const spacing = lineWidth * 3;
 
-    const width = this.options?.width ?? 1;
-    const fillStyle = this.options?.style?.fillStyle ?? 'currentColor';
+    if (staveCtx.setFillStyle) {
+      staveCtx.setFillStyle(color);
+    }
 
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY - barLineWidth, width, botY - topY, {
+      staveCtx.fillRect(x - spacing, topY - staveLineWidth, lineWidth, height, {
         rx: 0,
         ry: 0,
-        fill: fillStyle,
+        fill: color,
         stroke: 'none',
       });
     }
     // the top line is drawn with 'stroke-width'. By default, the stroke is
     // drawn centered on the shape’s edge: half of it goes outward, half inward.
-    staveCtx.fillRect(x, topY - barLineWidth / 2,  width, botY - topY, {
+    staveCtx.fillRect(x, topY - staveLineWidth / 2, lineWidth, height, {
       rx: 0,
       ry: 0,
-      fill: fillStyle,
+      fill: color,
       stroke: 'none',
     });
   }
@@ -210,8 +245,18 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    staveCtx.fillRect(x - 5, topY, 1, botY - topY);
-    staveCtx.fillRect(x - 2, topY, 3, botY - topY);
+    const { lineWidth, color } = this.resolveVisualStyle(stave);
+    const height = botY - topY;
+    const thinWidth = lineWidth;
+    const thickWidth = lineWidth * 3;
+    const spacing = lineWidth * 2;
+
+    if (staveCtx.setFillStyle) {
+      staveCtx.setFillStyle(color);
+    }
+
+    staveCtx.fillRect(x - (thickWidth + spacing), topY, thinWidth, height);
+    staveCtx.fillRect(x - thickWidth, topY, thickWidth, height);
   }
 
   drawRepeatBar(stave: Stave, x: number, begin: boolean): void {
@@ -219,22 +264,30 @@ export class Barline extends StaveModifier {
 
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    let xShift = 3;
+    const { lineWidth, color } = this.resolveVisualStyle(stave);
+    const height = botY - topY;
+    const thinWidth = lineWidth;
+    const thickWidth = lineWidth * 3;
+    let xShift = 3 * lineWidth;
 
     if (!begin) {
-      xShift = -5;
+      xShift = -5 * lineWidth;
     }
 
-    staveCtx.fillRect(x + xShift, topY, 1, botY - topY);
-    staveCtx.fillRect(x - 2, topY, 3, botY - topY);
+    if (staveCtx.setFillStyle) {
+      staveCtx.setFillStyle(color);
+    }
 
-    const dotRadius = 2;
+    staveCtx.fillRect(x + xShift, topY, thinWidth, height);
+    staveCtx.fillRect(x - 2 * lineWidth, topY, thickWidth, height);
+
+    const dotRadius = Math.max(lineWidth, 2);
 
     // Shift dots left or right
     if (begin) {
-      xShift += 4;
+      xShift += 4 * lineWidth;
     } else {
-      xShift -= 4;
+      xShift -= 4 * lineWidth;
     }
 
     const dotX = x + xShift + dotRadius / 2;
@@ -246,6 +299,7 @@ export class Barline extends StaveModifier {
 
     // draw the top repeat dot
     staveCtx.beginPath();
+    staveCtx.setFillStyle?.(color);
     staveCtx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2, false);
     staveCtx.fill();
 

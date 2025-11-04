@@ -8,7 +8,7 @@ import { Metrics } from './metrics';
 import { RenderContext, TextMeasure } from './rendercontext';
 import { Tables } from './tables';
 import { normalizeAngle, prefix, RuntimeError } from './util';
-import { VexflowConfig, VexflowConfigInstance } from './config';
+import { VexflowConfigInstance } from './config';
 
 export type Attributes = {
   [name: string]: string | number | undefined;
