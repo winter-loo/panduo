@@ -17,6 +17,15 @@
   let bassStaffRef: HTMLDivElement | null = null;
   let grandStaffRef: HTMLDivElement | null = null;
 
+  function createStaveNotes(notes: StaveNoteStruct[], cfg?: VexflowConfigInstance): StaveNote[] {
+    let sNotes = [];
+    for (let i = 0; i < notes.length; i++) {
+      let sNote = new VexFlow.StaveNote({ ...notes[i], autoStem: true }, cfg);
+      sNotes.push(sNote);
+    }
+    return sNotes;
+  }
+
   onMount(() => {
     (() => {
       let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG);
@@ -93,12 +102,12 @@
         },
       });
       let renderer = new VexFlow.Renderer(grandStaffRef!, VexFlow.Renderer.Backends.SVG);
-      renderer.resize(800, (2 * numSpacesPerStaff - 2) * staffLineSpacing);
+      renderer.resize(1400, 20 * staffLineSpacing);
       let ctx = renderer.getContext();
       const treble = new Stave(
         16,
         0,
-        400,
+        1400,
         {
           spaceAboveStaffLn: 2,
           spaceBelowStaffLn: 2,
@@ -110,7 +119,7 @@
       const bass = new Stave(
         16,
         (numSpacesPerStaff - 2) * staffLineSpacing,
-        400,
+        1400,
         {
           spaceAboveStaffLn: 2,
           spaceBelowStaffLn: 2,
@@ -131,82 +140,105 @@
 
       connector.drawWithStyle();
 
-      const f3 = new VexFlow.StaveNote(
-        {
-          clef: 'bass',
-          keys: ['f/3'],
-          duration: '4',
-          autoStem: true,
-        },
+      const bassNotes = createStaveNotes(
+        [
+          {
+            clef: 'bass',
+            keys: ['f/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['e/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['d/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['c/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['g/3'],
+            duration: '1',
+          },
+          {
+            clef: 'bass',
+            keys: ['a/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['b/3'],
+            duration: '4',
+          },
+          {
+            clef: 'bass',
+            keys: ['c/4'],
+            duration: '2',
+          },
+        ],
         cfg,
       );
-      const c4 = new VexFlow.StaveNote(
-        {
-          clef: 'bass',
-          keys: ['c/4'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const b3 = new VexFlow.StaveNote(
-        {
-          clef: 'treble',
-          keys: ['b/3'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const a3 = new VexFlow.StaveNote(
-        {
-          clef: 'treble',
-          keys: ['a/3'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const g3 = new VexFlow.StaveNote(
-        {
-          clef: 'treble',
-          keys: ['g/3'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const g3_bass = new VexFlow.StaveNote(
-        {
-          clef: 'bass',
-          keys: ['g/3'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const c4_treble = new VexFlow.StaveNote(
-        {
-          clef: 'treble',
-          keys: ['c/4'],
-          duration: '4',
-          autoStem: true,
-        },
-        cfg,
-      );
-      const g4 = new VexFlow.StaveNote(
-        {
-          clef: 'treble',
-          keys: ['g/4'],
-          duration: '4',
-          autoStem: true,
-        },
+
+      const trebleNotes = createStaveNotes(
+        [
+          {
+            keys: ['c/4'],
+            duration: '4',
+          },
+          {
+            keys: ['d/4'],
+            duration: '8',
+          },
+          {
+            keys: ['e/4'],
+            duration: '8',
+          },
+          {
+            keys: ['f/4'],
+            duration: '2',
+          },
+          {
+            keys: ['g/4'],
+            duration: '16',
+          },
+          {
+            keys: ['a/4'],
+            duration: '16',
+          },
+          {
+            keys: ['b/4'],
+            duration: '8',
+          },
+          {
+            keys: ['c/5'],
+            duration: '4',
+          },
+          {
+            keys: ['c/5'],
+            duration: '2',
+          },
+          {
+            keys: ['b/4'],
+            duration: '2',
+          },
+          {
+            keys: ['b/4'],
+            duration: '2',
+          },
+        ],
         cfg,
       );
       VexFlow.Formatter.FormatAndDraw(
         renderer.getContext(),
-        treble,
-        { notes: [g4, c4_treble, g3, a3, b3] },
+        bass,
+        { notes: bassNotes },
         {
           params: {
             autoBeam: true,
@@ -215,8 +247,8 @@
       );
       VexFlow.Formatter.FormatAndDraw(
         renderer.getContext(),
-        bass,
-        { notes: [f3, c4, g3_bass] },
+        treble,
+        { notes: trebleNotes },
         {
           params: {
             autoBeam: true,
@@ -247,37 +279,16 @@
 </section>
 <section class="m-4 align-baseline">
   <!-- noteHeadWhole  -->
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(12)}px">
-    &#xE10C; O (fontSize: 12 &leftarrow; {Font.convertSizeToPixelValue(12) + 'px'})
-  </p>
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(15)}px">
-    &#xE10C; O (fontSize: 15 &leftarrow; {Font.convertSizeToPixelValue(15) + 'px'})
-  </p>
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(18)}px">
-    &#xE10C; O (fontSize: 18 &leftarrow; {Font.convertSizeToPixelValue(18) + 'px'})
-  </p>
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(21)}px">
-    &#xE10C; O (fontSize: 21 &leftarrow; {Font.convertSizeToPixelValue(21) + 'px'})
-  </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(24)}px">
-    &#xE10C; O (fontSize: 24 &leftarrow; {Font.convertSizeToPixelValue(24) + 'px'})
-  </p>
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(27)}px">
-    &#xE10C; O (fontSize: 27 &leftarrow; {Font.convertSizeToPixelValue(27) + 'px'})
+    &#xe0a3; O (fontSize: 24 &leftarrow; {Font.convertSizeToPixelValue(24) + 'px'})
   </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(30)}px">
-    &#xE10C; O (fontSize: 30 &leftarrow; {Font.convertSizeToPixelValue(30) + 'px'})
-  </p>
-  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(33)}px">
-    &#xE10C; O (fontSize: 33 &leftarrow; {Font.convertSizeToPixelValue(33) + 'px'})
+    &#xe0a3; O (fontSize: 30 &leftarrow; {Font.convertSizeToPixelValue(30) + 'px'})
   </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(36)}px">
-    &#xE10C; O (fontSize: 36 &leftarrow; {Font.convertSizeToPixelValue(36) + 'px'})
+    &#xe0a3; O (fontSize: 36 &leftarrow; {Font.convertSizeToPixelValue(36) + 'px'})
   </p>
-</section>
-
-<section class="m-4">
-  <p style:font-size="{Font.convertSizeToPixelValue(36)}px" style:line-height="48px">
-    O (fontSize: 36 &leftarrow; {Font.convertSizeToPixelValue(36) + 'px'})
+  <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(48)}px">
+    &#xe0a3; O (fontSize: 48 &leftarrow; {Font.convertSizeToPixelValue(48) + 'px'})
   </p>
 </section>

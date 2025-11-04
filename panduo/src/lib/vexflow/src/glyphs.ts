@@ -3774,8 +3774,7 @@ export enum Glyphs {
   // U+E1D2  Whole note (semibreve)
   noteWhole = '\ue1d2',
   // U+E0A4  Black notehead
-  // noteheadBlack = '\ue0a4',
-  noteheadBlack = '\ue10b',
+  noteheadBlack = '\ue0a4',
   // U+E0F7  Circle slash notehead
   noteheadCircleSlash = '\ue0f7',
   // U+E0B3  Circle X notehead
@@ -3949,8 +3948,7 @@ export enum Glyphs {
   // U+E0B4  Double whole notehead with X
   noteheadDoubleWholeWithX = '\ue0b4',
   // U+E0A3  Half (minim) notehead
-  // noteheadHalf = '\ue0a3',
-  noteheadHalf = '\ue10c',
+  noteheadHalf = '\ue0a3',
   // U+E0FB  Filled half (minim) notehead
   noteheadHalfFilled = '\ue0fb',
   // U+E0B6  Half notehead with X
@@ -4119,7 +4117,7 @@ export enum Glyphs {
   noteheadVoidWithX = '\ue0b7',
   // U+E0A2  Whole (semibreve) notehead
   // noteheadWhole = '\ue0a2',
-  noteheadWhole = '\ue10c',
+  noteheadWhole = '\ue0a3',
   // U+E0FA  Filled whole (semibreve) notehead
   noteheadWholeFilled = '\ue0fa',
   // U+E0B5  Whole notehead with X
