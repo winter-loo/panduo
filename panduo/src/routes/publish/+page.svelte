@@ -2,12 +2,15 @@
   import { goto } from '$app/navigation';
   import Sidebar, { type Feature } from '$lib/components/app/Sidebar.svelte';
   import StageNavbar from '$lib/components/app/StageNavbar.svelte';
-  import RoadmapSection, {
-    type RoadmapItem,
-  } from '$lib/components/app/RoadmapSection.svelte';
+  import RoadmapSection, { type RoadmapItem } from '$lib/components/app/RoadmapSection.svelte';
   import PracticeCalendar from '$lib/components/app/PracticeCalendar.svelte';
   import { Aperture, Piano, ShoppingBag, User as UserIcon } from '@lucide/svelte';
-  import { Armchair, HandHelping, Music3, Piano as PianoIcon } from '@lucide/svelte';
+  import {
+    IconStool,
+    IconHandpointing,
+    IconMusicNoteSimple,
+    IconPianoKeys,
+  } from '$lib/components/app/icons/index';
 
   const features: Feature[] = [
     { icon: Piano, label: 'learn' },
@@ -17,10 +20,10 @@
   ];
 
   const roadmapItems: RoadmapItem[] = [
-    { icon: Music3, label: 'scales', showLoop: true, align: 'center' },
-    { icon: HandHelping, label: 'hand shape', align: 'start' },
-    { icon: PianoIcon, label: 'keyboard', align: 'start' },
-    { icon: Armchair, label: 'posture', align: 'center' },
+    { icon: IconMusicNoteSimple, label: 'scales', showLoop: true, align: 'center' },
+    { icon: IconHandpointing, label: 'hand shape', align: 'start' },
+    { icon: IconPianoKeys, label: 'keyboard', align: 'start' },
+    { icon: IconStool, label: 'posture', align: 'center' },
   ];
 
   const practiceHistory = (() => {
@@ -62,30 +65,23 @@
 </script>
 
 <svelte:head>
-  <title>Music Scales | Panduo</title>
+  <title>Panduo</title>
 </svelte:head>
 
 <div class="min-h-screen bg-[var(--app-color-100)]">
-  <div class="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 py-10 lg:flex-row">
+  <div class="mx-auto flex w-full max-w-[1512px] flex-col gap-9 lg:flex-row">
     <Sidebar {features} />
-    <div class="flex w-full max-w-[600px] flex-col items-center gap-10 self-center lg:self-stretch">
+    <div
+      class="flex w-full max-w-[642px] flex-col items-center gap-10 self-center pt-12 lg:self-stretch"
+    >
       <StageNavbar {stageLabel} {songTitle} onback={handleBack} />
       <div class="relative flex w-full flex-col items-center gap-10">
-        <div class="w-full">
+        <div class="w-[535px]">
           <RoadmapSection title="roadmap" items={roadmapItems} />
-        </div>
-        <div
-          class="pointer-events-none w-[220px] rounded-full bg-white/80 p-4 shadow-[0_30px_60px_rgba(0,0,0,0.1)] backdrop-blur-sm lg:absolute lg:top-36 lg:-right-10"
-        >
-          <img
-            alt="Illustration of a panda practicing piano"
-            class="h-full w-full rounded-full object-cover"
-            src="/images/app/panda.png"
-          />
         </div>
       </div>
     </div>
-    <div class="w-full max-w-[486px] self-center lg:self-stretch">
+    <div class="w-full max-w-[486px] self-center pt-12 lg:self-stretch">
       <PracticeCalendar values={practiceHistory.values} startDate={practiceHistory.startDate} />
     </div>
   </div>

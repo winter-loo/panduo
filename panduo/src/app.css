@@ -124,7 +124,6 @@
   --app-dark: oklch(0.51 0.046 138);
   --app-medium: oklch(0.64 0.033 138);
   --app-light: oklch(0.86 0.02 138);
-  --app-lightest: oklch(0.99 0.01 138);
 
   --app-color-50: oklch(0.9947 0.0045 134.85);
   --app-color-100: oklch(0.9808 0.0028 128.49);
@@ -133,6 +132,7 @@
   --app-color-300: oklch(0.6398 0.0322 137.43);
   --app-color-400: oklch(0.863 0.1496 137.88);
   --app-color-500: oklch(0.7241 0.1975 138.01);
+  --app-color-520: oklch(0.6932 0.1975 138.01);
   --app-color-600: oklch(0.6033 0.177 137.89);
   --app-color-700: oklch(0.5107 0.0468 138.52);
   --app-color-800: oklch(0.3122 0.0258 136.1);

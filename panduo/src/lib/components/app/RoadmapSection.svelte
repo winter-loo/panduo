@@ -15,27 +15,24 @@
   };
 
   const props: RoadmapSectionProps = $props();
-  const title = $derived(props.title ?? 'Roadmap');
   const items = $derived(props.items ?? []);
 
-  const ALIGN_CLASS: Record<'start' | 'center' | 'end', string> = {
-    start: 'justify-start',
-    center: 'justify-center',
-    end: 'justify-end',
-  };
+  const offsets = ['translate-x-0', '-translate-x-1/4', '-translate-x-1/4', 'translate-x-0'];
 </script>
 
-<section class="flex w-full flex-col gap-10">
-  <header>
-    <h3 class="text-3xl font-semibold tracking-[0.2em] text-[#58cc02] uppercase">{title}</h3>
-  </header>
-  <div class="flex flex-col gap-8">
-    {#each items as item (item.label)}
-      <div class={`flex w-full ${ALIGN_CLASS[item.align ?? 'start']}`}>
-        <RoadmapCapsule label={item.label} showLoop={item.showLoop ?? false}>
-          <item.icon class="h-6 w-6 text-white" />
-        </RoadmapCapsule>
-      </div>
-    {/each}
+<section class="relative flex flex-col">
+  {#each items as item, index (item.label)}
+    <div class={`flex h-[118px] flex-row items-center justify-center ${offsets[index]}`}>
+      <RoadmapCapsule label={item.label} showLoop={item.showLoop ?? false}>
+        <item.icon size={56} strokeWidth=0 fill="var(--app-color-100)" class="text-white" />
+      </RoadmapCapsule>
+    </div>
+  {/each}
+  <div class="pointer-events-none absolute right-0 h-[220px] w-[220px] translate-y-1/2">
+    <img
+      alt="Illustration of a panda practicing piano"
+      class="h-full w-full object-cover"
+      src="/images/app/panda.png"
+    />
   </div>
 </section>

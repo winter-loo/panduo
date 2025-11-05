@@ -116,7 +116,7 @@
   </div>
 {/snippet}
 
-<main class="flex min-h-screen items-center justify-center bg-[var(--app-lightest)] px-3 py-10">
+<main class="flex min-h-screen items-center justify-center bg-[var(--app-color-100)] px-3 py-10">
   <div
     class="flex max-h-[399px] w-full max-w-[844px] flex-col rounded-sm bg-white px-4 py-2 shadow-sm"
   >
