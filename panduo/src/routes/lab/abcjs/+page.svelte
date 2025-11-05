@@ -25,7 +25,18 @@
       staffwidth: 840,
     });
   });
+
+  // Get MIDI data as a link or data URL
+  var midiOutput = abcjs.synth.getMidiFile('M:3/4\nL:1/8\n G2ee | e2c2ce | g3g fe | d2z2', {
+    midiOutputType: 'link',
+    downloadLabel: 'Download MIDI',
+  });
+
 </script>
+
+<section>
+  {@html midiOutput}
+</section>
 
 <section class="subpages mt-5 ml-4 underline">
   <Button variant="link" href="{PagePath}/animation">animation</Button>
@@ -46,7 +57,7 @@
   <div id="s3-paper"></div>
 </section>
 
-<section class="h-40 ml-4">
+<section class="ml-4 h-40">
   <h3 class="mt-10 text-lg font-bold">references</h3>
   <ul>
     <li>https://paulrosen.github.io/abcjs/</li>
