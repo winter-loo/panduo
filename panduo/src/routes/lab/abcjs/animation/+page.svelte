@@ -1,15 +1,17 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import abcjs, {
-    type EventCallbackReturn,
-    type NoteTimingEvent,
-    type TimingCallbacksDebug,
-    type TimingCallbacksPosition,
-  } from 'abcjs';
+  import abcjs from '$lib/abcjs/index.js';
   import { onDestroy, onMount } from 'svelte';
+  import type {
+    NoteTimingEvent,
+    TimingCallbacksPosition,
+    TimingCallbacksDebug,
+    EventCallbackReturn,
+  } from '$lib/abcjs/types/abc-animation';
+  import type TimingCallbacks from '$lib/abcjs/src/api/abc_timing_callbacks';
 
   let isRunning = $state(false);
-  let timingCallbacks: abcjs.TimingCallbacks;
+  let timingCallbacks: TimingCallbacks;
   let movingStaffEl: HTMLDivElement | null = null;
 
   let animationFrame = 0;
@@ -148,10 +150,19 @@ x CDEF | GABc | defg | abc'z |
 <section class="mt-5 ml-4">
   <Button onclick={startStop}>{isRunning ? 'Pause' : 'Start'}</Button>
   <Button onclick={reset}>reset</Button>
-  <div class="paper-viewport relative w-[800px] m-auto overflow-hidden flex items-center">
+  <div class="paper-viewport relative m-auto flex w-[800px] items-center overflow-hidden">
     <div id="clef-only" class="w-[100px]"></div>
-    <div id="cursor" bind:this={cursorEl} class="absolute left-[100px] h-[200px] w-[4px] bg-[#a9a9a9] opacity-70"></div>
-    <div id="moving-staff" class="w-[700px]" bind:this={movingStaffEl} style:transform={`translateX(${offset}px)`}></div>
+    <div
+      id="cursor"
+      bind:this={cursorEl}
+      class="absolute left-[100px] h-[200px] w-[4px] bg-[#a9a9a9] opacity-70"
+    ></div>
+    <div
+      id="moving-staff"
+      class="w-[700px]"
+      bind:this={movingStaffEl}
+      style:transform={`translateX(${offset}px)`}
+    ></div>
   </div>
 </section>
 

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import abcjs from 'abcjs';
-  import 'abcjs/abcjs-audio.css';
+  import abcjs from '$lib/abcjs/index.js';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   const PagePath = page.url.pathname;
@@ -38,8 +37,9 @@
   {@html midiOutput}
 </section>
 
-<section class="subpages mt-5 ml-4 underline">
+<section class="subpages mt-5 ml-4">
   <Button variant="link" href="{PagePath}/animation">animation</Button>
+  <Button variant="link" href="{PagePath}/mini">mini lab</Button>
 </section>
 
 <section>
