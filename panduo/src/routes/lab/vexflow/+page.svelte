@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from '$lib/components/ui/button';
   import {
     RenderContext,
     Renderer,
@@ -26,39 +27,47 @@
     return sNotes;
   }
 
-  onMount(() => {
-    (() => {
-      let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG);
-      renderer.resize(800, 80);
-      const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
-      staff.addClef('treble');
-      staff.setContext(renderer.getContext()).draw();
-      const g4 = new VexFlow.StaveNote({
-        clef: 'treble',
-        keys: ['g/4'],
-        duration: '4',
-        autoStem: true,
-        alignCenter: true,
-      });
-      const c5 = new VexFlow.StaveNote({
-        clef: 'treble',
-        keys: ['c/5'],
-        duration: '4',
-        autoStem: true,
-        alignCenter: true,
-      });
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        staff,
-        { notes: [g4, c5] },
-        {
-          params: {
-            autoBeam: true,
-          },
-        },
-      );
-    })();
+  let trebleStaffFontFamily = $state('Bravura');
 
+  $effect(() => {
+    let cfg = VexflowConfig.create({
+      fontFamily: trebleStaffFontFamily,
+    });
+    let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG, cfg);
+    renderer.resize(800, 80);
+    const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
+    staff.addClef('treble');
+    staff.setContext(renderer.getContext()).draw();
+    const g4 = new VexFlow.StaveNote({
+      clef: 'treble',
+      keys: ['g/4'],
+      duration: '4',
+      autoStem: true,
+      alignCenter: true,
+    }, cfg);
+    const c5 = new VexFlow.StaveNote({
+      clef: 'treble',
+      keys: ['c/5'],
+      duration: '4',
+      autoStem: true,
+      alignCenter: true,
+    }, cfg);
+    VexFlow.Formatter.FormatAndDraw(
+      renderer.getContext(),
+      staff,
+      { notes: [g4, c5] },
+      {
+        params: {
+          autoBeam: true,
+        },
+      },
+    );
+    return () => {
+      trebleStaffRef?.replaceChildren();
+    };
+  });
+
+  onMount(() => {
     (() => {
       let renderer = new VexFlow.Renderer(bassStaffRef!, VexFlow.Renderer.Backends.SVG);
       renderer.resize(800, 80);
@@ -115,21 +124,9 @@
       let staveWidth = 1400;
       renderer.resize(staveWidth + (cfg.get('Stave.style.lineWidth') ?? 0), 20 * staffLineSpacing);
       let ctx = renderer.getContext();
-      const treble = new Stave(
-        0,
-        0,
-        staveWidth,
-        {},
-        cfg,
-      );
+      const treble = new Stave(0, 0, staveWidth, {}, cfg);
       treble.addClef('treble');
-      const bass = new Stave(
-        0,
-        (numSpacesPerStaff - 2) * staffLineSpacing,
-        staveWidth,
-        {},
-        cfg,
-      );
+      const bass = new Stave(0, (numSpacesPerStaff - 2) * staffLineSpacing, staveWidth, {}, cfg);
       bass.addClef('bass');
       treble.setContext(ctx);
       bass.setContext(ctx);
@@ -264,6 +261,10 @@
 </script>
 
 <section class="m-4">
+  <div class="w-full">
+    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = 'Bravura')}>Bravura</Button>
+    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = 'Bravura Playful')}>Bravura Playful</Button>
+  </div>
   <div
     class="treble-staff flex items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
     bind:this={trebleStaffRef}
