@@ -1,5 +1,5 @@
 <script lang="ts">
-  import abcjs from '$lib/abcjs/index';
+  import * as abcjs from '$lib/abcjs/index';
   import { onMount } from 'svelte';
   console.log('tune object array: ', abcjs.parseOnly("L:1/4\n | CDEF | GABc \n| d[efg] | abc'z |"));
 

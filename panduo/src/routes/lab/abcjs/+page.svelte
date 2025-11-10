@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
-  import abcjs from '$lib/abcjs/index.js';
+  import * as abcjs from '$lib/abcjs/index';
   import { onMount } from 'svelte';
   import { page } from '$app/state';
   const PagePath = page.url.pathname;

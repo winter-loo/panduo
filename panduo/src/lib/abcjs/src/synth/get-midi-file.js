@@ -1,4 +1,4 @@
-import tunebook from '../api/abc_tunebook';
+import * as tunebook from '../api/abc_tunebook';
 import midiCreate from '../midi/abc_midi_create';
 
 var getMidiFile = function(source, options) {

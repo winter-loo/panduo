@@ -1,4 +1,4 @@
-import tunebook from './abc_tunebook';
+import * as tunebook from './abc_tunebook';
 import Tune from '../data/abc_tune';
 
 import EngraverController from '../write/engraver-controller';

@@ -1,4 +1,4 @@
-import tunebook from './abc_tunebook';
+import * as tunebook from './abc_tunebook';
 import EngraverController from '../write/engraver-controller';
 
 var tuneMetrics = function(abc, params) {

@@ -9,8 +9,8 @@ die () {
 # switch to dev branch.
 git checkout dev
 
-# change version number in package.json and version.js.
-perl -pi -e "s/\'([^\']+)\'/\'$1\'/" version.js
+# change version number in package.json and version.ts.
+perl -pi -e "s/\'([^\']+)\'/\'$1\'/" version.ts
 perl -pi -e "s/\"version\": \"([^\"]+)\"/\"version\": \"$1\"/" package.json
 
 # build so dist has the right version numbers.
