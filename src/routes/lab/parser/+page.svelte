@@ -82,26 +82,255 @@
         | "/"+ --half
     number = digit+
     note = accidental? pitch noteLength?
-    Broken = note ">" note
+    Broken = note ">" note NoteSequence?
     Rest =
     	("z" | "x") #(noteLength)?
         | ("Z" | "X") #(number)?
     Beam = #(note)+
+    Regular = note+ NoteSequence?
     NoteSequence =
-    	note+
-        | Tie
-        | Slur
-        | BarNotes
+            | Broken
+			| Regular
+            | Tie
+            | Slur
+            | BarNotes
+            | Rest
 
     Bar = "||" | "|]" | "[|" | "|"
     Repeat = "::" | "|:" | ":|" | "[1" | "[2" | "|1" | ":|2"
 
     BarNotes = Bar NoteSequence*
 
-    Tie = note #("-") Bar ? note
-    Slur = "(" NoteSequence ")"
+    Tie = NoteSequence? note #("-") Bar ? note NoteSequence?
+    Slur = "(" NoteSequence+ ")"
+    GraceNotes = "{"#( "/")? NoteSequence+ "}"
   }
+`;
+
 `
+Abc {
+    NoteSeq =
+    	NoteSeq NoteSeq  --concat
+        |  note ">" note --broken
+        |  note #("-") note --tie
+        |  "(" NoteSeq ")" --slur
+        | "{" NoteSeq "}" --grace
+        | "("#(digit) NoteSeq  --nplet
+    	| note
+
+    note = "A".."G" | "a".."g"
+  }
+`;
+
+`
+Abc  {
+    NoteSeq =
+    	NoteSeq NoteSeq  --concat
+        |  note ">" note --broken
+        |  note #("-") note --tie
+        |  "(" NoteSeq ")" --slur
+        | "{" NoteSeq "}" --grace
+        | "("#(digit) NoteSeq  --nplet
+        | "[" #(NoteConstruct)+ "]" --chord
+        | NoteConstruct
+
+
+    NoteConstruct  = ChordAnnotation? AnnotationList? CoreNote
+
+    ChordAnnotation = "\"" ChordAnnoText "\""
+    ChordAnnoText = note
+    ChordSymbol = "Am"
+
+    PairingAnnotationNote = CoreNoteWithStartAnnotation NoteSeq* CoreNoteWithEndAnnotation
+
+    CoreNoteWithStartAnnotation = ("\"" ChordSymbol "\"")? AnnotationStart CoreNote
+    CoreNoteWithEndAnnotation = ("\"" ChordSymbol "\"")? AnnotationEnd CoreNote
+
+    CoreNote = #(accidental)? #(note) #(octave)? #(noteLen)?
+
+    AnnotationStart =
+      | "!trill(!"
+      | "!crescendo(!"
+      | "!<(!"
+      | "!diminuendo(!"
+      | "!>(!"
+
+    AnnotationEnd =
+      | "!trill)!"
+      | "!crescendo)!"
+      | "!<)!"
+      | "!diminuendo)!"
+      | "!>)!"
+
+     AnnotationList =
+     	| AnnotationList Annotation --list
+     	| Annotation --single
+     Annotation =
+      | "\"" AnnoText "\"" --anno
+      | Decoration --deco
+    AnnoText = (~EOL any)*
+
+    Decoration =
+      | "."
+      | "~"
+      | "H"
+      | "L"
+      | "M"
+      | "O"
+      | "P"
+      | "S"
+      | "T"
+      | "u"
+      | "v"
+      | "!trill!"
+      | "!lowermordent!"
+      | "!uppermordent!"
+      | "!mordent!"
+      | "!pralltriller!"
+      | "!roll!"
+      | "!turn!"
+      | "!turnx!"
+      | "!invertedturn!"
+      | "!invertedturnx!"
+      | "!arpeggio!"
+      | "!>!"
+      | "!accent!"
+      | "!emphasis!"
+      | "!fermata!"
+      | "!invertedfermata!"
+      | "!tenuto!"
+      | "!0!"
+      | "!1!"
+      | "!2!"
+      | "!3!"
+      | "!4!"
+      | "!5!"
+      | "!+!"
+      | "!plus!"
+      | "!snap!"
+      | "!slide!"
+      | "!wedge!"
+      | "!upbow!"
+      | "!downbow!"
+      | "!open!"
+      | "!thumb!"
+      | "!breath!"
+      | "!pppp!"
+      | "!ppp!"
+      | "!pp!"
+      | "!p!"
+      | "!mp!
+      | "!mf!"
+      | "!f!"
+      | "!ff!"
+      | "!fff!"
+      | "!ffff!"
+      | "!sfz!"
+      | "!segno!"
+      | "!coda!"
+      | "!D.S.!"
+      | "!D.C.!"
+      | "!dacoda!"
+      | "!dacapo!"
+      | "!fine!"
+      | "!shortphrase!"
+      | "!mediumphrase!"
+      | "!longphrase!"
+
+    accidental = "^"+ | "_"+ | "="
+    note = "A".."G" | "a".."g"
+    octave = ","+ | "'"+
+    noteLen = digit
+  }
+`;
+
+
+  `
+Abc  {
+    NoteSeq =
+    	NoteSeq NoteSeq  --concat
+        |  NoteConstruct BinaryNoteOp NoteConstruct --binary
+        |  "(" NoteSeq ")" --slur
+        |  "{" NoteSeq "}" --grace
+        | UnaryOp NoteSeq  --nplet
+    	| NoteConstruct
+
+       UnaryOp = "(" #(digit)
+       BinaryNoteOp = BinaryNoteOp BinaryNoteOp  --multi
+       		| ">"
+            | "-"
+
+
+     NoteConstruct  = ("\"" ChordSymbol "\"")? AnnotationList?  CoreNote
+
+     CoreNote = #(accidental)? #(note) #(octave)? #(noteLen)? --single
+     		| "[" NoteConstruct+ "]" --chord
+
+
+     ChordSymbol = "Am"
+     AnnotationList =
+     	| AnnotationList Annotation --list
+     	| Annotation --single
+     Annotation =
+     	"\""  AnnoText "\"" --anno
+     	| "!0!" --deco
+        | "!f!"
+
+     AnnoText =
+     	| "^I"
+    accidental = "^"+ | "_"+ | "="
+    note = "A".."G" | "a".."g"
+    octave = ","+ | "'"+
+    noteLen = digit
+  }
+`;
+
+`
+Abc {
+  NoteSeq =
+    | NoteConstruct BinaryNoteOp NoteConstruct --binary
+    | NoteConstruct
+
+  BinaryNoteOp =
+    | BinaryNoteOp BinaryNoteOp  --multi
+    | ">"
+    | "-"
+
+
+  NoteConstruct = CoreNote
+
+  CoreNote = note
+
+  note = "A".."G" | "a".."g"
+}
+`;
+
+
+`
+Abc {
+    InlineInfoFieldList = InlineInfoField*
+    InlineInfoField = "["  Key ":" InlineFieldValue "]"
+    Key       = letter
+    InlineFieldValue     = (~(EOL | "]" | "[") any)*
+    EOL = "\r\n" | "\n" | "\r"
+    space := " " | "\t" | end
+}
+`;
+
+
+  `
+Abc {
+	BlockInfoField = InfoField EOL
+
+    InfoField = Key ":" Value
+    Key = letter
+    Value = (~EOL any)*
+    EmptyLines = EOL+
+    EOL = "\r\n" | "\n" | "\r"
+    space := " " | "\t" | end
+}
+
+`;
   console.log(abcNotation);
 
   const mr = abcNotation.match(String.raw`
