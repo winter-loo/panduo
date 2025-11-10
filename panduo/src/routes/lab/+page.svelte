@@ -16,4 +16,5 @@
   <Button variant="link" href={`${PagePath}/motion`}>framer motion</Button>
   <Button variant="link" href={`${PagePath}/piano-tone`}>piano tone</Button>
   <Button variant="link" href={`${PagePath}/vexflow`}>vexflow music staff</Button>
+  <Button variant="link" href={`${PagePath}/parser`}>ohm parser</Button>
 </nav>
