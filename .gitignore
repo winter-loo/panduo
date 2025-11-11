@@ -45,3 +45,4 @@ pnpm-lock.yaml
 dist/
 .vscode/
 /public/audio/
+.svelte-kit
