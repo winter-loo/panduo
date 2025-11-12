@@ -14,26 +14,37 @@ import { onMount } from 'svelte';
   onMount(() => {
     currentGrammar = String.raw`
 Abc {
-  File = eol* FileHeader? TuneBook
-  FileHeader = blockInfoFieldList eol eol+
+  File = eol* (FileHeader eol eol+)? TuneBook
+
+  FileHeader =
+    | FileHeader eol FileHeader --many
+    | reservedFileHeaderField
+    | UnknownFileHeaderField --unknown
 
   TuneBook =
     | TuneBook eol eol+ TuneBook --many
     | Tune --one
 
-  Tune = TuneHeader? TuneBody eol*
-  TuneHeader = blockInfoFieldList eol
+  Tune = TuneHeader (eol TuneBody)? eol*
+  TuneHeader = TuneHeaderStartField (eol TuneHeaderMiddleField)? eol TuneHeaderEndField
+  TuneHeaderMiddleField =
+    | TuneHeaderMiddleField eol TuneHeaderMiddleField --many
+    | reservedTuneHeaderField
+    | UnknownTuneHeaderField --unknown
+
   TuneBody = StaffElement
 
   StaffElement =
     | StaffElement StaffElement --concat
+    | StaffElement eol InBodyInfoFieldList eol StaffElement --sepByBlockFields
+    | InBodyInfoFieldList eol StaffElement --startWithBlockFields
+    | InBodyInfoFieldList --trailingBlockFields
     | bar
     | rest
     | noteSeq
     | eol
     | lineContinue
-    | blockInfoFieldList
-    | InlineInfoFieldList
+    | InlineInfoFieldList --inlineFields
 
   rest =
       | ("z" | "x") noteLen? --inside
@@ -42,19 +53,21 @@ Abc {
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
   noteSeq =
-    | chordAnnotation spaces noteGroup --group
-    | noteGroup
-    | noteConstruct
-
-  noteGroup =
     | noteSeq noteSeq --beam
     | noteSeq space+ noteSeq --gap
-    | "(" spaces noteSeq spaces ")" --slur
-    | "{" spaces noteSeq spaces "}" --grace
-    | "(" digit noteConstruct+ --nplet
     // spaces are not allowed between notes
-    | noteConstruct binaryOp noteConstruct --binary
+    | noteSeq binaryOp noteSeq --binary
+    | chordedNoteGroup --chorded
 
+  noteGroup =
+    | "(" spaces noteConstruct+ spaces ")" --slur
+    | "{" spaces noteConstruct+ spaces "}" --grace
+    | "[" spaces noteConstruct+ spaces "]" --chord
+    | "(" digit noteConstruct+ --nplet
+    | noteConstruct
+
+  chordedNoteGroup = (chordAnnotation spaces)? annotatedNoteGroup
+  annotatedNoteGroup = (annotationOp spaces)? noteGroup
 
   binaryOp =
     | binaryOp binaryOp  --many
@@ -172,36 +185,119 @@ Abc {
     | number            --mul
 
   InlineInfoFieldList = InlineInfoField*
-  InlineInfoField = "["  key InlineFieldValue "]"
-  InlineFieldValue     = (~(eol | "]" | "[") any)*
+  InlineInfoField = "[" InlineInfoFieldX "]"
+  InlineInfoFieldX =
+    | reservedInlineField
+    | UnknownField --unknown
+  InlineFieldValue = (~(eol | "]" | "[") any)*
+  InBodyInfoFieldList =
+    | InBodyInfoFieldList eol InBodyInfoFieldList --many
+    | reservedInBodyField --one
+    | UnknownField --unkown
 
-  blockInfoFieldList = infoField spaces infoFieldLineContinue+
-  infoFieldLineContinue = eol infoField
-  infoField = key spaces value
+  TuneHeaderStartField = "X:" number
+  TuneHeaderEndField   = "K:" oneLineValue
+
+  reservedFileHeaderField = reservedHeaderOnlyField
+
+  reservedTuneHeaderField =
+    | reservedTuneHeaderFieldX
+    | reservedHeaderOnlyField
+    | reservedCommonField
+
+  reservedTuneHeaderFieldX =
+    | "P:" spaces oneLineValue
+    | "Q:" spaces qKeyedValue
+    | "T:" spaces oneLineValue
+    | "V:" spaces oneLineValue
+    | "W:" spaces oneLineValue
+
+  reservedInBodyField =
+    | reservedInBodyFieldX
+    | reservedCommonField
+
+  reservedInBodyFieldX =
+  	| "K:" spaces oneLineValue
+    | "P:" spaces oneLineValue
+    | "Q:" spaces qKeyedValue
+    | "s:" spaces oneLineValue
+    | "T:" spaces oneLineValue
+    | "V:" spaces oneLineValue
+    | "W:" spaces oneLineValue
+    | "w:" spaces oneLineValue
+
+  reservedInlineField =
+    | reservedInlineFieldX
+    | reservedCommonField
+
+  reservedInlineFieldX =
+   	| "K:" spaces oneLineValue
+    | "P:" spaces oneLineValue
+    | "Q:" spaces qKeyedValue
+    | "R:" spaces oneLineValue
+    | "V:" spaces oneLineValue
+
+  reservedHeaderOnlyField =
+    | "A:" spaces oneLineValue
+    | "B:" spaces oneLineValue
+    | "C:" spaces oneLineValue
+    | "D:" spaces oneLineValue
+    | "F:" spaces oneLineValue
+    | "G:" spaces oneLineValue
+    | "H:" spaces oneLineValue
+    | "S:" spaces oneLineValue
+    | "Z:" spaces manyLineValue
+    | "O:" spaces oneLineValue
+
+  reservedCommonField =
+    | "I:" spaces oneLineValue
+    | "L:" spaces noteLen
+    | "M:" spaces noteLen
+    | "m:" spaces oneLineValue
+    | "N:" spaces oneLineValue
+    | "R:" spaces oneLineValue
+    | "r:" spaces oneLineValue
+    | "U:" spaces oneLineValue
+    | fieldContinue spaces oneLineValue
+
+  qKeyedValue = dqTextString? spaces  (number "/" number "=")? number spaces dqTextString?
+
+  UnknownFileHeaderField = ~(reservedFileHeaderField) key oneLineValue
+  UnknownTuneHeaderField = ~(reservedTuneHeaderField | TuneHeaderStartField | TuneHeaderEndField) key oneLineValue
+  UnknownField = ~(reservedInBodyField | reservedInlineField | reservedTuneHeaderField | reservedFileHeaderField) key oneLineValue
+
   key = letter ":"
+  textString  = (~(eol | "\"") any)*
+  dqTextString = "\"" textString "\""
   // allow newline in value but line beginning with letter + colon
-  // is a marker for infoField
-  value = (~(eol key) any)*
+  // is a marker for info field
+  oneLineValue  = (~(eol) any)*
+  manyLineValue = (~(eol key) any)*
+  comment = "%" (~eol any)*
+  commentLine = eol comment
   eol = "\r\n" | "\n" | "\r"
-  space := " " | "\t"
+  space := " " | "\t" | comment | commentLine
   number = digit+
   lineContinue = "\\"
+  fieldContinue = "+:"
 }
 `;
-      matchingText = "\nK:A\n";
+
+      matchingText = `[CEG]->[CEG]`;
   });
 
   $effect(() => {
     try {
       let abcNotation = ohm.grammar(currentGrammar);
-      const mr = abcNotation.match(matchingText);
+      const mr = abcNotation.match(matchingText, 'noteSeq');
       if (mr.failed()) {
         failureMessage = mr.message!;
       } else {
         failureMessage = '';
 
-        traceOutput = abcNotation.trace(matchingText).toString();
-        ast = toAST(mr).toString();
+        traceOutput = abcNotation.trace(matchingText, 'noteSeq').toString();
+        // ast = toAST(mr);
+        // console.log('ast:', ast)
       }
     } catch (e) {
       if (e instanceof Error)
@@ -251,10 +347,10 @@ Abc {
   </div>
   <div class="flex flex-col max-h-full p-8">
     {#if failureMessage.length > 0}
-      <pre class="text-red-500 text-base">{failureMessage}</pre>
+      <pre class="text-red-500 text-base text-wrap">{failureMessage}</pre>
       <hr class="my-2 "/>
     {:else}
-      <pre class="max-h-fit overflow-auto">{ast}</pre>
+      <!-- <pre class="max-h-fit overflow-auto">{ast}</pre> -->
       <pre class="max-h-fit overflow-auto">{traceOutput}</pre>
     {/if}
   </div>
