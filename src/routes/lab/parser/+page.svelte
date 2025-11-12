@@ -5,23 +5,6 @@ import { onMount } from 'svelte';
   import * as InputGroup from "$lib/components/ui/input-group/index.js";
   import { Save as SaveIcon, Copy as CopyIcon } from '@lucide/svelte';
 
-
-`
-Abc {
-		Foo = annotationList
-
-    annotationList =
-      | annotationList space+ annotation --inde
-      | annotationList annotation --beam
-      | annotation --single
-
-		annotation = "\"" annoText "\""
-    annoText = (~(eol | "\"") any)*
-		eol = "\n" | "\r\n" | "\r"
-		space := " " | "\t"
-}
-`;
-
   let currentGrammar = $state('');
   let matchingText = $state('');
   let traceOutput = $state('');
@@ -30,180 +13,181 @@ Abc {
 
   onMount(() => {
     currentGrammar = String.raw`
-      Abc {
-          File = FileHeader? TuneBook
-          FileHeader = BlockInfoFieldList (EOL EOL+ | end)
+Abc {
+  File = eol* FileHeader? TuneBook
+  FileHeader = blockInfoFieldList eol eol+
 
-          TuneBook = listOf<Tune, EOL+> EOL*
+  TuneBook =
+    | TuneBook eol eol+ TuneBook --many
+    | Tune --one
 
-          Tune = TuneHeader? TuneBody
-          TuneHeader = BlockInfoFieldList (EOL | end)
-          TuneBody = StaffElement
+  Tune = TuneHeader? TuneBody eol*
+  TuneHeader = blockInfoFieldList eol
+  TuneBody = StaffElement
 
-          StaffElement =
-            | StaffElement StaffElement --concat
-            | bar spaces noteseq
-            | rest
-            | noteSeq
+  StaffElement =
+    | StaffElement StaffElement --concat
+    | bar
+    | rest
+    | noteSeq
+    | eol
+    | lineContinue
+    | blockInfoFieldList
+    | InlineInfoFieldList
 
-          rest =
-              | ("z" | "x") noteLen? --inside
-              | ("Z" | "X") number? --cross
+  rest =
+      | ("z" | "x") noteLen? --inside
+      | ("Z" | "X") number? --cross
 
-          bar = "||" | "|" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | ":|2"
+  bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
-          noteSeq =
-            | chordAnnotation spaces noteGroup --group
-            | noteGroup
-            | noteConstruct
+  noteSeq =
+    | chordAnnotation spaces noteGroup --group
+    | noteGroup
+    | noteConstruct
 
-          noteGroup =
-            | noteSeq noteSeq --beam
-            | noteSeq space+ noteSeq --gap
-            | "(" spaces noteSeq spaces ")" --slur
-            | "{" spaces noteSeq spaces "}" --grace
-            | "(" digit noteConstruct+ --nplet
-            // spaces are not allowed between notes
-            | noteConstruct binaryOp noteConstruct --binary
+  noteGroup =
+    | noteSeq noteSeq --beam
+    | noteSeq space+ noteSeq --gap
+    | "(" spaces noteSeq spaces ")" --slur
+    | "{" spaces noteSeq spaces "}" --grace
+    | "(" digit noteConstruct+ --nplet
+    // spaces are not allowed between notes
+    | noteConstruct binaryOp noteConstruct --binary
 
 
-          binaryOp =
-            | binaryOp binaryOp  --many
-            // the use of broken rhythm markers between notes of unequal lengths
-            // will produce undefined results, and should be avoided.
-            | ">"+ --brokenDottedFirst
-            | "<"+ --brokenDottedSecond
-            | "-" --tie
+  binaryOp =
+    | binaryOp binaryOp  --many
+    // the use of broken rhythm markers between notes of unequal lengths
+    // will produce undefined results, and should be avoided.
+    | ">"+ --brokenDottedFirst
+    | "<"+ --brokenDottedSecond
+    | "-" --tie
 
-          noteConstruct = (chordAnnotation spaces)? annotatedNote
+  noteConstruct = (chordAnnotation spaces)? annotatedNote
 
-          annotatedNote = (annotationOp spaces)? coreNote
-          annotationOp =
-            | annotationOp annotationOp --concat
-            | annotationOp space+ annotationOp --gap
-            | annotation
+  annotatedNote = (annotationOp spaces)? coreNote
+  annotationOp =
+    | annotationOp annotationOp --concat
+    | annotationOp space+ annotationOp --gap
+    | annotation
 
-          chordAnnotation = "\"" chordAnnoText "\""
-          // <note><accidental><type></bass>
-          chordAnnoText = "A".."G" #(chordAnnoSharp)? #(chordAnnoType)? #("/" ("A".."G" | "a".."g"))?
-          chordAnnoSharp = "b" | "#" | "\u266d" | "\u266e" | "\u266f"
-          chordAnnoType =
-            | chordAnnoType chordAnnoType --many
-            | "m" | "min" | "maj" | "dim" | "aug" | "+" | "sus" | number
+  chordAnnotation = "\"" chordAnnoText "\""
+  // <note><accidental><type></bass>
+  chordAnnoText = "A".."G" #(chordAnnoSharp)? #(chordAnnoType)? #("/" ("A".."G" | "a".."g"))?
+  chordAnnoSharp = "b" | "#" | "\u266d" | "\u266e" | "\u266f"
+  chordAnnoType =
+    | chordAnnoType chordAnnoType --many
+    | "m" | "min" | "maj" | "dim" | "aug" | "+" | "sus" | number
 
-          PairingAnnotationNote = CoreNoteWithStartAnnotation NoteSeq* CoreNoteWithEndAnnotation
-          CoreNoteWithStartAnnotation = ChordAnnotation? AnnotationStart CoreNote
-          CoreNoteWithEndAnnotation = ChordAnnotation? AnnotationEnd CoreNote
-          AnnotationStart =
-            | "!trill(!"
-            | "!crescendo(!"
-            | "!<(!"
-            | "!diminuendo(!"
-            | "!>(!"
-          AnnotationEnd =
-            | "!trill)!"
-            | "!crescendo)!"
-            | "!<)!"
-            | "!diminuendo)!"
-            | "!>)!"
+  PairingAnnotatedNote =
+    | chordAnnotation? "!trill(!" PairingMiddle "!trill)!" coreNote
+    | chordAnnotation? "!crescendo(!" PairingMiddle "!crescendo)!" coreNote
+    | chordAnnotation? "!<(!" PairingMiddle "!<)!" coreNote
+    | chordAnnotation? "!diminuendo(!" PairingMiddle "!diminuendo)!" coreNote
+    | chordAnnotation? "!>(!" PairingMiddle "!>)!" coreNote
+  PairingMiddle = coreNote noteSeq* chordAnnotation?
 
-          coreNote = accidental? note octave? noteLen?
+  coreNote = accidental? note octave? noteLen?
 
-          annotation =
-            | "\"" annoText "\"" --anno
-            | decoration --deco
-          annoText = (~(eol | "\"") any)*
+  annotation =
+    | "\"" annoText "\"" --anno
+    | decoration --deco
+  annoText = (~(eol | "\"") any)*
 
-          decoration =
-              | "."
-              | "~"
-              | "H"
-              | "L"
-              | "M"
-              | "O"
-              | "P"
-              | "S"
-              | "T"
-              | "u"
-              | "v"
-              | "!trill!"
-              | "!lowermordent!"
-              | "!uppermordent!"
-              | "!mordent!"
-              | "!pralltriller!"
-              | "!roll!"
-              | "!turn!"
-              | "!turnx!"
-              | "!invertedturn!"
-              | "!invertedturnx!"
-              | "!arpeggio!"
-              | "!>!"
-              | "!accent!"
-              | "!emphasis!"
-              | "!fermata!"
-              | "!invertedfermata!"
-              | "!tenuto!"
-              | "!0!"
-              | "!1!"
-              | "!2!"
-              | "!3!"
-              | "!4!"
-              | "!5!"
-              | "!+!"
-              | "!plus!"
-              | "!snap!"
-              | "!slide!"
-              | "!wedge!"
-              | "!upbow!"
-              | "!downbow!"
-              | "!open!"
-              | "!thumb!"
-              | "!breath!"
-              | "!pppp!"
-              | "!ppp!"
-              | "!pp!"
-              | "!p!"
-              | "!mp!"
-              | "!mf!"
-              | "!f!"
-              | "!ff!"
-              | "!fff!"
-              | "!ffff!"
-              | "!sfz!"
-              | "!segno!"
-              | "!coda!"
-              | "!D.S.!"
-              | "!D.C.!"
-              | "!dacoda!"
-              | "!dacapo!"
-              | "!fine!"
-              | "!shortphrase!"
-              | "!mediumphrase!"
-              | "!longphrase!"
+  decoration =
+      | "."
+      | "~"
+      | "H"
+      | "L"
+      | "M"
+      | "O"
+      | "P"
+      | "S"
+      | "T"
+      | "u"
+      | "v"
+      | "!trill!"
+      | "!lowermordent!"
+      | "!uppermordent!"
+      | "!mordent!"
+      | "!pralltriller!"
+      | "!roll!"
+      | "!turn!"
+      | "!turnx!"
+      | "!invertedturn!"
+      | "!invertedturnx!"
+      | "!arpeggio!"
+      | "!>!"
+      | "!accent!"
+      | "!emphasis!"
+      | "!fermata!"
+      | "!invertedfermata!"
+      | "!tenuto!"
+      | "!0!"
+      | "!1!"
+      | "!2!"
+      | "!3!"
+      | "!4!"
+      | "!5!"
+      | "!+!"
+      | "!plus!"
+      | "!snap!"
+      | "!slide!"
+      | "!wedge!"
+      | "!upbow!"
+      | "!downbow!"
+      | "!open!"
+      | "!thumb!"
+      | "!breath!"
+      | "!pppp!"
+      | "!ppp!"
+      | "!pp!"
+      | "!p!"
+      | "!mp!"
+      | "!mf!"
+      | "!f!"
+      | "!ff!"
+      | "!fff!"
+      | "!ffff!"
+      | "!sfz!"
+      | "!segno!"
+      | "!coda!"
+      | "!D.S.!"
+      | "!D.C.!"
+      | "!dacoda!"
+      | "!dacapo!"
+      | "!fine!"
+      | "!shortphrase!"
+      | "!mediumphrase!"
+      | "!longphrase!"
 
-          accidental = "^"+ | "_"+ | "="
-          note = "A".."G" | "a".."g"
-          octave = ","+ | "'"+
-          noteLen =
-            | number "/" number --fra
-            | "/" number        --div
-            | "/"+              --half
-            | number            --mul
+  accidental = "^"+ | "_"+ | "="
+  note = "A".."G" | "a".."g"
+  octave = ","+ | "'"+
+  noteLen =
+    | number "/" number --fra
+    | "/" number        --div
+    | "/"+              --half
+    | number            --mul
 
-          InlineInfoFieldList = InlineInfoField*
-          InlineInfoField = "["  Key ":" InlineFieldValue "]"
-          InlineFieldValue     = (~(EOL | "]" | "[") any)*
+  InlineInfoFieldList = InlineInfoField*
+  InlineInfoField = "["  key InlineFieldValue "]"
+  InlineFieldValue     = (~(eol | "]" | "[") any)*
 
-          BlockInfoFieldList = listOf<InfoField, EOL>
-          InBodyBlockInfoFieldList = EOL listOf<InfoField, EOL> EOL
-          InfoField = Key ":" Value
-          Key = letter
-          Value = (~EOL any)*
-          EOL = "\r\n" | "\n" | "\r"
-          space := " " | "\t"
-          number = digit+
-      }
-      `;
+  blockInfoFieldList = infoField spaces infoFieldLineContinue+
+  infoFieldLineContinue = eol infoField
+  infoField = key spaces value
+  key = letter ":"
+  // allow newline in value but line beginning with letter + colon
+  // is a marker for infoField
+  value = (~(eol key) any)*
+  eol = "\r\n" | "\n" | "\r"
+  space := " " | "\t"
+  number = digit+
+  lineContinue = "\\"
+}
+`;
       matchingText = "\nK:A\n";
   });
 
