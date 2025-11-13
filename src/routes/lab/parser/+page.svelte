@@ -125,6 +125,11 @@
   <button class="w-full h-2 bg-border text-[8px] flex items-center justify-center font-bold
     hover:bg-[var(--app-color-150)] hover:text-base" onclick={toggleExpandToTop} aria-label="expand top">↕</button>
   <div class={`flex w-full flex-col ${toTop ? 'h-3/4' : 'h-1/4'} p-8 transition-height ease-out duration-150`}>
+    <div>
+      <a class="text-gray-400" target="_blank" href="https://abcnotation.com/wiki/abc:standard:v2.1" title="abc standard">https://abcnotation.com/wiki/abc:standard:v2.1</a> <br/>
+      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/docs/syntax-reference" title="ohm syntax reference">https://ohmjs.org/docs/syntax-reference</a>
+    </div>
+    <hr />
     {#if resultMessage.length > 0}
       <pre class="text-red-500 text-base text-wrap">{resultMessage}</pre>
       <button onclick={() => (showTrace = !showTrace)}>show trace</button>
