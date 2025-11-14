@@ -12,13 +12,17 @@
   let traceOutput = $state('');
   let resultMessage = $state('');
   let abcGrammar: ohm.Grammar;
+  let m: ohm.Matcher;
+  let mr: ohm.MatchResult;
 
   testText = test1;
 
   $effect(() => {
     try {
       abcGrammar = ohm.grammar(currentGrammarText);
-      const mr = abcGrammar.match(testText);
+      m = abcGrammar.matcher();
+      m.setInput(testText);
+      mr = m.match();
       if (mr.failed()) {
         resultMessage = mr.message!;
       } else {
@@ -107,11 +111,149 @@
         traceOutput = "input text is too long to trace, max: 100";
     }
   });
+
+  let reducedText = $state('');
+  function reduce() {
+    debugger;
+    if (!abcGrammar) return;
+    const semantics = abcGrammar.createSemantics().addOperation('reduce', {
+      _terminal() {
+        return '';
+      },
+     _iter(...children) {
+        return children.map(c => c.reduce());
+      },
+
+      File(_1, fh, _2, _3, tunebook) {
+        debugger;
+        return fh.reduce().concat(tunebook.reduce());
+      },
+      FileHeader(a) {
+        return a.reduce();
+      },
+      FileHeader_many(a, _, b) {
+        return a.reduce() + "\n" + b.reduce();
+      },
+      FileHeader_unknown(_) {
+        return '';
+      },
+      TuneBook(a) {
+        return a.reduce();
+      },
+      TuneBook_many(a, _1, _2, b) {
+        return a.reduce() + "\n\n" + b.reduce();
+      },
+      Tune(a, _, b, _2) {
+        return a.reduce() + "\n" + b.reduce();
+      },
+      TuneHeader(a1, _a2, a3, _a4, a5) {
+        return a1.reduce() + a3.reduce() + a5.reduce();
+      },
+      TuneHeaderStartField(_x, n) {
+        return 'X:'.concat(n.sourceString.trim());
+      },
+      TuneHeaderEndField(_k, v) {
+        return 'K:'.concat(v.sourceString.trim());
+      },
+      TuneHeaderMiddleField(a) {
+        return a.reduce();
+      },
+      TuneHeaderMiddleField_many(a, _, b) {
+        return a.reduce() + "\n" + b.reduce();
+      },
+      TuneHeaderMiddleField_unknown(_) {
+        return '';
+      },
+
+      TuneBody(a) {
+        return a.reduce();
+      },
+
+      MusicCode(_) {
+        return '';
+      },
+
+      MusicCode_many(a, b) {
+        return a.reduce().concat(b.reduce());
+      },
+
+      TuneBody_middleBlockFields(a, _, b, _2, c) {
+        return a.reduce() + '\n' + b.reduce() + '\n' + c.reduce();
+      },
+
+      TuneBody_leadingBlockFields(a, _, c) {
+        return a.reduce() + "\n" + c.reduce();
+      },
+
+      TuneBody_trailingBlockFields(a, _, c) {
+        return a.reduce() + "\n" + c.reduce();
+      },
+
+      MusicCode_noteseq(a) {
+        return a.reduce();
+      },
+
+      MusicCode_inlineFields(a) {
+        return a.reduce();
+      },
+
+      NoteSeq() {
+
+      },
+
+      InlineInfoFieldList() {
+
+      },
+
+      InBodyInfoFieldList() {
+
+      },
+
+
+
+      /*
+       * handle info fields
+       {
+       */
+      reservedFileHeaderField(a) {
+        return a.reduce();
+      },
+      reservedTuneHeaderField(a) {
+        return a.reduce();
+      },
+      reservedInBodyField(a) {
+        return a.reduce();
+      },
+      reservedInlineField (a) {
+        return a.reduce();
+      },
+      reservedTuneHeaderFieldX(a, _, b) {
+        return a.sourceString.concat(b.sourceString.trim());
+      },
+      reservedHeaderOnlyField(a, _, b) {
+        return a.sourceString.concat(b.sourceString.trim());
+      },
+      reservedInBodyFieldX(a, _, b) {
+        return a.sourceString.concat(b.sourceString.trim());
+      },
+      reservedInlineFieldX(a, _, b) {
+        return a.sourceString.concat(b.sourceString.trim());
+      },
+      reservedCommonField(a, _, b) {
+        return a.sourceString.concat(b.sourceString.trim());
+      },
+      //} end of info fields
+    });
+    reducedText = semantics(mr).reduce();
+  }
 </script>
 
 <div class="flex flex-col justify-center items-center w-[calc(100vw-20px)] h-screen">
+  <!-- top editor -->
   <div class={`flex w-full ${toTop ? 'h-1/4' : 'h-3/4'} px-1 pt-4 transition-height ease-out duration-150`}>
+    <!-- grammar editor -->
     <div bind:this={grammarRef} class={`grammar ${minRight ? 'w-full' : minLeft ? 'w-0' : 'w-1/2'} h-full flex flex-col overflow-auto transition-width ease-out duration-150`}></div>
+    <!-- window handle bar -->
     <div class="flex flex-col handle w-2 h-full bg-border">
       <button class="left w-full h-full text-[8px] flex items-center justify-center hover:bg-[var(--app-color-150)] hover:text-base" onclick={toggleExpandToLeft} aria-label="expand left">
         {minLeft ? '⇒' : '⇐'}
@@ -120,14 +262,28 @@
         {minRight ? '⇐' : '⇒'}
       </button>
     </div>
-    <div bind:this={testRef} class={`test ${minLeft ? 'w-full' : minRight ? 'w-0' : 'w-1/2'} h-full flex flex-col overflow-auto transition-width ease-out duration-150`}></div>
+    <!-- test window -->
+    <div class={`test ${minLeft ? 'w-full' : minRight ? 'w-0' : 'w-1/2'} h-full flex flex-col overflow-auto transition-width ease-out duration-150`}>
+      <div bind:this={testRef}></div>
+      <hr class="my-2" />
+      {#if testText.length > 0}
+        <div>
+          <button class="h-8 ml-1 ring-2 text-base text-bold px-1 ring-[var(--app-color-500)]
+            hover:bg-[var(--app-color-100)] active:bg-[var(--app-color-150)] active:scale-98" onclick={reduce}>reduce</button>
+          <pre>{reducedText}</pre>
+        </div>
+      {/if}
+    </div>
   </div>
+  <!-- window handle bar -->
   <button class="w-full h-2 bg-border text-[8px] flex items-center justify-center font-bold
     hover:bg-[var(--app-color-150)] hover:text-base" onclick={toggleExpandToTop} aria-label="expand top">↕</button>
+  <!-- result window -->
   <div class={`flex w-full flex-col ${toTop ? 'h-3/4' : 'h-1/4'} p-8 transition-height ease-out duration-150`}>
     <div>
       <a class="text-gray-400" target="_blank" href="https://abcnotation.com/wiki/abc:standard:v2.1" title="abc standard">https://abcnotation.com/wiki/abc:standard:v2.1</a> <br/>
-      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/docs/syntax-reference" title="ohm syntax reference">https://ohmjs.org/docs/syntax-reference</a>
+      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/docs/syntax-reference" title="ohm syntax reference">https://ohmjs.org/docs/syntax-reference</a><br />
+      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/editor/" title="ohm syntax reference">https://ohmjs.org/editor/</a>
     </div>
     <hr />
     {#if resultMessage.length > 0}

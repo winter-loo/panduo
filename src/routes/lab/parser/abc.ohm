@@ -17,20 +17,18 @@ Abc {
     | reservedTuneHeaderField
     | UnknownTuneHeaderField --unknown
 
-  TuneBody = MusicCode
+  TuneBody
+  	= (InBodyInfoFieldList eol)? MusicCode (eol InBodyInfoFieldList eol MusicCode)? InBodyInfoFieldList?
 
-  MusicCode =
-    | MusicCode MusicCode --concat
-    | MusicCode eol InBodyInfoFieldList eol MusicCode --sepByBlockFields
-    | InBodyInfoFieldList eol MusicCode --startWithBlockFields
-    | InBodyInfoFieldList --trailingBlockFields
+  MusicCode = MusicCodeLine (eol MusicCodeLine)*
+
+  MusicCodeLine =
+    | MusicCodeLine MusicCodeLine --concat
     | bar
     | rest
-    | NoteSeq
-    | eol
+    | NoteSeq --noteseq
     | lineContinue
     | InlineInfoFieldList --inlineFields
-    | reservedLetters
 
   rest =
       | ("z" | "x") noteLen? --inside
@@ -184,12 +182,14 @@ Abc {
   InBodyInfoFieldList =
     | InBodyInfoFieldList eol InBodyInfoFieldList --many
     | reservedInBodyField --one
-    | UnknownField --unkown
+    | UnknownField --unknown
 
   TuneHeaderStartField = "X:" number
   TuneHeaderEndField   = "K:" oneLineValue
 
-  reservedFileHeaderField = reservedHeaderOnlyField
+  reservedFileHeaderField
+    = reservedHeaderOnlyField
+    | reservedCommonField
 
   reservedTuneHeaderField =
     | reservedTuneHeaderFieldX
@@ -269,7 +269,7 @@ Abc {
   eol = "\r\n" | "\n" | "\r"
   space := " " | "\t" | comment | commentLine
   number = digit+
-  lineContinue = "\\"
+  lineContinue = "\\" eol
   fieldContinue = "+:"
   reservedLetters =
     | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | ","
