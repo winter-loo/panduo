@@ -1,9 +1,9 @@
 Abc {
-  File = eol* (FileHeader eol eol+)? TuneBook
+  File = eol* (FileHeaders eol eol+)? TuneBook
 
-  FileHeader =
-    | FileHeader eol FileHeader --many
-    | reservedFileHeaderField
+  FileHeaders = FileHeader (eol FileHeader)*
+  FileHeader
+    = reservedFileHeaderField
     | UnknownFileHeaderField --unknown
 
   TuneBook = Tune (eol eol+ Tune)* eol*
@@ -19,16 +19,16 @@ Abc {
 
   TuneBodyPart
     = TuneBodyPart eol InBodyInfoFieldList eol TuneBodyPart --middle
-    | InlineInfoFieldList TuneBodyPart --inline
+    | InlineInfoFieldList --inline
     | MusicCode
     | reservedLetters
 
-  MusicCode = MusicSymbol+
+  MusicCode = MusicCodePart+
 
-  MusicSymbol
+  MusicCodePart
     = bar
     | rest
-    | NoteFlow --noteflow
+    | NoteSeq+ --noteseq
 
   rest =
       | ("z" | "x") noteLen? --inside
@@ -36,19 +36,16 @@ Abc {
 
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
-  NoteFlow = NoteSeq+
-
   NoteSeq =
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
-    | "(" NoteGroup ")" --slur
     | NoteGroup --unary
-    | noteConstruct binaryOp noteConstruct --binary
+    | noteConstruct binaryOps noteConstruct --binary
     | noteConstruct
 
-  binaryOp =
-    | binaryOp binaryOp --many
-    | brokenOp
+  binaryOps = binaryOp+
+  binaryOp
+    = brokenOp
     | tieOp
   brokenOp = ">"+ | "<"+
   tieOp = "-"
@@ -177,9 +174,9 @@ Abc {
     | reservedInlineField
     | UnknownField --unknown
   inlineFieldValue = (~(eol | "]" | "[") any)*
-  InBodyInfoFieldList =
-    | InBodyInfoFieldList eol InBodyInfoFieldList --many
-    | reservedInBodyField --one
+  InBodyInfoFieldList = InBodyInfoField (eol InBodyInfoField)*
+  InBodyInfoField =
+    | reservedInBodyField
     | UnknownField --unknown
 
   TuneHeaderStartField = "X:" number
@@ -275,7 +272,10 @@ Abc {
     = eol commentLine --lineComment
     | "\\" spaces eol --lineContinue
     | "\r\n" | "\n" | "\r"
-  space := " " | "\t" | comment
+  space
+    := " " | "\t" | comment
+    | "(" --slurStart
+    | ")" --slurEnd
   number = digit+
   fieldContinue = "+:"
   reservedLetters =
