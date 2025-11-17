@@ -6,11 +6,9 @@ Abc {
     | reservedFileHeaderField
     | UnknownFileHeaderField --unknown
 
-  TuneBook =
-    | TuneBook eol eol+ TuneBook --many
-    | Tune --one
+  TuneBook = Tune (eol eol+ Tune)* eol*
 
-  Tune = TuneHeader (eol TuneBody)? eol*
+  Tune = TuneHeader (eol TuneBody)?
   TuneHeader = TuneHeaderStartField (eol TuneHeaderMiddleField)? eol TuneHeaderEndField
   TuneHeaderMiddleField =
     | TuneHeaderMiddleField eol TuneHeaderMiddleField --many
@@ -18,17 +16,20 @@ Abc {
     | UnknownTuneHeaderField --unknown
 
   TuneBody
-  	= (InBodyInfoFieldList eol)? MusicCode (eol InBodyInfoFieldList eol MusicCode)? InBodyInfoFieldList?
+    = (InBodyInfoFieldList eol)? TuneBodyPart (~(eol InBodyInfoFieldList) eol? TuneBodyPart)* (eol InBodyInfoFieldList)?
 
-  MusicCode = MusicCodeLine (eol MusicCodeLine)*
+  TuneBodyPart
+    = TuneBodyPart eol InBodyInfoFieldList eol TuneBodyPart --middle
+    | InlineInfoFieldList TuneBodyPart --inline
+    | MusicCode
 
-  MusicCodeLine =
-    | MusicCodeLine MusicCodeLine --concat
-    | bar
+  MusicCode = MusicSymbol+
+
+  MusicSymbol
+    = bar
     | rest
-    | NoteSeq --noteseq
+    | NoteFlow --noteflow
     | lineContinue
-    | InlineInfoFieldList --inlineFields
 
   rest =
       | ("z" | "x") noteLen? --inside
@@ -36,30 +37,26 @@ Abc {
 
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
+  NoteFlow = NoteSeq+
+
   NoteSeq =
-    | NoteSeq NoteSeq --many
-    | NoteGroup BinaryOp NoteGroup --binary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
+    | "(" NoteGroup ")" --slur
     | NoteGroup --unary
 
-  BinaryOp =
-    | BinaryOp BinaryOp --many
+  binaryOp =
+    | binaryOp binaryOp --many
     | brokenOp
     | tieOp
   brokenOp = ">"+ | "<"+
   tieOp = "-"
 
-  noteConnection =
-    | noteConnection noteConnection --beam
-    | noteConnection space+ noteConnection --gap
-    | annotatedNote
-
   BaseNoteGroup =
-    | "[" noteConnection "]" --chord
-    | "(" noteConnection ")" --slur
-    | "(" #(digit) noteConnection --nplet
-    | noteConnection
+    | "[" annotatedNote+ "]" --chord
+    | "(" #(digit) annotatedNote+ --nplet
+    | annotatedNote binaryOp annotatedNote --binary
+    | annotatedNote+
 
   NoteGroup = chordAnnotation? BaseNoteGroup
 
@@ -272,8 +269,8 @@ Abc {
   lineContinue = "\\" eol
   fieldContinue = "+:"
   reservedLetters =
-    | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | ","
-    | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@" | "[" | "\\"
-    | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~"
+    | "!" | "\"" | "#" | "$" | "%" | "&" | "*" | "+"
+    | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@"
+    | "`" | "~"
     | "0".."9" | "A".."Z" | "a".."z"
 }
