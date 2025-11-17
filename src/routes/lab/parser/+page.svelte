@@ -128,22 +128,19 @@
         debugger;
         return fh.reduce().concat(tunebook.reduce());
       },
+      FileHeaders(a, _, b) {
+        return a.reduce() + b.reduce();
+      },
       FileHeader(a) {
         return a.reduce();
-      },
-      FileHeader_many(a, _, b) {
-        return a.reduce() + "\n" + b.reduce();
       },
       FileHeader_unknown(_) {
         return '';
       },
-      TuneBook(a) {
-        return a.reduce();
+      TuneBook(tune, _1, _2, atune, _4) {
+        return tune.reduce() + "\n\n" + atune;
       },
-      TuneBook_many(a, _1, _2, b) {
-        return a.reduce() + "\n\n" + b.reduce();
-      },
-      Tune(a, _, b, _2) {
+      Tune(a, _, b) {
         return a.reduce() + "\n" + b.reduce();
       },
       TuneHeader(a1, _a2, a3, _a4, a5) {
@@ -158,57 +155,115 @@
       TuneHeaderMiddleField(a) {
         return a.reduce();
       },
-      TuneHeaderMiddleField_many(a, _, b) {
-        return a.reduce() + "\n" + b.reduce();
-      },
       TuneHeaderMiddleField_unknown(_) {
         return '';
       },
 
-      TuneBody(a) {
+      TuneBody(a, _, b, _2, c, _3, d) {
         return a.reduce();
       },
 
-      MusicCode(_) {
+      TuneBodyPart(a) {
+        return a.reduce();
+      },
+
+      TuneBodyPart_inline(a) {
+        return a.reduce();
+      },
+
+      TuneBodyPart_middle(a, _, b, _2, c) {
+        return a.reduce() + "\n" + b.reduce() + "\n" + c.reduce();
+      },
+
+      MusicCode(a) {
+        return a.reduce();
+      },
+
+      MusicCodePart_noteseq(a) {
+        return a.reduce();
+      },
+
+      NoteSeq(a) {
+        return a.reduce();
+      },
+
+      NoteSeq_dotted(a, _) {
+        return a.recue() + ">";
+      },
+
+      NoteSeq_pairedAnnotation(a) {
+        return a.reduce();
+      },
+
+      NoteSeq_group(a) {
+        return a.reduce();
+      },
+
+      NoteSeq_binary(a, b, c) {
+        return a.reduce() + b.reduce() + c.reduce();
+      },
+
+      BaseNoteGroup(a) {
+        return a.reduce();
+      },
+
+      BaseNoteGroup_chord(_, a, _2) {
+        return "[" + a.reduce() + "]";
+      },
+
+      BaseNoteGroup_nplet(_, a, b) {
+        return "(" + a.reduce() + b.reduce();
+      },
+
+      BaseNoteGroup_binary(a, b, c) {
+        return a.reduce() + b.reduce() + c.reduce();
+      },
+
+      NoteGroup(a, b) {
+        return a.reduce() + b.reduce();
+      },
+
+      PairingAnnotatedNote(a, b, c, d, e) {
+        return a.reduce() + b.reduce() + c.reduce() + d.reduce() + e.reduce();
+      },
+
+      PairingMiddle(a, b, c) {
+        return a.reduce() + b.reduce() + c.reduce();
+      },
+
+      InlineInfoFieldList(a) {
+        return a.reduce();
+      },
+
+      InlineInfoField(a, b, c) {
+        return a.reduce() + b.reduce() + c.reduce();
+      },
+
+      InlineInfoFieldX(a) {
+        return a.reduce();
+      },
+      InlineInfoFieldX_unknown(_) {
+        return '';
+      },
+      UnknownField(_1, _2) {
+        return '';
+      },
+      UnknownFileHeaderField(_1, _2) {
+        return '';
+      },
+      UnknownTuneHeaderField(_1, _2) {
         return '';
       },
 
-      MusicCode_many(a, b) {
-        return a.reduce().concat(b.reduce());
+      InBodyInfoFieldList(a, b, c) {
+        return a.reduce() + b.reduce() + c.reduce();
       },
-
-      TuneBody_middleBlockFields(a, _, b, _2, c) {
-        return a.reduce() + '\n' + b.reduce() + '\n' + c.reduce();
-      },
-
-      TuneBody_leadingBlockFields(a, _, c) {
-        return a.reduce() + "\n" + c.reduce();
-      },
-
-      TuneBody_trailingBlockFields(a, _, c) {
-        return a.reduce() + "\n" + c.reduce();
-      },
-
-      MusicCode_noteseq(a) {
+      InBodyInfoField(a) {
         return a.reduce();
       },
-
-      MusicCode_inlineFields(a) {
-        return a.reduce();
+      InBodyInfoField_unknown(_) {
+        return '';
       },
-
-      NoteSeq() {
-
-      },
-
-      InlineInfoFieldList() {
-
-      },
-
-      InBodyInfoFieldList() {
-
-      },
-
 
 
       /*
@@ -239,8 +294,8 @@
       reservedInlineFieldX(a, _, b) {
         return a.sourceString.concat(b.sourceString.trim());
       },
-      reservedCommonField(a, _, b) {
-        return a.sourceString.concat(b.sourceString.trim());
+      reservedCommonField(a) {
+        return a.sourceString;
       },
       //} end of info fields
     });
@@ -264,7 +319,7 @@
     </div>
     <!-- test window -->
     <div class={`test ${minLeft ? 'w-full' : minRight ? 'w-0' : 'w-1/2'} h-full flex flex-col overflow-auto transition-width ease-out duration-150`}>
-      <div bind:this={testRef}></div>
+      <div class="max-h-3/4 overflow-auto" bind:this={testRef}></div>
       <hr class="my-2" />
       {#if testText.length > 0}
         <div>

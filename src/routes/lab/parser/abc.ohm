@@ -39,7 +39,7 @@ Abc {
   NoteSeq =
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
-    | NoteGroup --unary
+    | NoteGroup --group
     | noteConstruct binaryOps noteConstruct --binary
     | noteConstruct
 
@@ -76,8 +76,8 @@ Abc {
     | chordAnnoType chordAnnoType --many
     | "m" | "min" | "maj" | "dim" | "aug" | "+" | "sus" | number
 
-  PairingAnnotatedNote =
-    | chordAnnotation? "!trill(!" PairingMiddle "!trill)!" baseNote
+  PairingAnnotatedNote
+    = chordAnnotation? "!trill(!" PairingMiddle "!trill)!" baseNote
     | chordAnnotation? "!crescendo(!" PairingMiddle "!crescendo)!" baseNote
     | chordAnnotation? "!<(!" PairingMiddle "!<)!" baseNote
     | chordAnnotation? "!diminuendo(!" PairingMiddle "!diminuendo)!" baseNote
@@ -93,71 +93,71 @@ Abc {
   annoText = (~(eol | "\"") any)*
 
   decoration =
-      | "."
-      | "~"
-      | "H"
-      | "L"
-      | "M"
-      | "O"
-      | "P"
-      | "S"
-      | "T"
-      | "u"
-      | "v"
-      | "!trill!"
-      | "!lowermordent!"
-      | "!uppermordent!"
-      | "!mordent!"
-      | "!pralltriller!"
-      | "!roll!"
-      | "!turn!"
-      | "!turnx!"
-      | "!invertedturn!"
-      | "!invertedturnx!"
-      | "!arpeggio!"
-      | "!>!"
-      | "!accent!"
-      | "!emphasis!"
-      | "!fermata!"
-      | "!invertedfermata!"
-      | "!tenuto!"
-      | "!0!"
-      | "!1!"
-      | "!2!"
-      | "!3!"
-      | "!4!"
-      | "!5!"
-      | "!+!"
-      | "!plus!"
-      | "!snap!"
-      | "!slide!"
-      | "!wedge!"
-      | "!upbow!"
-      | "!downbow!"
-      | "!open!"
-      | "!thumb!"
-      | "!breath!"
-      | "!pppp!"
-      | "!ppp!"
-      | "!pp!"
-      | "!p!"
-      | "!mp!"
-      | "!mf!"
-      | "!f!"
-      | "!ff!"
-      | "!fff!"
-      | "!ffff!"
-      | "!sfz!"
-      | "!segno!"
-      | "!coda!"
-      | "!D.S.!"
-      | "!D.C.!"
-      | "!dacoda!"
-      | "!dacapo!"
-      | "!fine!"
-      | "!shortphrase!"
-      | "!mediumphrase!"
-      | "!longphrase!"
+    | "."
+    | "~"
+    | "H"
+    | "L"
+    | "M"
+    | "O"
+    | "P"
+    | "S"
+    | "T"
+    | "u"
+    | "v"
+    | "!trill!"
+    | "!lowermordent!"
+    | "!uppermordent!"
+    | "!mordent!"
+    | "!pralltriller!"
+    | "!roll!"
+    | "!turn!"
+    | "!turnx!"
+    | "!invertedturn!"
+    | "!invertedturnx!"
+    | "!arpeggio!"
+    | "!>!"
+    | "!accent!"
+    | "!emphasis!"
+    | "!fermata!"
+    | "!invertedfermata!"
+    | "!tenuto!"
+    | "!0!"
+    | "!1!"
+    | "!2!"
+    | "!3!"
+    | "!4!"
+    | "!5!"
+    | "!+!"
+    | "!plus!"
+    | "!snap!"
+    | "!slide!"
+    | "!wedge!"
+    | "!upbow!"
+    | "!downbow!"
+    | "!open!"
+    | "!thumb!"
+    | "!breath!"
+    | "!pppp!"
+    | "!ppp!"
+    | "!pp!"
+    | "!p!"
+    | "!mp!"
+    | "!mf!"
+    | "!f!"
+    | "!ff!"
+    | "!fff!"
+    | "!ffff!"
+    | "!sfz!"
+    | "!segno!"
+    | "!coda!"
+    | "!D.S.!"
+    | "!D.C.!"
+    | "!dacoda!"
+    | "!dacapo!"
+    | "!fine!"
+    | "!shortphrase!"
+    | "!mediumphrase!"
+    | "!longphrase!"
 
   accidental = "^"+ | "_"+ | "="
   noteName = "A".."G" | "a".."g"
@@ -257,7 +257,7 @@ Abc {
 
   UnknownFileHeaderField = ~(reservedFileHeaderField) key oneLineValue
   UnknownTuneHeaderField = ~(reservedTuneHeaderField | TuneHeaderStartField | TuneHeaderEndField) key oneLineValue
-  UnknownField = ~(reservedInBodyField | reservedInlineField | reservedTuneHeaderField | reservedFileHeaderField) key oneLineValue
+  UnknownField = ~(reservedInBodyField | reservedInlineField | reservedTuneHeaderField | reservedFileHeaderField) key (oneLineValue | inlineFieldValue)
 
   key = letter ":"
   textString  = (~(eol | "\"") any)*
