@@ -112,194 +112,78 @@
     }
   });
 
-  let reducedText = $state('');
-  function reduce() {
-    debugger;
+  let prettyPrintedText = $state('');
+  function extract() {
+    let bgColorMap = new Map([
+      ["a", "bg-[var(--note-a-500)] hover:bg-[var(--note-a-600)]"],
+      ["b", "bg-[var(--note-b-500)] hover:bg-[var(--note-b-600)]"],
+      ["c", "bg-[var(--note-c-500)] hover:bg-[var(--note-c-600)]"],
+      ["d", "bg-[var(--note-d-500)] hover:bg-[var(--note-d-600)]"],
+      ["e", "bg-[var(--note-e-500)] hover:bg-[var(--note-e-600)]"],
+      ["f", "bg-[var(--note-f-500)] hover:bg-[var(--note-f-600)]"],
+      ["g", "bg-[var(--note-g-500)] hover:bg-[var(--note-g-600)]"],
+    ]);
     if (!abcGrammar) return;
-    const semantics = abcGrammar.createSemantics().addOperation('reduce', {
+    const semantics = abcGrammar.createSemantics().addOperation('extract', {
+      _nonterminal(...children) {
+        return children.map(c => c.extract()).join('');
+      },
       _terminal() {
         return '';
       },
-     _iter(...children) {
-        return children.map(c => c.reduce());
+      _iter(...children) {
+        return children.map(c => c.extract()).join('');
       },
-
-      File(_1, fh, _2, _3, tunebook) {
-        debugger;
-        return fh.reduce().concat(tunebook.reduce());
+      TuneBook(a1, _a2, _a3, a4, _a5) {
+        let output = `<div class="tune my-4">${a1.extract()}</div>`;
+        a4.children.forEach(c => {
+           output += `<div class="tune my-4">${c.extract()}</div>`;
+        });
+        return output;
       },
-      FileHeaders(a, _, b) {
-        return a.reduce() + b.reduce();
-      },
-      FileHeader(a) {
-        return a.reduce();
-      },
-      FileHeader_unknown(_) {
+      reservedCommonField_meter(_a1, _a2, _a3) {
         return '';
       },
-      TuneBook(tune, _1, _2, atune, _4) {
-        return tune.reduce() + "\n\n" + atune;
-      },
-      Tune(a, _, b) {
-        return a.reduce() + "\n" + b.reduce();
-      },
-      TuneHeader(a1, _a2, a3, _a4, a5) {
-        return a1.reduce() + a3.reduce() + a5.reduce();
-      },
-      TuneHeaderStartField(_x, n) {
-        return 'X:'.concat(n.sourceString.trim());
-      },
-      TuneHeaderEndField(_k, v) {
-        return 'K:'.concat(v.sourceString.trim());
-      },
-      TuneHeaderMiddleField(a) {
-        return a.reduce();
-      },
-      TuneHeaderMiddleField_unknown(_) {
+      reservedCommonField_unitNoteLength(_a1, _a2, _a3) {
         return '';
       },
-
-      TuneBody(a, _, b, _2, c, _3, d) {
-        return a.reduce();
-      },
-
-      TuneBodyPart(a) {
-        return a.reduce();
-      },
-
-      TuneBodyPart_inline(a) {
-        return a.reduce();
-      },
-
-      TuneBodyPart_middle(a, _, b, _2, c) {
-        return a.reduce() + "\n" + b.reduce() + "\n" + c.reduce();
-      },
-
-      MusicCode(a) {
-        return a.reduce();
-      },
-
-      MusicCodePart_noteseq(a) {
-        return a.reduce();
-      },
-
-      NoteSeq(a) {
-        return a.reduce();
-      },
-
-      NoteSeq_dotted(a, _) {
-        return a.recue() + ">";
-      },
-
-      NoteSeq_pairedAnnotation(a) {
-        return a.reduce();
-      },
-
-      NoteSeq_group(a) {
-        return a.reduce();
-      },
-
-      NoteSeq_binary(a, b, c) {
-        return a.reduce() + b.reduce() + c.reduce();
-      },
-
-      BaseNoteGroup(a) {
-        return a.reduce();
-      },
-
-      BaseNoteGroup_chord(_, a, _2) {
-        return "[" + a.reduce() + "]";
-      },
-
-      BaseNoteGroup_nplet(_, a, b) {
-        return "(" + a.reduce() + b.reduce();
-      },
-
-      BaseNoteGroup_binary(a, b, c) {
-        return a.reduce() + b.reduce() + c.reduce();
-      },
-
-      NoteGroup(a, b) {
-        return a.reduce() + b.reduce();
-      },
-
-      PairingAnnotatedNote(a, b, c, d, e) {
-        return a.reduce() + b.reduce() + c.reduce() + d.reduce() + e.reduce();
-      },
-
-      PairingMiddle(a, b, c) {
-        return a.reduce() + b.reduce() + c.reduce();
-      },
-
-      InlineInfoFieldList(a) {
-        return a.reduce();
-      },
-
-      InlineInfoField(a, b, c) {
-        return a.reduce() + b.reduce() + c.reduce();
-      },
-
-      InlineInfoFieldX(a) {
-        return a.reduce();
-      },
-      InlineInfoFieldX_unknown(_) {
+      reservedInBodyFieldX_key(_a1, _a2, _a3) {
         return '';
       },
-      UnknownField(_1, _2) {
+      reservedInlineFieldX_key(_a1, _a2, _a3) {
         return '';
       },
-      UnknownFileHeaderField(_1, _2) {
+      baseNote(_accidental, noteName, _octave, dura) {
+        let output = '';
+        // if (accidental.numChildren > 0) output += accidental.sourceString;
+        output += `<span class="text-base text-white">${noteName.sourceString}</span>`;
+        // if (octave.numChildren > 0) output += octave.sourceString;
+        let noteWidth = 32;
+        if (dura.numChildren > 0) {
+          let fra = dura.extract().split('/');
+          noteWidth = fra[0] * noteWidth / fra[1];
+        }
+        let bgColor = bgColorMap.get(noteName.sourceString.toLowerCase()) ?? 'bg-[var(--note-black-600)] hover:bg-[var(--note-black-700)]';
+        output = `<div class="inline-block ${bgColor}" style="width:${noteWidth}px">${output}</div>`;
+        return output;
+      },
+      noteLen_fra(a1, _, a2) {
+        return a1.sourceString + "/" + a2.sourceString;
+      },
+      noteLen_div(_a1, a2) {
+        return "1/" + a2.sourceString;
+      },
+      noteLen_half(a1) {
+        return "1/" + a1.sourceString.length;
+      },
+      noteLen_mul(a) {
+        return a.sourceString + "/1";
+      },
+      graceNote(_a1, _a2, _a3, _a4, _a5) {
         return '';
       },
-      UnknownTuneHeaderField(_1, _2) {
-        return '';
-      },
-
-      InBodyInfoFieldList(a, b, c) {
-        return a.reduce() + b.reduce() + c.reduce();
-      },
-      InBodyInfoField(a) {
-        return a.reduce();
-      },
-      InBodyInfoField_unknown(_) {
-        return '';
-      },
-
-
-      /*
-       * handle info fields
-       {
-       */
-      reservedFileHeaderField(a) {
-        return a.reduce();
-      },
-      reservedTuneHeaderField(a) {
-        return a.reduce();
-      },
-      reservedInBodyField(a) {
-        return a.reduce();
-      },
-      reservedInlineField (a) {
-        return a.reduce();
-      },
-      reservedTuneHeaderFieldX(a, _, b) {
-        return a.sourceString.concat(b.sourceString.trim());
-      },
-      reservedHeaderOnlyField(a, _, b) {
-        return a.sourceString.concat(b.sourceString.trim());
-      },
-      reservedInBodyFieldX(a, _, b) {
-        return a.sourceString.concat(b.sourceString.trim());
-      },
-      reservedInlineFieldX(a, _, b) {
-        return a.sourceString.concat(b.sourceString.trim());
-      },
-      reservedCommonField(a) {
-        return a.sourceString;
-      },
-      //} end of info fields
     });
-    reducedText = semantics(mr).reduce();
+    prettyPrintedText = semantics(mr).extract();
   }
 </script>
 
@@ -322,10 +206,11 @@
       <div class="max-h-3/4 overflow-auto" bind:this={testRef}></div>
       <hr class="my-2" />
       {#if testText.length > 0}
-        <div>
+        <div class="p-2 max-h-1/2 overflow-auto">
           <button class="h-8 ml-1 ring-2 text-base text-bold px-1 ring-[var(--app-color-500)]
-            hover:bg-[var(--app-color-100)] active:bg-[var(--app-color-150)] active:scale-98" onclick={reduce}>reduce</button>
-          <pre>{reducedText}</pre>
+            hover:bg-[var(--app-color-100)] active:bg-[var(--app-color-150)] active:scale-98"
+            onclick={extract}>note only</button>
+          <div>{@html prettyPrintedText}</div>
         </div>
       {/if}
     </div>

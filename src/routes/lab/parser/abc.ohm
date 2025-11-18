@@ -21,14 +21,17 @@ Abc {
     = TuneBodyPart eol InBodyInfoFieldList eol TuneBodyPart --middle
     | InlineInfoFieldList --inline
     | MusicCode
-    | reservedLetters
+    | reservedLetter --reserved
 
   MusicCode = MusicCodePart+
 
+  // rule in front has higher priority
   MusicCodePart
-    = bar
+    = NoteSeq+ --noteseq
     | rest
-    | NoteSeq+ --noteseq
+    | "(" --slurStart
+    | ")" --slurEnd
+    | bar
 
   rest =
       | ("z" | "x") noteLen? --inside
@@ -50,19 +53,20 @@ Abc {
   brokenOp = ">"+ | "<"+
   tieOp = "-"
 
-  BaseNoteGroup =
-    | "[" annotatedNote+ "]" --chord
+  baseNoteGroup
+    = "[" annotatedNote+ "]" --chord
     | "(" #(digit) annotatedNote+ --nplet
     | annotatedNote binaryOp annotatedNote --binary
     | annotatedNote+
 
-  NoteGroup = chordAnnotation? BaseNoteGroup
+  NoteGroup = chordAnnotation? baseNoteGroup
 
   noteConstruct = (graceNote spaces)? chordedNote
   graceNote = "{" spaces baseNote+ spaces "}"
   chordedNote = (chordAnnotation spaces)? annotatedNote
 
-  annotatedNote = (annotationOp spaces)? baseNote
+  // slur symbols could exist before and after baseNote
+  annotatedNote = (annotationOp spaces)? "("? baseNote ")"?
   annotationOp =
     | annotationOp annotationOp --concat
     | annotationOp space+ annotationOp --gap
@@ -203,25 +207,25 @@ Abc {
     | reservedCommonField<oneLineValue>
 
   reservedInBodyFieldX =
-  	| "K:" spaces oneLineValue
-    | "P:" spaces oneLineValue
-    | "Q:" spaces qKeyedValue
-    | "s:" spaces oneLineValue
-    | "T:" spaces oneLineValue
-    | "V:" spaces oneLineValue
-    | "W:" spaces oneLineValue
-    | "w:" spaces oneLineValue
+  	| "K:" spaces oneLineValue --key
+    | "P:" spaces oneLineValue --part
+    | "Q:" spaces qKeyedValue --tempo
+    | "s:" spaces oneLineValue --symbolLine
+    | "T:" spaces oneLineValue --tuneTitle
+    | "V:" spaces oneLineValue --voice
+    | "W:" spaces oneLineValue --wordsAfter
+    | "w:" spaces oneLineValue --wordsParallel
 
   reservedInlineField =
     | reservedInlineFieldX
     | reservedCommonField<inlineFieldValue>
 
   reservedInlineFieldX =
-   	| "K:" spaces inlineFieldValue
-    | "P:" spaces inlineFieldValue
-    | "Q:" spaces qKeyedValue
-    | "R:" spaces inlineFieldValue
-    | "V:" spaces inlineFieldValue
+   	| "K:" spaces inlineFieldValue --key
+    | "P:" spaces inlineFieldValue --part
+    | "Q:" spaces qKeyedValue --tempo
+    | "R:" spaces inlineFieldValue --rhythm
+    | "V:" spaces inlineFieldValue --voice
 
   reservedHeaderOnlyField =
     | "A:" spaces oneLineValue
@@ -237,7 +241,7 @@ Abc {
 
   reservedCommonField<value> =
     | "I:" "linebreak" space+ linebreakMarks --instruction
-    | "L:" spaces noteLen --unitNoteLenth
+    | "L:" spaces noteLen --unitNoteLength
     | "M:" spaces noteLen --meter
     | "m:" spaces value --macro
     | "N:" spaces value --notes
@@ -272,13 +276,10 @@ Abc {
     = eol commentLine --lineComment
     | "\\" spaces eol --lineContinue
     | "\r\n" | "\n" | "\r"
-  space
-    := " " | "\t" | comment
-    | "(" --slurStart
-    | ")" --slurEnd
+  space := " " | "\t" | comment
   number = digit+
   fieldContinue = "+:"
-  reservedLetters =
+  reservedLetter =
     | "!" | "\"" | "#" | "$" | "%" | "&" | "*" | "+"
     | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" | "@"
     | "`" | "~"
