@@ -123,6 +123,7 @@
       ["f", "bg-[var(--note-f-500)] hover:bg-[var(--note-f-600)]"],
       ["g", "bg-[var(--note-g-500)] hover:bg-[var(--note-g-600)]"],
     ]);
+    let dotted = 0;
     if (!abcGrammar) return;
     const semantics = abcGrammar.createSemantics().addOperation('extract', {
       _nonterminal(...children) {
@@ -153,6 +154,32 @@
       reservedInlineFieldX_key(_a1, _a2, _a3) {
         return '';
       },
+      binaryOp_broken(a) {
+        if (a.sourceString.indexOf(">") != -1) {
+          dotted = a.sourceString.length;
+        } else {
+          dotted = -a.sourceString.length;
+        }
+        return '';
+      },
+      NoteSeq_binary(a1, a2, a3) {
+        let output = '';
+        // set dotted in a2 action
+        a2.extract();
+        output = a1.extract();
+        dotted = -dotted;
+        output += a3.extract();
+        dotted = 0;
+        return output;
+      },
+      NoteSeq_dotted(a1, a2) {
+        let output = '';
+        // set dotted in a2 action
+        a2.extract();
+        output = a1.extract();
+        dotted = 0;
+        return output;
+      },
       baseNote(_accidental, noteName, _octave, dura) {
         let output = '';
         // if (accidental.numChildren > 0) output += accidental.sourceString;
@@ -163,6 +190,11 @@
           let fra = dura.extract().split('/');
           noteWidth = fra[0] * noteWidth / fra[1];
         }
+        let s = 0;
+        for (let i = 1; i <= Math.abs(dotted); i++) {
+          s += Math.pow(2, -i);
+        }
+        noteWidth += ((dotted > 0) ? 1 : -1) * noteWidth * s;
         let bgColor = bgColorMap.get(noteName.sourceString.toLowerCase()) ?? 'bg-[var(--note-black-600)] hover:bg-[var(--note-black-700)]';
         output = `<div class="inline-block ${bgColor}" style="width:${noteWidth}px">${output}</div>`;
         return output;

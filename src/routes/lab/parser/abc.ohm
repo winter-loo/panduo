@@ -39,17 +39,17 @@ Abc {
 
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
-  NoteSeq =
+  NoteSeq
+    = noteConstruct binaryOps noteConstruct --binary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
     | NoteGroup --group
-    | noteConstruct binaryOps noteConstruct --binary
     | noteConstruct
 
   binaryOps = binaryOp+
   binaryOp
-    = brokenOp
-    | tieOp
+    = brokenOp --broken
+    | tieOp --tie
   brokenOp = ">"+ | "<"+
   tieOp = "-"
 
