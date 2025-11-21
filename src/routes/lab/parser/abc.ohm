@@ -88,7 +88,8 @@ Abc {
     | chordAnnotation? "!>(!" PairingMiddle "!>)!" baseNote
   PairingMiddle = baseNote NoteSeq* chordAnnotation?
 
-  baseNote = accidental? noteName octave? noteLen?
+  baseNote = accidental? pitch noteLen?
+  pitch = noteName octave?
 
   // decorations may be applied to notes, rests, note groups, and bar lines
   annotation =
@@ -199,7 +200,7 @@ Abc {
     | "P:" spaces oneLineValue
     | "Q:" spaces qKeyedValue
     | "T:" spaces oneLineValue
-    | "V:" spaces oneLineValue
+    | "V:" spaces voiceSetting
     | "W:" spaces oneLineValue
 
   reservedInBodyField =
@@ -212,7 +213,7 @@ Abc {
     | "Q:" spaces qKeyedValue --tempo
     | "s:" spaces oneLineValue --symbolLine
     | "T:" spaces oneLineValue --tuneTitle
-    | "V:" spaces oneLineValue --voice
+    | "V:" spaces voiceSetting --voice
     | "W:" spaces oneLineValue --wordsAfter
     | "w:" spaces oneLineValue --wordsParallel
 
@@ -225,7 +226,7 @@ Abc {
     | "P:" spaces inlineFieldValue --part
     | "Q:" spaces qKeyedValue --tempo
     | "R:" spaces inlineFieldValue --rhythm
-    | "V:" spaces inlineFieldValue --voice
+    | "V:" spaces voiceSetting --voice
 
   reservedHeaderOnlyField =
     | "A:" spaces oneLineValue
@@ -252,6 +253,24 @@ Abc {
 
   qKeyedValue = dqTextString? spaces  (number "/" number spaces "=")? spaces number spaces dqTextString?
 
+  voiceSetting = word (space+ voiceProperty)*
+  voiceProperty
+    = voicePropertyName spaces "=" spaces "\"" (~"\"" any)+ "\"" --name
+    | voicePropertySubName spaces "=" spaces "\"" (~"\"" any)+ "\"" --subname
+    | "stem" spaces "=" spaces ("up" | "down") --stem
+    | ("clef" spaces "=" spaces)? clefProperty --clef
+  voicePropertyName = "name" | "nm"
+  voicePropertySubName = "subname" | "sname" | "snm"
+
+  // <clef name>[<line number>][+8 | -8] [middle=<pitch>] [transpose=<semitones>] [octave=<number>] [stafflines=<lines>]
+  clefProperty = (clefPropertyOpt space+)* clefName number? ("+8" | "-8")? (space+ clefPropertyOpt)*
+  clefPropertyOpt
+    = ("middle" | "m") spaces "=" spaces pitch --middle
+    | ("transpose" | "t") spaces "=" spaces mathNumber --transpose
+    | "octave" spaces "=" spaces mathNumber --octave
+    | "stafflines" spaces "=" spaces number --lines
+  clefName = "treble" | "bass" | "bass3" | "tenor" | "alto" | "alto2" | "alto1"
+
   linebreakMarks = linebreakMark (space+ linebreakMark)*
   linebreakMark
     = "$"
@@ -270,14 +289,32 @@ Abc {
   // is a marker for info field
   oneLineValue  = (~(eol | "%") any)*
   manyLineValue = (~(eol key) any)*
-  comment = "%" (~eol any)*
-  commentLine = comment eol
+  comment = (~"%%" "%") (~eol any)*
+  commentLine
+    = comment eol --comment
+    | stylesheetDirective spaces eol --directive
+
+  stylesheetDirective = "%%" spaces stylesheetDirectiveDetail
+  stylesheetDirectiveDetail
+    = "score" spaces voiceGroup+ --score
+    | oneLineValue
+  voiceGroup
+    = "(" spaces voiceGroup+ spaces ")" --group
+    | "{" spaces voiceGroup+ spaces "}" --brace
+    | "[" spaces voiceGroup+ spaces "]" --bracket
+    | voiceGroup spaces "|" spaces voiceGroup --barContinue
+    | word --name
+  word = alnum+
+
   eol
     = eol commentLine --lineComment
     | "\\" spaces eol --lineContinue
     | "\r\n" | "\n" | "\r"
   space := " " | "\t" | comment
   number = digit+
+  positiveNumber = "+"? number
+  negativeNumber = "-" number
+  mathNumber = positiveNumber | negativeNumber
   fieldContinue = "+:"
   reservedLetter =
     | "!" | "\"" | "#" | "$" | "%" | "&" | "*" | "+"

@@ -255,7 +255,8 @@
     <div>
       <a class="text-gray-400" target="_blank" href="https://abcnotation.com/wiki/abc:standard:v2.1" title="abc standard">https://abcnotation.com/wiki/abc:standard:v2.1</a> <br/>
       <a class="text-gray-400" target="_blank" href="https://ohmjs.org/docs/syntax-reference" title="ohm syntax reference">https://ohmjs.org/docs/syntax-reference</a><br />
-      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/editor/" title="ohm syntax reference">https://ohmjs.org/editor/</a>
+      <a class="text-gray-400" target="_blank" href="https://ohmjs.org/editor/" title="ohm syntax reference">https://ohmjs.org/editor/</a><br />
+      <a class="text-gray-400" target="_blank" href="https://editor.drawthedots.com/" title="abc editor by abcjs">https://editor.drawthedots.com/</a>
     </div>
     <hr />
     {#if resultMessage.length > 0}
