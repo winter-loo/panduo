@@ -1,0 +1,9 @@
+L:1/4
+M:3/4
+Q:"Allegretto" 3/4=66
+%%score {R | L}
+V:R treble
+V:L bass m=D
+K:G
+[V:R] (!5!d G/A/B/c/ | .d) .G .G | (!3!e c/d/e/f/ | .g) .G .G |
+[V:L] [GBd]2 A | B3 | c3 | B3 |
