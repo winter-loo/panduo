@@ -148,7 +148,7 @@ K:G
       let dur = maybeLen.children[0].toVex();
       durationOverride = new Fraction(dur.num, dur.den);
     }
-    const vfNote = new StaveNote({ keys: [p], duration: 'q', durationOverride });
+    const vfNote = new StaveNote({ keys: [p.value], duration: 'q', durationOverride });
     notes.push(vfNote);
     return {type: 'baseNote', note: vfNote};
   },
@@ -196,7 +196,6 @@ K:G
     let mr = abcGrammar.match(abcInputText);
     semantics(mr).toVex();
 
-    debugger
     let cfg = VexflowConfig.create({
       fontFamily: 'Bravura',
     });
@@ -218,7 +217,7 @@ K:G
   }
 </script>
 <div>
-  <textarea id="abcInput" class="w-screen min-h-[200px]" bind:value={abcInputText}></textarea>
+  <textarea id="abcInput" class="w-screen p-4 min-h-[200px]" bind:value={abcInputText}></textarea>
   <button onclick={toVex}>toVex</button>
 </div>
 <div id="abcvex"></div>
