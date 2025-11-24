@@ -26,8 +26,8 @@ Abc {
   MusicCode = MusicCodePart+
 
   // rule in front has higher priority
-  MusicCodePart
-    = NoteSeq+ --noteseq
+  MusicCodePart =
+    | NoteSeq+ --noteseq
     | rest --rest
     | "(" --slurStart
     | ")" --slurEnd
@@ -242,7 +242,7 @@ Abc {
 
   reservedCommonField<value> =
     | "I:" "linebreak" space+ linebreakMarks --instruction
-    | unitLengthSetting --unitlen
+    | unitNoteLengthSetting --unitlen
     | meterSetting --meter
     | "m:" spaces value --macro
     | "N:" spaces value --notes
