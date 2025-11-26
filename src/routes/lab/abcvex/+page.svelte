@@ -26,19 +26,18 @@ Q:"Allegretto" 3/4=66
 V:R treble
 V:L bass m=D
 K:G
-[V:R] (!5!d G/A/B/c/ | .d) .G .G | (!3!e c/d/e/f/ | .g) .G .G |
-[V:L] [GBd]2 A | B3 | c3 | B3 |
+B3
 `);
 
   let notes: StaveNote[] = [];
   const semantics = abcGrammar.createSemantics().addOperation('toVex', {
-    _nonterminal(...children) {
-      let r: {[index: string]: any} = { type: this.ctorName};
-      children.map(c => {
-        r[c.ctorName] = c.toVex();
-      });
-      return r;
-    },
+    // _nonterminal(...children) {
+    //   let r: {[index: string]: any} = { type: this.ctorName};
+    //   children.map(c => {
+    //     r[c.ctorName] = c.toVex();
+    //   });
+    //   return r;
+    // },
     _terminal() {
       return {type: 'token', value: this.sourceString};
     },
@@ -146,16 +145,20 @@ K:G
     let durationOverride = new Fraction(1, 4);
     if (maybeLen.children.length) {
       let dur = maybeLen.children[0].toVex();
+      console.log('xxx note duration', dur);
       durationOverride = new Fraction(dur.num, dur.den);
     }
     const vfNote = new StaveNote({ keys: [p.value], duration: 'q', durationOverride });
+    console.log('xxx note pitch', p.value);
     notes.push(vfNote);
     return {type: 'baseNote', note: vfNote};
   },
 
   pitch(name, maybeOctave) {
     const step = name.sourceString.toLowerCase();
-    const octave = (maybeOctave.children.length ? maybeOctave.children[0].toVex().octave : null) || 4;
+    let octave = (maybeOctave.children.length ? maybeOctave.children[0].toVex().octave : null) || 4;
+    // is lower case letter
+    if (name.sourceString == step) octave += 1;
     return {type: 'pitch', value: step + '/' + octave};
   },
 
@@ -178,7 +181,7 @@ K:G
     return {type: 'noteLen', num: 1, den: Number(den.sourceString)};
   },
   noteLen_half(slashes) {
-    return {type: 'noteLen', num: 1, den: slashes.children.length};
+    return {type: 'noteLen', num: 1, den: slashes.sourceString.length};
   },
   noteLen_mul(num) {
     return {type: 'noteLen', num: Number(num.sourceString), den: 1};
@@ -192,7 +195,12 @@ K:G
     toVex();
   });
 
+  let staffRef;
   function toVex() {
+    notes = [];
+    if (staffRef) {
+      staffRef.innerHTML = '';
+    }
     let mr = abcGrammar.match(abcInputText);
     semantics(mr).toVex();
 
@@ -220,4 +228,4 @@ K:G
   <textarea id="abcInput" class="w-screen p-4 min-h-[200px]" bind:value={abcInputText}></textarea>
   <button onclick={toVex}>toVex</button>
 </div>
-<div id="abcvex"></div>
+<div id="abcvex" bind={staffRef} class="ml-10"></div>
