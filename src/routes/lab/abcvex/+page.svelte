@@ -17,26 +17,13 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state(String.raw`
-X:1
-L:1/4
-M:3/4
-Q:"Allegretto" 3/4=66
-%%score {R | L}
-V:R treble
-V:L bass m=D
-K:G
-B3
-`);
+  let abcInputText = $state('B3');
 
   let notes: StaveNote[] = [];
   const semantics = abcGrammar.createSemantics().addOperation('toVex', {
+    // should not use _nonterminal
     // _nonterminal(...children) {
-    //   let r: {[index: string]: any} = { type: this.ctorName};
-    //   children.map(c => {
-    //     r[c.ctorName] = c.toVex();
-    //   });
-    //   return r;
+    //   children.map(c => c.toVex());
     // },
     _terminal() {
       return {type: 'token', value: this.sourceString};
@@ -187,9 +174,9 @@ B3
     return {type: 'noteLen', num: Number(num.sourceString), den: 1};
   },
 
-  // fallback for unknowns
-  UnknownField(_a1, _a2) { return null; },
-});
+    // fallback for unknowns
+    UnknownField(_a1, _a2) { return null; },
+  });
 
   $effect(() => {
     toVex();
@@ -201,7 +188,7 @@ B3
     if (staffRef) {
       staffRef.innerHTML = '';
     }
-    let mr = abcGrammar.match(abcInputText);
+    let mr = abcGrammar.match(abcInputText, 'baseNote');
     semantics(mr).toVex();
 
     let cfg = VexflowConfig.create({
@@ -228,4 +215,4 @@ B3
   <textarea id="abcInput" class="w-screen p-4 min-h-[200px]" bind:value={abcInputText}></textarea>
   <button onclick={toVex}>toVex</button>
 </div>
-<div id="abcvex" bind={staffRef} class="ml-10"></div>
+<div id="abcvex" bind:this={staffRef} class="ml-10"></div>
