@@ -259,7 +259,15 @@ Abc {
     | "U:" value --userDefined
     | fieldContinue value --fieldContinue
 
-  MeterSetting = "M:" spaces noteLen
+  MeterSetting = "M:" meterValue
+  meterValue = fraction | meterValueLiteral
+  meterValueLiteral =
+    | "C"
+    | "C|"
+    | "none"
+
+  fraction = number spaces "/" spaces number
+
   UnitNoteLengthSetting = "L:" "1" "/" unitNoteLength
   unitNoteLength = "16" | "32" | "64" | "1" | "2" | "4" | "8"
 

@@ -18,12 +18,35 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("L:1/4\nB3");
+  let abcInputText = $state("M:2/4\nL:1/4\nB3");
 
   let notes: StaveNote[] = [];
-  let parseContext: any = {
-    unitNoteLength: 8,
-  };
+  class ParseContext {
+    _unitNoteLength: number | null = null;
+    // default: free meteer
+    meter: Fraction = new Fraction(0, 1);
+
+    constructor() {
+      this.reset();
+    }
+
+    get unitNoteLength(): number {
+      if (this._unitNoteLength != null) return this._unitNoteLength;
+      let m = this.meter.value();
+      if (m > 0 && m < 0.75) {
+        return 16;
+      } else {
+        return 8;
+      }
+    }
+
+    reset() {
+      this._unitNoteLength = null;
+      this.meter = new Fraction(0, 1);
+    }
+  }
+
+  let pc = new ParseContext();
   let actions: ohm.ActionDict<any | undefined> = {
     // should not use _nonterminal
     // _nonterminal(...children) {
@@ -82,19 +105,29 @@
     // },
 
     UnitNoteLengthSetting(_Lcolon, _one, _slash, unitNoteLength) {
-      parseContext.unitNoteLength = Number(unitNoteLength.sourceString);
+      pc._unitNoteLength = Number(unitNoteLength.sourceString);
     },
 
-    // // A simple meter mapping, expects "M:" spaces noteLen
-    // meterSetting(_Mcolon, _spaces, noteLen) {
-    //   // noteLen: returns {num, den} or null
-    //   const nl = noteLen.toVex ? noteLen.toVex() : null;
-    //   if (nl && nl.num && nl.den) {
-    //     return {meter: {num_beats: nl.num, beat_value: nl.den}};
-    //   }
-    //   return {meter: {num_beats: 4, beat_value: 4}};
-    // },
-    //
+    // A simple meter mapping, expects "M:" spaces noteLen
+    MeterSetting(_Mcolon, value) {
+      let v = value.sourceString;
+      let r = new Fraction(0, 1); // free meter
+      if (v == "C") {
+        r = new Fraction(4, 4);
+      } else if (v == "C|") {
+        r = new Fraction(2, 2);
+      } else if (v == "none") {
+        // use default value
+      } else {
+        r = value.toVex();
+      }
+      pc.meter = r;
+    },
+
+    fraction(num, _sp1, _slash, _sp2, den) {
+      return new Fraction(Number(num.sourceString), Number(den.sourceString));
+    },
+
     // tempoSetting(_Q, _sp, qv) {
     //   // qv returns numeric tempo in children
     //   return {tempo: qv.sourceString};
@@ -167,12 +200,12 @@
 
     baseNote(_acc, pitch, maybeLen) {
       const p = pitch.toVex();
-      let duration = parseContext.unitNoteLength,
+      let duration = pc.unitNoteLength,
         dots = 0;
       if (maybeLen.children.length) {
         let dur = maybeLen.children[0].toVex();
         let frac = new Fraction(dur.num, dur.den);
-        let dd = fractionToDottedDuration(frac, parseContext.unitNoteLength);
+        let dd = fractionToDottedDuration(frac, pc.unitNoteLength);
         if (dd) {
           duration = dd.base;
           dots = dd.dots;
@@ -180,8 +213,7 @@
           throw new Error("Wrong note length notation: " + maybeLen.children[0].sourceString);
         }
       }
-      duration = duration.toString();
-      const vfNote = new StaveNote({ keys: [p.value], duration, autoStem: true });
+      const vfNote = new StaveNote({ keys: [p.value], duration: duration.toString(), autoStem: true });
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([vfNote]);
       }
@@ -285,6 +317,7 @@
   function toVex() {
     notes = [];
     errMessage = "";
+    pc.reset();
     if (staffRef) {
       staffRef.innerHTML = "";
     }
