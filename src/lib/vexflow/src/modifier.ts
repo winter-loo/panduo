@@ -65,7 +65,7 @@ export class Modifier extends Element {
   protected spacingFromNextModifier: number;
   protected modifierContext?: ModifierContext;
 
-  constructor(config: VexflowConfigInstance) {
+  constructor(config?: VexflowConfigInstance) {
     super(config);
 
     this.width = 0;

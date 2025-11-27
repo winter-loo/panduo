@@ -23,7 +23,7 @@ export class Dot extends Modifier {
   }
 
   /** Add a dot on the specified keys to the notes. */
-  static buildAndAttach(notes: Note[], config: VexflowConfigInstance, options?: { index?: number; all?: boolean }): void {
+  static buildAndAttach(notes: Note[], config?: VexflowConfigInstance, options?: { index?: number; all?: boolean }): void {
     for (const note of notes) {
       if (options?.all) {
         for (let i = 0; i < note.keys.length; i++) {
@@ -134,7 +134,7 @@ export class Dot extends Modifier {
     return true;
   }
 
-  constructor(config: VexflowConfigInstance) {
+  constructor(config?: VexflowConfigInstance) {
     super(config);
 
     this.position = Modifier.Position.RIGHT;

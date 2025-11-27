@@ -13,6 +13,7 @@
     VexflowConfigInstance,
     type StaveNoteStruct,
     Fraction,
+    Dot,
   } from '$lib/vexflow/vexflow-core';
 
   const abcGrammar = ohm.grammar(abcNotation);
@@ -129,14 +130,22 @@
 
   baseNote(_acc, pitch, maybeLen) {
     const p = pitch.toVex();
-    let durationOverride = new Fraction(1, 4);
+    let duration = '8', dots = 0;
     if (maybeLen.children.length) {
       let dur = maybeLen.children[0].toVex();
-      console.log('xxx note duration', dur);
-      durationOverride = new Fraction(dur.num, dur.den);
+      let frac = new Fraction(dur.num, dur.den);
+      let dd = fractionToDottedDuration(frac, 8);
+      if (dd) {
+        duration = dd.base.toString();
+        dots = dd.dots;
+      } else {
+          throw new Error('Wrong note length notation: ' + maybeLen.children[0].sourceString);
+      }
     }
-    const vfNote = new StaveNote({ keys: [p.value], duration: 'q', durationOverride });
-    console.log('xxx note pitch', p.value);
+    const vfNote = new StaveNote({ keys: [p.value], duration, autoStem: true });
+    for (let i = 0; i < dots; i++) {
+        Dot.buildAndAttach([vfNote])
+    }
     notes.push(vfNote);
     return {type: 'baseNote', note: vfNote};
   },
@@ -178,18 +187,72 @@
     UnknownField(_a1, _a2) { return null; },
   });
 
+  // Example. The function converts a fraction representing a musical duration into a base duration and a number of dots.
+  // The base duration is given as a denominator (e.g., 4 for a quarter note).
+  // The input fraction `frac` is multiplied by the unit note length (1 / unl) to get the final duration.
+  //
+  // Examples with default unit note length (unl = 4, i.e., L:1/4)
+  // frac = 2/1 ("C2") => total duration 2/4 = 1/2 => { base: 2, dots: 0 } (half note)
+  // frac = 3/1 ("C3") => total duration 3/4 = 3/4 => { base: 2, dots: 1 } (dotted half note)
+  // frac = 1/2 ("C/2") => total duration 1/8 = 1/8 => { base: 8, dots: 0 } (eighth note)
+  // frac = 3/2 ("C3/2") => total duration 3/8 = 3/8 => { base: 4, dots: 1 } (dotted quarter note)
+  //
+  // Examples with unit note length = 8 (i.e., L:1/8)
+  // frac = 1/1 ("C") with unl=8 => total duration 1/8 => { base: 8, dots: 0 }
+  // frac = 7/2 ("C7/2") with unl=8 => total duration 7/16 => { base: 4, dots: 2 } (double-dotted quarter note)
+  //
+  // Invalid durations
+  // frac = 5/2 ("C5/2") with unl=4 => total duration 5/8 => null (not representable with dots)
+  function fractionToDottedDuration(frac: Fraction, unl: number = 4): { base: number, dots: number } | null {
+    const totalDur = frac.clone().multiply(1, unl);
+    totalDur.simplify();
+
+    const num = totalDur.numerator;
+    const den = totalDur.denominator;
+
+    if (num <= 0 || den <= 0) {
+      return null;
+    }
+
+    const numPlusOne = num + 1;
+    // Check if numPlusOne is a power of 2. This means num is of the form 2^k - 1.
+    // This covers both dotted (k>1) and non-dotted (k=1 => num=1) notes.
+    if ((numPlusOne > 0) && ((numPlusOne & (numPlusOne - 1)) === 0)) {
+      const dots = Math.log2(numPlusOne) - 1;
+
+      // Denominator of the dotted note duration is base * 2^dots
+      const base = den / Math.pow(2, dots);
+
+      // Base must be an integer and a power of 2.
+      if (Number.isInteger(base) && base > 0 && ((base & (base - 1)) === 0)) {
+        return { base, dots };
+      }
+    }
+
+    return null;
+  }
+
   $effect(() => {
     toVex();
   });
 
+  let errMessage = $state('');
   let staffRef;
   function toVex() {
     notes = [];
+    errMessage = '';
     if (staffRef) {
       staffRef.innerHTML = '';
     }
     let mr = abcGrammar.match(abcInputText, 'baseNote');
-    semantics(mr).toVex();
+
+    try {
+      semantics(mr).toVex();
+    } catch (e) {
+      if (e instanceof Error)
+        errMessage = e.message;
+      return;
+    }
 
     let cfg = VexflowConfig.create({
       fontFamily: 'Bravura',
@@ -216,3 +279,8 @@
   <button onclick={toVex}>toVex</button>
 </div>
 <div id="abcvex" bind:this={staffRef} class="ml-10"></div>
+
+{#if errMessage.length > 0}
+  <hr />
+  <p class="text-red-500">{errMessage}</p>
+{/if}
