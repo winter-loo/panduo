@@ -1,6 +1,6 @@
 <script lang="ts">
-  import abcNotation from '../parser/abc.ohm?raw';
-  import * as ohm from 'ohm-js';
+  import abcNotation from "../parser/abc.ohm?raw";
+  import * as ohm from "ohm-js";
   import {
     RenderContext,
     Renderer,
@@ -14,34 +14,33 @@
     type StaveNoteStruct,
     Fraction,
     Dot,
-  } from '$lib/vexflow/vexflow-core';
+  } from "$lib/vexflow/vexflow-core";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state('L:1/4\nB3');
+  let abcInputText = $state("L:1/4\nB3");
 
   let notes: StaveNote[] = [];
   let parseContext: any = {
     unitNoteLength: 8,
   };
-  const semantics = abcGrammar.createSemantics().addOperation('toVex', {
+  let actions: ohm.ActionDict<any | undefined> = {
     // should not use _nonterminal
     // _nonterminal(...children) {
     //   children.map(c => c.toVex());
     // },
     _terminal() {
-      return {type: 'token', value: this.sourceString};
+      return { type: "token", value: this.sourceString };
     },
     _iter(...children) {
-      let r: {[index: string]: any} = {type: 'iter'};
-      children.map(c => {
+      let r: { [index: string]: any } = { type: "iter" };
+      children.map((c) => {
         r[c.ctorName] = c.toVex();
       });
       return r;
     },
 
-    Tune_empty() {
-    },
+    Tune_empty() {},
 
     Tune_onlyHeader(h) {
       h.toVex();
@@ -58,7 +57,7 @@
 
     TuneHeader(field, _, fieldRest) {
       field.toVex();
-      fieldRest.children.map(c => c.toVex());
+      fieldRest.children.map((c) => c.toVex());
     },
 
     TuneHeaderField(f) {
@@ -106,126 +105,131 @@
       morePart.toVex();
     },
 
-
     // MusicCode(...children) {
     // },
 
-  // MusicCodePart alternatives
-  // MusicCodePart_noteseq(seq) { return seq.toVex(); },
-  // MusicCodePart_rest(r) { return r.toVex(); },
-  // MusicCodePart_bar(bar) { return {type: 'bar', text: bar.sourceString}; },
-  // MusicCodePart_slurStart(_) { return null; },
-  // MusicCodePart_slurEnd(_) { return null; },
+    // MusicCodePart alternatives
+    // MusicCodePart_noteseq(seq) { return seq.toVex(); },
+    // MusicCodePart_rest(r) { return r.toVex(); },
+    // MusicCodePart_bar(bar) { return {type: 'bar', text: bar.sourceString}; },
+    // MusicCodePart_slurStart(_) { return null; },
+    // MusicCodePart_slurEnd(_) { return null; },
 
-  // Rest mapping
-  // rest_inside(_letter, maybeLen) {
+    // Rest mapping
+    // rest_inside(_letter, maybeLen) {
     // const len = maybeLen.children.length ? maybeLen.children[0].toVex() : null;
     // const duration = len ? len.duration : 'q';
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
-  // },
-  // rest_cross(_letter, _maybeNum) {
+    // },
+    // rest_cross(_letter, _maybeNum) {
     // const duration = 'w'; // treat Z/X uppercase as whole rest by heuristic
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
-  // },
+    // },
 
-  // Note sequences
-  // NoteSeq_binary(left, ops, right) {
-  //   // For binary constructs (like pitch1 tie pitch2) map each note.
-  //   const l = left.toVex();
-  //   const r = right.toVex();
-  //   // tie handling
-  //   if (ops.children && ops.children.some(c => c.sourceString === '-')) {
-  //     // create tie between last head of l and r
-  //     // We'll return both notes; actual tie needs Vex.Flow.StaveTie — omitted for brevity
-  //   }
-  //   return [].concat(l, r);
-  // },
+    // Note sequences
+    // NoteSeq_binary(left, ops, right) {
+    //   // For binary constructs (like pitch1 tie pitch2) map each note.
+    //   const l = left.toVex();
+    //   const r = right.toVex();
+    //   // tie handling
+    //   if (ops.children && ops.children.some(c => c.sourceString === '-')) {
+    //     // create tie between last head of l and r
+    //     // We'll return both notes; actual tie needs Vex.Flow.StaveTie — omitted for brevity
+    //   }
+    //   return [].concat(l, r);
+    // },
 
-  NoteGroup(ca, bg) {
-    bg.toVex();
-  },
+    NoteGroup(ca, bg) {
+      bg.toVex();
+    },
 
-  // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
-  //   // annotatedNotes = array of annotatedNote nodes
-  //   const keys = annotatedNotes.children.map(n => n.toVex().key);
-  //   const len = maybeLen.children.length ? maybeLen.children[0].toVex() : {duration: 'q'};
-  //   const dur = len.duration;
-  //   // VexFlow chord uses comma-separated keys in one StaveNote
-  //   const staveNote = new StaveNote({ keys, duration: dur });
-  //   return {type: 'tickable', vf: staveNote};
-  // },
+    // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
+    //   // annotatedNotes = array of annotatedNote nodes
+    //   const keys = annotatedNotes.children.map(n => n.toVex().key);
+    //   const len = maybeLen.children.length ? maybeLen.children[0].toVex() : {duration: 'q'};
+    //   const dur = len.duration;
+    //   // VexFlow chord uses comma-separated keys in one StaveNote
+    //   const staveNote = new StaveNote({ keys, duration: dur });
+    //   return {type: 'tickable', vf: staveNote};
+    // },
 
-  baseNoteGroup(notes) {
-    if (notes.children.length > 1) {
+    baseNoteGroup(notes) {
+      if (notes.children.length > 1) {
         // make a beam
-    } else {
-      notes.toVex();
-    }
-  },
-
-  annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
-    baseNote.toVex();
-  },
-
-  baseNote(_acc, pitch, maybeLen) {
-    const p = pitch.toVex();
-    let duration = parseContext.unitNoteLength, dots = 0;
-    if (maybeLen.children.length) {
-      let dur = maybeLen.children[0].toVex();
-      let frac = new Fraction(dur.num, dur.den);
-      let dd = fractionToDottedDuration(frac, parseContext.unitNoteLength);
-      if (dd) {
-        duration = dd.base;
-        dots = dd.dots;
       } else {
-          throw new Error('Wrong note length notation: ' + maybeLen.children[0].sourceString);
+        notes.toVex();
       }
-    }
-    duration = duration.toString();
-    const vfNote = new StaveNote({ keys: [p.value], duration, autoStem: true });
-    for (let i = 0; i < dots; i++) {
-        Dot.buildAndAttach([vfNote])
-    }
-    notes.push(vfNote);
-    return {type: 'baseNote', note: vfNote};
-  },
+    },
 
-  pitch(name, maybeOctave) {
-    const step = name.sourceString.toLowerCase();
-    let octave = (maybeOctave.children.length ? maybeOctave.children[0].toVex().octave : null) || 4;
-    // is lower case letter
-    if (name.sourceString == step) octave += 1;
-    return {type: 'pitch', value: step + '/' + octave};
-  },
+    annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
+      baseNote.toVex();
+    },
 
-  octave(_) {
-    const s = this.sourceString;
-    // count quotes -> increase octave, commas decrease
-    const quotes = (s.match(/'/g)||[]).length;
-    const commas = (s.match(/,/g)||[]).length;
-    // base octave 4
-    return {type: 'octave', octave: 4 + quotes - commas};
-  },
+    baseNote(_acc, pitch, maybeLen) {
+      const p = pitch.toVex();
+      let duration = parseContext.unitNoteLength,
+        dots = 0;
+      if (maybeLen.children.length) {
+        let dur = maybeLen.children[0].toVex();
+        let frac = new Fraction(dur.num, dur.den);
+        let dd = fractionToDottedDuration(frac, parseContext.unitNoteLength);
+        if (dd) {
+          duration = dd.base;
+          dots = dd.dots;
+        } else {
+          throw new Error("Wrong note length notation: " + maybeLen.children[0].sourceString);
+        }
+      }
+      duration = duration.toString();
+      const vfNote = new StaveNote({ keys: [p.value], duration, autoStem: true });
+      for (let i = 0; i < dots; i++) {
+        Dot.buildAndAttach([vfNote]);
+      }
+      notes.push(vfNote);
+      return { type: "baseNote", note: vfNote };
+    },
 
-  number(_) { return {type: 'number', num: Number(this.sourceString)}; },
+    pitch(name, maybeOctave) {
+      const step = name.sourceString.toLowerCase();
+      let octave = (maybeOctave.children.length ? maybeOctave.children[0].toVex().octave : null) || 4;
+      // is lower case letter
+      if (name.sourceString == step) octave += 1;
+      return { type: "pitch", value: step + "/" + octave };
+    },
 
-  // noteLen returns an object with duration token for VexFlow
-  noteLen_fra(num, _slash, den) {
-    return {type: 'noteLen', num: Number(num.sourceString), den: Number(den.sourceString)};
-  },
-  noteLen_div(_slash, den) {
-    return {type: 'noteLen', num: 1, den: Number(den.sourceString)};
-  },
-  noteLen_half(slashes) {
-    return {type: 'noteLen', num: 1, den: slashes.sourceString.length};
-  },
-  noteLen_mul(num) {
-    return {type: 'noteLen', num: Number(num.sourceString), den: 1};
-  },
+    octave(_) {
+      const s = this.sourceString;
+      // count quotes -> increase octave, commas decrease
+      const quotes = (s.match(/'/g) || []).length;
+      const commas = (s.match(/,/g) || []).length;
+      // base octave 4
+      return { type: "octave", octave: 4 + quotes - commas };
+    },
+
+    number(_) {
+      return { type: "number", num: Number(this.sourceString) };
+    },
+
+    // noteLen returns an object with duration token for VexFlow
+    noteLen_fra(num, _slash, den) {
+      return { type: "noteLen", num: Number(num.sourceString), den: Number(den.sourceString) };
+    },
+    noteLen_div(_slash, den) {
+      return { type: "noteLen", num: 1, den: Number(den.sourceString) };
+    },
+    noteLen_half(slashes) {
+      return { type: "noteLen", num: 1, den: slashes.sourceString.length };
+    },
+    noteLen_mul(num) {
+      return { type: "noteLen", num: Number(num.sourceString), den: 1 };
+    },
 
     // fallback for unknowns
-    UnknownField(_a1, _a2) { return null; },
-  });
+    UnknownField(_a1, _a2) {
+      return null;
+    },
+  };
+  const semantics = abcGrammar.createSemantics().addOperation("toVex", actions);
 
   // Example. The function converts a fraction representing a musical duration into a base duration and a number of dots.
   // The base duration is given as a denominator (e.g., 4 for a quarter note).
@@ -243,7 +247,7 @@
   //
   // Invalid durations
   // frac = 5/2 ("C5/2") with unl=4 => total duration 5/8 => null (not representable with dots)
-  function fractionToDottedDuration(frac: Fraction, unl: number = 4): { base: number, dots: number } | null {
+  function fractionToDottedDuration(frac: Fraction, unl: number = 4): { base: number; dots: number } | null {
     const totalDur = frac.clone().multiply(1, unl);
     totalDur.simplify();
 
@@ -257,14 +261,14 @@
     const numPlusOne = num + 1;
     // Check if numPlusOne is a power of 2. This means num is of the form 2^k - 1.
     // This covers both dotted (k>1) and non-dotted (k=1 => num=1) notes.
-    if ((numPlusOne > 0) && ((numPlusOne & (numPlusOne - 1)) === 0)) {
+    if (numPlusOne > 0 && (numPlusOne & (numPlusOne - 1)) === 0) {
       const dots = Math.log2(numPlusOne) - 1;
 
       // Denominator of the dotted note duration is base * 2^dots
       const base = den / Math.pow(2, dots);
 
       // Base must be an integer and a power of 2.
-      if (Number.isInteger(base) && base > 0 && ((base & (base - 1)) === 0)) {
+      if (Number.isInteger(base) && base > 0 && (base & (base - 1)) === 0) {
         return { base, dots };
       }
     }
@@ -276,31 +280,30 @@
     toVex();
   });
 
-  let errMessage = $state('');
-  let staffRef;
+  let errMessage = $state("");
+  let staffRef: any;
   function toVex() {
     notes = [];
-    errMessage = '';
+    errMessage = "";
     if (staffRef) {
-      staffRef.innerHTML = '';
+      staffRef.innerHTML = "";
     }
-    let mr = abcGrammar.match(abcInputText, 'Tune');
+    let mr = abcGrammar.match(abcInputText, "Tune");
 
     try {
       semantics(mr).toVex();
     } catch (e) {
-      if (e instanceof Error)
-        errMessage = e.message;
+      if (e instanceof Error) errMessage = e.message;
       return;
     }
 
     let cfg = VexflowConfig.create({
-      fontFamily: 'Bravura',
+      fontFamily: "Bravura",
     });
     let renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG, cfg);
     renderer.resize(800, 80);
     const stave = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
-    stave.addClef('treble');
+    stave.addClef("treble");
     stave.setContext(renderer.getContext()).draw();
     VexFlow.Formatter.FormatAndDraw(
       renderer.getContext(),
@@ -314,6 +317,7 @@
     );
   }
 </script>
+
 <div>
   <textarea id="abcInput" class="w-screen p-4 min-h-[200px]" bind:value={abcInputText}></textarea>
   <button onclick={toVex}>toVex</button>
