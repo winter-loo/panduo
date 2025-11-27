@@ -3,15 +3,22 @@ Abc {
 
   FileHeaders = FileHeader (eol FileHeader)*
   FileHeader
-    = reservedFileHeaderField
+    = ReservedFileHeaderField
     | UnknownFileHeaderField --unknown
 
   TuneBook = Tune (eol eol+ Tune)* eol*
 
-  Tune = TuneHeader (eol TuneBody)?
-  TuneHeader = TuneHeaderStartField (eol TuneHeaderMiddleField)* eol TuneHeaderEndField
-  TuneHeaderMiddleField
-    = reservedTuneHeaderField
+  Tune =
+    | TuneHeader eol TuneBody --full
+    | TuneHeader --onlyHeader
+    | TuneBody --onlyBody
+    | /* nothing */ --empty
+
+  TuneHeader = TuneHeaderField (eol TuneHeaderField)*
+  TuneHeaderField =
+    | TuneHeaderStartField --start
+    | TuneHeaderEndField --end
+    | ReservedTuneHeaderField
     | UnknownTuneHeaderField --unknown
 
   TuneBody
@@ -39,8 +46,9 @@ Abc {
 
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
-  NoteSeq
-    = noteConstruct binaryOps noteConstruct --binary
+  NoteSeq =
+    | noteConstruct binaryOps noteConstruct --binary
+    | NoteGroup binaryOps NoteGroup --groupBinary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
     | NoteGroup --group
@@ -176,99 +184,100 @@ Abc {
   InlineInfoFieldList = InlineInfoField+
   InlineInfoField = "[" InlineInfoFieldX "]"
   InlineInfoFieldX =
-    | reservedInlineField
+    | ReservedInlineField
     | UnknownField --unknown
   inlineFieldValue = (~(eol | "]" | "[") any)*
   InBodyInfoFieldList = InBodyInfoField (eol InBodyInfoField)*
   InBodyInfoField =
-    | reservedInBodyField
+    | ReservedInBodyField
     | UnknownField --unknown
 
   TuneHeaderStartField = "X:" number
-  TuneHeaderEndField   = keySignatureSetting
+  TuneHeaderEndField   = KeySignatureSetting
 
-  reservedFileHeaderField
-    = reservedHeaderOnlyField
-    | reservedCommonField<oneLineValue>
+  ReservedFileHeaderField
+    = ReservedHeaderOnlyField
+    | ReservedCommonField<oneLineValue>
 
-  reservedTuneHeaderField =
-    | reservedTuneHeaderFieldX
-    | reservedHeaderOnlyField
-    | reservedCommonField<oneLineValue>
+  ReservedTuneHeaderField =
+    | ReservedTuneHeaderFieldX
+    | ReservedHeaderOnlyField
+    | ReservedCommonField<oneLineValue>
 
-  reservedTuneHeaderFieldX =
-    | "P:" spaces oneLineValue --part
-    | tempoSetting --tempo
-    | "T:" spaces oneLineValue --title
-    | voiceSetting --voice
-    | "W:" spaces oneLineValue --wordsAfter
+  ReservedTuneHeaderFieldX =
+    | "P:" oneLineValue --part
+    | TempoSetting --tempo
+    | "T:" oneLineValue --title
+    | VoiceSetting --voice
+    | "W:" oneLineValue --wordsAfter
 
-  reservedInBodyField =
-    | reservedInBodyFieldX
-    | reservedCommonField<oneLineValue>
+  ReservedInBodyField =
+    | ReservedInBodyFieldX
+    | ReservedCommonField<oneLineValue>
 
-  reservedInBodyFieldX =
-  	| keySignatureSetting --keysig
-    | "P:" spaces oneLineValue --part
-    | tempoSetting --tempo
-    | "s:" spaces oneLineValue --symbolLine
-    | "T:" spaces oneLineValue --tuneTitle
-    | voiceSetting --voice
-    | "W:" spaces oneLineValue --wordsAfter
-    | "w:" spaces oneLineValue --wordsParallel
+  ReservedInBodyFieldX =
+  	| KeySignatureSetting --keysig
+    | "P:" oneLineValue --part
+    | TempoSetting --tempo
+    | "s:" oneLineValue --symbolLine
+    | "T:" oneLineValue --tuneTitle
+    | VoiceSetting --voice
+    | "W:" oneLineValue --wordsAfter
+    | "w:" oneLineValue --wordsParallel
 
-  reservedInlineField =
-    | reservedInlineFieldX
-    | reservedCommonField<inlineFieldValue>
+  ReservedInlineField =
+    | ReservedInlineFieldX
+    | ReservedCommonField<inlineFieldValue>
 
-  reservedInlineFieldX =
-   	| keySignatureSetting --keysig
-    | "P:" spaces inlineFieldValue --part
-    | tempoSetting --tempo
-    | "R:" spaces inlineFieldValue --rhythm
-    | voiceSetting --voice
+  ReservedInlineFieldX =
+   	| KeySignatureSetting --keysig
+    | "P:" inlineFieldValue --part
+    | TempoSetting --tempo
+    | "R:" inlineFieldValue --rhythm
+    | VoiceSetting --voice
 
-  reservedHeaderOnlyField =
-    | "A:" spaces oneLineValue
-    | "B:" spaces oneLineValue
-    | "C:" spaces oneLineValue
-    | "D:" spaces oneLineValue
-    | "F:" spaces oneLineValue
-    | "G:" spaces oneLineValue
-    | "H:" spaces oneLineValue
-    | "S:" spaces oneLineValue
-    | "Z:" spaces manyLineValue
-    | "O:" spaces oneLineValue
+  ReservedHeaderOnlyField =
+    | "A:" oneLineValue
+    | "B:" oneLineValue
+    | "C:" oneLineValue
+    | "D:" oneLineValue
+    | "F:" oneLineValue
+    | "G:" oneLineValue
+    | "H:" oneLineValue
+    | "S:" oneLineValue
+    | "Z:" manyLineValue
+    | "O:" oneLineValue
 
-  reservedCommonField<value> =
+  ReservedCommonField<value> =
     | "I:" "linebreak" space+ linebreakMarks --instruction
-    | unitNoteLengthSetting --unitlen
-    | meterSetting --meter
-    | "m:" spaces value --macro
-    | "N:" spaces value --notes
-    | "R:" spaces value --rhythm
-    | "r:" spaces value --remark
-    | "U:" spaces value --userDefined
-    | fieldContinue spaces value --fieldContinue
+    | UnitNoteLengthSetting --unitlen
+    | MeterSetting
+    | "m:" value --macro
+    | "N:" value --notes
+    | "R:" value --rhythm
+    | "r:" value --remark
+    | "U:" value --userDefined
+    | fieldContinue value --fieldContinue
 
-  meterSetting = "M:" spaces noteLen
-  unitNoteLengthSetting = "L:" spaces noteLen
+  MeterSetting = "M:" spaces noteLen
+  UnitNoteLengthSetting = "L:" "1" "/" unitNoteLength
+  unitNoteLength = "16" | "32" | "64" | "1" | "2" | "4" | "8"
 
-  voiceSetting = "V:" spaces word (space+ voiceProperty)*
-  voiceProperty
-    = voicePropertyName spaces "=" spaces "\"" (~"\"" any)+ "\"" --name
-    | voicePropertySubName spaces "=" spaces "\"" (~"\"" any)+ "\"" --subname
-    | "stem" spaces "=" spaces ("up" | "down") --stem
-    | ("clef" spaces "=" spaces)? clefProperty --clef
+  VoiceSetting = "V:" word VoiceProperty*
+  VoiceProperty
+    = voicePropertyName "=" "\"" (~"\"" any)+ "\"" --name
+    | voicePropertySubName "=" "\"" (~"\"" any)+ "\"" --subname
+    | "stem" "=" ("up" | "down") --stem
+    | ("clef" "=")? clefProperty --clef
   voicePropertyName = "name" | "nm"
   voicePropertySubName = "subname" | "sname" | "snm"
 
-  tempoSetting
-    = "Q:" spaces qKeyedValue --tempo
-  qKeyedValue = dqTextString? spaces  (number "/" number spaces "=")? spaces number spaces dqTextString?
+  TempoSetting
+    = "Q:" QKeyedValue --tempo
+  QKeyedValue = dqTextString? (number "/" number "=")? number dqTextString?
 
-  keySignatureSetting
-    = "K:" spaces keySignatureTonic (spaces keySignatureMode)? (space+ accidental noteName)?
+  KeySignatureSetting
+    = "K:" keySignatureTonic keySignatureMode? (space+ accidental noteName)?
   keySignatureTonic = "A".."G" ("#" | "b")?
   keySignatureMode = "maj" | "min" | "m" | "Mix" | "Dor" | "Phr" | "Lyd" | "Loc"
 
@@ -288,9 +297,9 @@ Abc {
     | "<EOL>"
     | "<none>"
 
-  UnknownFileHeaderField = ~(reservedFileHeaderField) key oneLineValue
-  UnknownTuneHeaderField = ~(reservedTuneHeaderField | TuneHeaderStartField | TuneHeaderEndField) key oneLineValue
-  UnknownField = ~(reservedInBodyField | reservedInlineField | reservedTuneHeaderField | reservedFileHeaderField) key (oneLineValue | inlineFieldValue)
+  UnknownFileHeaderField = ~(ReservedFileHeaderField) key oneLineValue
+  UnknownTuneHeaderField = ~(ReservedTuneHeaderField | TuneHeaderStartField | TuneHeaderEndField) key oneLineValue
+  UnknownField = ~(ReservedInBodyField | ReservedInlineField | ReservedTuneHeaderField | ReservedFileHeaderField) key (oneLineValue | inlineFieldValue)
 
   key = letter ":"
   textString  = (~(eol | "\"") any)*
@@ -317,8 +326,8 @@ Abc {
     | word --name
   word = alnum+
 
-  eol
-    = eol commentLine --lineComment
+  eol =
+    | eol commentLine --lineComment
     | "\\" spaces eol --lineContinue
     | "\r\n" | "\n" | "\r"
   space := " " | "\t" | comment

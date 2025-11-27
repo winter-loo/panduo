@@ -18,9 +18,12 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state('B3');
+  let abcInputText = $state('L:1/4\nB3');
 
   let notes: StaveNote[] = [];
+  let parseContext: any = {
+    unitNoteLength: 8,
+  };
   const semantics = abcGrammar.createSemantics().addOperation('toVex', {
     // should not use _nonterminal
     // _nonterminal(...children) {
@@ -37,18 +40,52 @@
       return r;
     },
 
-    // Tune(tuneHeader, maybeBody) {
+    Tune_empty() {
+    },
+
+    Tune_onlyHeader(h) {
+      h.toVex();
+    },
+
+    Tune_onlyBody(b) {
+      b.toVex();
+    },
+
+    Tune_full(h, _, b) {
+      h.toVex();
+      b.toVex();
+    },
+
+    TuneHeader(field, _, fieldRest) {
+      field.toVex();
+      fieldRest.children.map(c => c.toVex());
+    },
+
+    TuneHeaderField(f) {
+      f.toVex();
+    },
+
+    TuneHeaderField_start(fs) {
+      fs.toVex();
+    },
+
+    TuneHeaderField_end(fe) {
+      fe.toVex();
+    },
+
+    // TuneHeaderField_unknown(f) {
+    //   console.warn('unknown tune header field: ', f.sourceString);
     // },
-    //
+
     // keySignatureSetting(_kcolon, _spaces, tonic, maybeMode, maybeAlt) {
     //   const key = tonic.sourceString + (maybeMode.children.length ? ' ' + maybeMode.children[0].sourceString : '');
     //   return {key: tonic.sourceString.toLowerCase(), mode: maybeMode.children.length ? maybeMode.children[0].sourceString : null};
     // },
-    //
-    // unitNoteLengthSetting(_Lcolon, _spaces, noteLen) {
-    //   return {unitNoteLength: noteLen.toVex()};
-    // },
-    //
+
+    UnitNoteLengthSetting(_Lcolon, _one, _slash, unitNoteLength) {
+      parseContext.unitNoteLength = Number(unitNoteLength.sourceString);
+    },
+
     // // A simple meter mapping, expects "M:" spaces noteLen
     // meterSetting(_Mcolon, _spaces, noteLen) {
     //   // noteLen: returns {num, den} or null
@@ -63,10 +100,13 @@
     //   // qv returns numeric tempo in children
     //   return {tempo: qv.sourceString};
     // },
-    //
-    // TuneBody(...children) {
-    // },
-    //
+
+    TuneBody(l1, _e1, part, _e2, morePart, _e3, l2) {
+      part.toVex();
+      morePart.toVex();
+    },
+
+
     // MusicCode(...children) {
     // },
 
@@ -101,8 +141,9 @@
   //   return [].concat(l, r);
   // },
 
-  // NoteGroup_group(x) { return x.toVex(); },
-  // NoteGroup(x) { return x.toVex(); },
+  NoteGroup(ca, bg) {
+    bg.toVex();
+  },
 
   // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
   //   // annotatedNotes = array of annotatedNote nodes
@@ -114,34 +155,33 @@
   //   return {type: 'tickable', vf: staveNote};
   // },
 
-  // baseNoteGroup(notes) {
-  //   if (notes.children.length > 1) {
-  //       // make a beam
-  //   } else {
-  //     return notes.toVex();
-  //   }
-  // },
+  baseNoteGroup(notes) {
+    if (notes.children.length > 1) {
+        // make a beam
+    } else {
+      notes.toVex();
+    }
+  },
 
-  // annotatedNote(maybeAnnotationOp, maybeParens, baseNote) {
-  //   const bn = baseNote.toVex();
-  //   // annotationOp could set articulations; ignore for now
-  //   return bn;
-  // },
+  annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
+    baseNote.toVex();
+  },
 
   baseNote(_acc, pitch, maybeLen) {
     const p = pitch.toVex();
-    let duration = '8', dots = 0;
+    let duration = parseContext.unitNoteLength, dots = 0;
     if (maybeLen.children.length) {
       let dur = maybeLen.children[0].toVex();
       let frac = new Fraction(dur.num, dur.den);
-      let dd = fractionToDottedDuration(frac, 8);
+      let dd = fractionToDottedDuration(frac, parseContext.unitNoteLength);
       if (dd) {
-        duration = dd.base.toString();
+        duration = dd.base;
         dots = dd.dots;
       } else {
           throw new Error('Wrong note length notation: ' + maybeLen.children[0].sourceString);
       }
     }
+    duration = duration.toString();
     const vfNote = new StaveNote({ keys: [p.value], duration, autoStem: true });
     for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([vfNote])
@@ -244,7 +284,7 @@
     if (staffRef) {
       staffRef.innerHTML = '';
     }
-    let mr = abcGrammar.match(abcInputText, 'baseNote');
+    let mr = abcGrammar.match(abcInputText, 'Tune');
 
     try {
       semantics(mr).toVex();
@@ -282,5 +322,5 @@
 
 {#if errMessage.length > 0}
   <hr />
-  <p class="text-red-500">{errMessage}</p>
+  <pre class="text-red-500">{errMessage}</pre>
 {/if}
