@@ -16,11 +16,12 @@
     Dot,
     Beam,
     Note,
+    StemmableNote,
   } from "$lib/vexflow/vexflow-core";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/4\nB>c");
+  let abcInputText = $state("M:3/4\nL:1/8\nB> c");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -62,6 +63,24 @@
         Dot.buildAndAttach([note]);
       }
       return note;
+    }
+
+    createBeam(notes: StemmableNote[]) {
+      let beamable = [];
+      for (let i = 0; i < notes.length; i++) {
+        let n = notes[i];
+        if (n.getIntrinsicTicks() < VexFlow.durationToTicks("4")) {
+          beamable.push(n);
+        } else {
+          if (beamable.length > 1) {
+            this.beams.push(new Beam(beamable, true));
+          }
+          beamable = [];
+        }
+      }
+      if (beamable.length > 1) {
+        this.beams.push(new Beam(beamable, true));
+      }
     }
   }
 
@@ -178,7 +197,7 @@
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
     // },
 
-    NoteSeq_binary(l, o, r) {
+    NoteSeq_binary(l, sp1, o, sp2, r) {
       let nl = l.toVex() as StaveNote;
       let nr = r.toVex() as StaveNote;
       const ops = o.toVex();
@@ -217,6 +236,9 @@
         }
       }
       pc.notes.push(...[nl, nr]);
+      if (sp1.sourceString.length == 0 && sp2.sourceString.length == 0) {
+        pc.createBeam([nl, nr]);
+      }
     },
 
     NoteConstruct(gn, chordedNote) {
@@ -267,21 +289,7 @@
     baseNoteGroup(notes) {
       let staveNotes = notes.children.map((n) => n.toVex());
       if (staveNotes.length > 1) {
-        let beamable = [];
-        for (let i = 0; i < staveNotes.length; i++) {
-          let n = staveNotes[i] as StaveNote;
-          if (n.getIntrinsicTicks() < VexFlow.durationToTicks("4")) {
-            beamable.push(n);
-          } else {
-            if (beamable.length > 1) {
-              pc.beams.push(new Beam(beamable, true));
-            }
-            beamable = [];
-          }
-        }
-        if (beamable.length > 1) {
-          pc.beams.push(new Beam(beamable, true));
-        }
+        pc.createBeam(staveNotes);
       }
       pc.notes.push(...staveNotes);
     },

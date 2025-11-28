@@ -1033,7 +1033,6 @@ export class Beam extends Element {
             midBeamX, midBeamY + beamThickness,
             midBeamX, midBeamY,
           ];
-          const startNote = this.notes[beamLine.startNote!];
           const startGroup = ctx.openGroup();
           ctx.polygon(points.join(" "), {
             'stroke-linecap': 'round',
@@ -1042,13 +1041,16 @@ export class Beam extends Element {
             fill: 'currentColor',
           });
           ctx.closeGroup();
-          const noteGroup = startNote.getSVGElement();
-          if (
-            startGroup instanceof SVGGElement &&
-            noteGroup instanceof SVGGElement &&
-            startGroup.parentNode !== noteGroup
-          ) {
-            noteGroup.appendChild(startGroup);
+          if (beamLine.startNote) {
+            const startNote = this.notes[beamLine.startNote];
+            const noteGroup = startNote.getSVGElement();
+            if (
+              startGroup instanceof SVGGElement &&
+              noteGroup instanceof SVGGElement &&
+              startGroup.parentNode !== noteGroup
+            ) {
+              noteGroup.appendChild(startGroup);
+            }
           }
 
           if (j + 1 == beamLines.length) {
@@ -1058,7 +1060,6 @@ export class Beam extends Element {
               lastBeamX, lastBeamY + beamThickness,
               lastBeamX, lastBeamY,
             ];
-            const endNote = this.notes[beamLine.endNote!];
             const endGroup = ctx.openGroup();
             ctx.polygon(points.join(" "), {
               'stroke-linecap': 'round',
@@ -1067,13 +1068,16 @@ export class Beam extends Element {
               fill: 'currentColor',
             });
             ctx.closeGroup();
-            const noteGroup = endNote.getSVGElement();
-            if (
-              endGroup instanceof SVGGElement &&
-              noteGroup instanceof SVGGElement &&
-              endGroup.parentNode !== noteGroup
-            ) {
-              noteGroup.appendChild(endGroup);
+            if (beamLine.endNote) {
+              const endNote = this.notes[beamLine.endNote];
+              const noteGroup = endNote.getSVGElement();
+              if (
+                endGroup instanceof SVGGElement &&
+                noteGroup instanceof SVGGElement &&
+                endGroup.parentNode !== noteGroup
+              ) {
+                noteGroup.appendChild(endGroup);
+              }
             }
           }
         } else {

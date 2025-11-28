@@ -47,8 +47,8 @@ Abc {
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
   NoteSeq =
-    | NoteConstruct binaryOps NoteConstruct --binary
-    | NoteGroup binaryOps NoteGroup --groupBinary
+    | NoteConstruct #(spaces) binaryOps #(spaces) NoteConstruct --binary
+    | NoteGroup #(spaces) binaryOps #(spaces) NoteGroup --groupBinary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
     | NoteGroup --group
