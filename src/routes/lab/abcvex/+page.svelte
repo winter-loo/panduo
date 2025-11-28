@@ -14,17 +14,19 @@
     type StaveNoteStruct,
     Fraction,
     Dot,
+    Beam,
+    Note,
   } from "$lib/vexflow/vexflow-core";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:2/4\nL:1/4\nB3");
+  let abcInputText = $state("M:3/4\nL:1/4\nBcd");
 
-  let notes: StaveNote[] = [];
   class ParseContext {
     _unitNoteLength: number | null = null;
     // default: free meteer
     meter: Fraction = new Fraction(0, 1);
+    notes: Note[] = [];
 
     constructor() {
       this.reset();
@@ -43,6 +45,7 @@
     reset() {
       this._unitNoteLength = null;
       this.meter = new Fraction(0, 1);
+      this.notes = [];
     }
   }
 
@@ -187,15 +190,14 @@
     // },
 
     baseNoteGroup(notes) {
-      if (notes.children.length > 1) {
-        // make a beam
-      } else {
-        notes.toVex();
-      }
+      let staveNotes = notes.children.map(n => n.toVex());
+      debugger;
+      // new Beam(staveNotes, true);
+      pc.notes.push(...staveNotes);
     },
 
     annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
-      baseNote.toVex();
+      return baseNote.toVex();
     },
 
     baseNote(_acc, pitch, maybeLen) {
@@ -217,8 +219,7 @@
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([vfNote]);
       }
-      notes.push(vfNote);
-      return { type: "baseNote", note: vfNote };
+      return vfNote;
     },
 
     pitch(name, maybeOctave) {
@@ -315,7 +316,6 @@
   let errMessage = $state("");
   let staffRef: any;
   function toVex() {
-    notes = [];
     errMessage = "";
     pc.reset();
     if (staffRef) {
@@ -337,11 +337,12 @@
     renderer.resize(800, 80);
     const stave = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
     stave.addClef("treble");
+    stave.addTimeSignature(pc.meter.toString());
     stave.setContext(renderer.getContext()).draw();
     VexFlow.Formatter.FormatAndDraw(
       renderer.getContext(),
       stave,
-      { notes },
+      { notes: pc.notes },
       {
         params: {
           autoBeam: true,
