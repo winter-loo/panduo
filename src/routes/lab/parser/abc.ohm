@@ -47,12 +47,12 @@ Abc {
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
   NoteSeq =
-    | noteConstruct binaryOps noteConstruct --binary
+    | NoteConstruct binaryOps NoteConstruct --binary
     | NoteGroup binaryOps NoteGroup --groupBinary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
     | NoteGroup --group
-    | noteConstruct
+    | NoteConstruct
 
   binaryOps = binaryOp+
   binaryOp
@@ -69,9 +69,9 @@ Abc {
 
   NoteGroup = chordAnnotation? baseNoteGroup
 
-  noteConstruct = (graceNote spaces)? chordedNote
-  graceNote = "{" spaces baseNote+ spaces "}"
-  chordedNote = (chordAnnotation spaces)? annotatedNote
+  NoteConstruct = GraceNote? ChordedNote
+  GraceNote = "{" baseNote+ "}"
+  ChordedNote = chordAnnotation? annotatedNote
 
   // slur symbols could exist between annotation and baseNote
   annotatedNote = (annotationOp spaces)? ("(" spaces)? baseNote

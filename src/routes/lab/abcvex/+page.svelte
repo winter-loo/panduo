@@ -20,7 +20,7 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/4\nB/c/d");
+  let abcInputText = $state("M:3/4\nL:1/4\nB>c");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -48,6 +48,20 @@
       this.meter = new Fraction(0, 1);
       this.notes = [];
       this.beams = [];
+    }
+
+    rebuildNote(note: StaveNote, dura: Fraction): StaveNote {
+      let dd = fractionToDottedDuration(dura, this.unitNoteLength);
+      if (!dd) {
+        throw new Error("Wrong note length notation: " + dura);
+      }
+      let duration = dd.base.toString();
+      let dots = dd.dots;
+      note = new StaveNote({ keys: note.getKeys(), duration, autoStem: true });
+      for (let i = 0; i < dots; i++) {
+        Dot.buildAndAttach([note]);
+      }
+      return note;
     }
   }
 
@@ -164,18 +178,77 @@
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
     // },
 
-    // Note sequences
-    // NoteSeq_binary(left, ops, right) {
-    //   // For binary constructs (like pitch1 tie pitch2) map each note.
-    //   const l = left.toVex();
-    //   const r = right.toVex();
-    //   // tie handling
-    //   if (ops.children && ops.children.some(c => c.sourceString === '-')) {
-    //     // create tie between last head of l and r
-    //     // We'll return both notes; actual tie needs Vex.Flow.StaveTie — omitted for brevity
-    //   }
-    //   return [].concat(l, r);
-    // },
+    NoteSeq_binary(l, o, r) {
+      let nl = l.toVex() as StaveNote;
+      let nr = r.toVex() as StaveNote;
+      const ops = o.toVex();
+      for (let i = 0; i < ops.length; i++) {
+        if (ops[i].op == "broken") {
+          let n = ops[i].dots;
+          let nlDura = nl.getTicks().divide(VexFlow.RESOLUTION).simplify();
+          let nrDura = nr.getTicks().divide(VexFlow.RESOLUTION).simplify();
+          if (!nlDura.equals(nrDura)) {
+            throw new Error("can not use '>' to connect unequal length notes");
+          }
+          if (nl.isDotted() || nr.isDotted()) {
+            throw new Error("notes around '>' cannot be dotted as one of note cannot be halved");
+          }
+
+          let nlNewDura: Fraction, nrNewDura: Fraction;
+          if (n > 0) {
+            nlNewDura = nlDura.clone();
+            // 1/4 + 1/8 + 1/16
+            for (let i = 1; i <= n; i++) {
+              let h = nlDura.divide(Math.pow(2, i));
+              nlNewDura.add(h);
+            }
+            nrNewDura = nrDura.clone().divide(Math.pow(2, n));
+          } else {
+            n = -n;
+            nrNewDura = nrDura.clone();
+            for (let i = 1; i <= n; i++) {
+              let h = nrDura.divide(Math.pow(2, i));
+              nrNewDura.add(h);
+            }
+            nlNewDura = nlDura.clone().divide(Math.pow(2, n));
+          }
+          nl = pc.rebuildNote(nl, nlNewDura.multiply(pc.unitNoteLength));
+          nr = pc.rebuildNote(nr, nrNewDura.multiply(pc.unitNoteLength));
+        }
+      }
+      pc.notes.push(...[nl, nr]);
+    },
+
+    NoteConstruct(gn, chordedNote) {
+      gn.toVex();
+      return chordedNote.toVex();
+    },
+
+    GraceNote(_lb, bns, _rb) {
+      bns.children.map((n) => n.toVex());
+    },
+
+    ChordedNote(ca, annotatedNote) {
+      ca.toVex();
+      return annotatedNote.toVex();
+    },
+
+    // return a list of operators
+    binaryOps(ops) {
+      return ops.children.map((o) => o.toVex());
+    },
+
+    binaryOp_broken(op) {
+      let dots = op.sourceString.length;
+      if (op.sourceString.indexOf("<") != -1) {
+        dots = -dots;
+      }
+      return { type: "op", op: "broken", dots };
+    },
+
+    binaryOp_tie(op) {
+      return { type: "op", op: "tie" };
+    },
 
     NoteGroup(ca, bg) {
       bg.toVex();
@@ -197,7 +270,7 @@
         let beamable = [];
         for (let i = 0; i < staveNotes.length; i++) {
           let n = staveNotes[i] as StaveNote;
-          if (n.getIntrinsicTicks() < VexFlow.durationToTicks('4')) {
+          if (n.getIntrinsicTicks() < VexFlow.durationToTicks("4")) {
             beamable.push(n);
           } else {
             if (beamable.length > 1) {
@@ -356,7 +429,7 @@
     stave.addTimeSignature(pc.meter.toString());
     stave.setContext(renderer.getContext()).draw();
     VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave, { notes: pc.notes }, {});
-    pc.beams.forEach(beam => beam.setContext(renderer.getContext()).drawWithStyle());
+    pc.beams.forEach((beam) => beam.setContext(renderer.getContext()).drawWithStyle());
   }
 </script>
 
