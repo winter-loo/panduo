@@ -177,7 +177,7 @@ export class Formatter {
   ): void {
     const metrics = formatter.getConfig().stave();
     options = {
-      stavePadding: metrics.padding,
+      stavePadding: 0,
       ...options,
     };
 

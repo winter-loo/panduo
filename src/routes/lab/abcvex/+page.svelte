@@ -20,13 +20,14 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/4\nBcd");
+  let abcInputText = $state("M:3/4\nL:1/4\nB/c/d");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
     // default: free meteer
     meter: Fraction = new Fraction(0, 1);
     notes: Note[] = [];
+    beams: Beam[] = [];
 
     constructor() {
       this.reset();
@@ -46,6 +47,7 @@
       this._unitNoteLength = null;
       this.meter = new Fraction(0, 1);
       this.notes = [];
+      this.beams = [];
     }
   }
 
@@ -190,9 +192,24 @@
     // },
 
     baseNoteGroup(notes) {
-      let staveNotes = notes.children.map(n => n.toVex());
-      debugger;
-      // new Beam(staveNotes, true);
+      let staveNotes = notes.children.map((n) => n.toVex());
+      if (staveNotes.length > 1) {
+        let beamable = [];
+        for (let i = 0; i < staveNotes.length; i++) {
+          let n = staveNotes[i] as StaveNote;
+          if (n.getIntrinsicTicks() < VexFlow.durationToTicks('4')) {
+            beamable.push(n);
+          } else {
+            if (beamable.length > 1) {
+              pc.beams.push(new Beam(beamable, true));
+            }
+            beamable = [];
+          }
+        }
+        if (beamable.length > 1) {
+          pc.beams.push(new Beam(beamable, true));
+        }
+      }
       pc.notes.push(...staveNotes);
     },
 
@@ -251,7 +268,7 @@
       return { type: "noteLen", num: 1, den: Number(den.sourceString) };
     },
     noteLen_half(slashes) {
-      return { type: "noteLen", num: 1, den: slashes.sourceString.length };
+      return { type: "noteLen", num: 1, den: Math.pow(2, slashes.sourceString.length) };
     },
     noteLen_mul(num) {
       return { type: "noteLen", num: Number(num.sourceString), den: 1 };
@@ -315,6 +332,7 @@
 
   let errMessage = $state("");
   let staffRef: any;
+  let renderer: Renderer;
   function toVex() {
     errMessage = "";
     pc.reset();
@@ -330,25 +348,15 @@
       return;
     }
 
-    let cfg = VexflowConfig.create({
-      fontFamily: "Bravura",
-    });
-    let renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG, cfg);
+    let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
+    renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG, cfg);
     renderer.resize(800, 80);
     const stave = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
     stave.addClef("treble");
     stave.addTimeSignature(pc.meter.toString());
     stave.setContext(renderer.getContext()).draw();
-    VexFlow.Formatter.FormatAndDraw(
-      renderer.getContext(),
-      stave,
-      { notes: pc.notes },
-      {
-        params: {
-          autoBeam: true,
-        },
-      },
-    );
+    VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave, { notes: pc.notes }, {});
+    pc.beams.forEach(beam => beam.setContext(renderer.getContext()).drawWithStyle());
   }
 </script>
 
