@@ -21,14 +21,14 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\nB> c");
+  let abcInputText = $state("M:3/4\nL:1/8\nFA>c");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
     // default: free meteer
     meter: Fraction = new Fraction(0, 1);
-    notes: Note[] = [];
-    beams: Beam[] = [];
+    notes: StemmableNote[] = [];
+    beams: [number, number][] = [];
 
     constructor() {
       this.reset();
@@ -51,35 +51,44 @@
       this.beams = [];
     }
 
-    rebuildNote(note: StaveNote, dura: Fraction): StaveNote {
+    rebuildNote(note: Note, dura: Fraction): StaveNote {
       let dd = fractionToDottedDuration(dura, this.unitNoteLength);
       if (!dd) {
         throw new Error("Wrong note length notation: " + dura);
       }
       let duration = dd.base.toString();
       let dots = dd.dots;
-      note = new StaveNote({ keys: note.getKeys(), duration, autoStem: true });
+      let nnote = new StaveNote({ keys: note.getKeys(), duration, autoStem: true });
       for (let i = 0; i < dots; i++) {
-        Dot.buildAndAttach([note]);
+        Dot.buildAndAttach([nnote]);
       }
-      return note;
+      return nnote;
     }
 
-    createBeam(notes: StemmableNote[]) {
-      let beamable = [];
-      for (let i = 0; i < notes.length; i++) {
-        let n = notes[i];
-        if (n.getIntrinsicTicks() < VexFlow.durationToTicks("4")) {
-          beamable.push(n);
+    createBeam(start: number, end: number) {
+      const merge = (beamable: [number, number]) => {
+        let prev = this.beams[this.beams.length - 1];
+        if (prev && prev[1] == beamable[0]) {
+          prev[1] = beamable[1];
         } else {
-          if (beamable.length > 1) {
-            this.beams.push(new Beam(beamable, true));
+          this.beams.push(beamable);
+        }
+      };
+      let beamable: [number, number] = [-1, -1];
+      for (let i = start; i <= end; i++) {
+        let n = this.notes[i];
+        if (n.getIntrinsicTicks() < VexFlow.durationToTicks("4")) {
+          if (beamable[0] < 0) beamable[0] = i;
+          else beamable[1] = i;
+        } else {
+          if (beamable[1] > 0) {
+            merge(beamable);
           }
-          beamable = [];
+          beamable = [-1, -1];
         }
       }
-      if (beamable.length > 1) {
-        this.beams.push(new Beam(beamable, true));
+      if (beamable[1] > 0) {
+        merge(beamable);
       }
     }
   }
@@ -197,15 +206,17 @@
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
     // },
 
-    NoteSeq_binary(l, sp1, o, sp2, r) {
-      let nl = l.toVex() as StaveNote;
-      let nr = r.toVex() as StaveNote;
+    NoteSeq_groupBinary(lg, sp1, o, sp2, rg) {
+      let [_l, l] = lg.toVex();
+      let [r, _r] = rg.toVex();
+      let nl = pc.notes[l];
+      let nr = pc.notes[r];
       const ops = o.toVex();
       for (let i = 0; i < ops.length; i++) {
         if (ops[i].op == "broken") {
           let n = ops[i].dots;
-          let nlDura = nl.getTicks().divide(VexFlow.RESOLUTION).simplify();
-          let nrDura = nr.getTicks().divide(VexFlow.RESOLUTION).simplify();
+          let nlDura = nl.getTicks().clone().divide(VexFlow.RESOLUTION).simplify();
+          let nrDura = nr.getTicks().clone().divide(VexFlow.RESOLUTION).simplify();
           if (!nlDura.equals(nrDura)) {
             throw new Error("can not use '>' to connect unequal length notes");
           }
@@ -231,13 +242,12 @@
             }
             nlNewDura = nlDura.clone().divide(Math.pow(2, n));
           }
-          nl = pc.rebuildNote(nl, nlNewDura.multiply(pc.unitNoteLength));
-          nr = pc.rebuildNote(nr, nrNewDura.multiply(pc.unitNoteLength));
+          pc.notes[l] = nl = pc.rebuildNote(nl, nlNewDura.multiply(pc.unitNoteLength));
+          pc.notes[r] = nr = pc.rebuildNote(nr, nrNewDura.multiply(pc.unitNoteLength));
         }
       }
-      pc.notes.push(...[nl, nr]);
       if (sp1.sourceString.length == 0 && sp2.sourceString.length == 0) {
-        pc.createBeam([nl, nr]);
+        pc.createBeam(l, r);
       }
     },
 
@@ -272,8 +282,13 @@
       return { type: "op", op: "tie" };
     },
 
-    NoteGroup(ca, bg) {
-      bg.toVex();
+    NoteGroup(ca, baseNoteGroup) {
+      let notes = baseNoteGroup.toVex();
+      let start = pc.notes.length;
+      pc.notes.push(...notes);
+      let end = pc.notes.length - 1;
+      pc.createBeam(start, end);
+      return [start, end];
     },
 
     // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
@@ -287,11 +302,7 @@
     // },
 
     baseNoteGroup(notes) {
-      let staveNotes = notes.children.map((n) => n.toVex());
-      if (staveNotes.length > 1) {
-        pc.createBeam(staveNotes);
-      }
-      pc.notes.push(...staveNotes);
+      return notes.children.map((n) => n.toVex());
     },
 
     annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
@@ -431,13 +442,22 @@
 
     let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG, cfg);
-    renderer.resize(800, 80);
-    const stave = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
+    renderer.resize(800, 200);
+    let rctx = renderer.getContext();
+    const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 }, cfg);
     stave.addClef("treble");
     stave.addTimeSignature(pc.meter.toString());
-    stave.setContext(renderer.getContext()).draw();
-    VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave, { notes: pc.notes }, {});
-    pc.beams.forEach((beam) => beam.setContext(renderer.getContext()).drawWithStyle());
+    stave.setContext(rctx).drawWithStyle();
+
+    const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
+    let beams = pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
+    new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
+      alignRests: true,
+      stave,
+      config: cfg,
+    });
+    voice.setContext(rctx).setStave(stave).drawWithStyle();
+    beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
   }
 </script>
 

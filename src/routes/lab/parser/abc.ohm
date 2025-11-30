@@ -47,7 +47,6 @@ Abc {
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
   NoteSeq =
-    | NoteConstruct #(spaces) binaryOps #(spaces) NoteConstruct --binary
     | NoteGroup #(spaces) binaryOps #(spaces) NoteGroup --groupBinary
     | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
@@ -64,7 +63,6 @@ Abc {
   baseNoteGroup
     = "[" annotatedNote+ "]" noteLen? --chord
     | "(" #(digit) annotatedNote+ --nplet
-    | annotatedNote binaryOp annotatedNote --binary
     | annotatedNote+
 
   NoteGroup = chordAnnotation? baseNoteGroup
