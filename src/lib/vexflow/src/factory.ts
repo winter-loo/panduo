@@ -87,8 +87,8 @@ export class Factory {
    *
    * `const vf: Factory = VexFlow.Factory.newFromElementId('boo', 1200, 600 );`
    */
-  static newFromElementId(config: VexflowConfigInstance, elementId: string | null, width = 500, height = 200): Factory {
-    return new Factory(config, { renderer: { elementId, width, height } });
+  static newFromElementId(elementId: string | null, width = 500, height = 200, config?: VexflowConfigInstance): Factory {
+    return new Factory({ renderer: { elementId, width, height } }, config);
   }
 
   protected options: Required<FactoryOptions>;
@@ -99,7 +99,7 @@ export class Factory {
   protected voices!: Voice[];
   protected renderQ!: Element[];
   protected systems!: System[];
-  protected config: VexflowConfigInstance;
+  protected config?: VexflowConfigInstance;
 
   /**
    * Example:
@@ -108,7 +108,7 @@ export class Factory {
    *
    * `const vf: Factory = new VexFlow.Factory({renderer: { elementId: 'boo', width: 1200, height: 600 }});`
    */
-  constructor(config: VexflowConfigInstance, options: FactoryOptions = {}) {
+  constructor(options: FactoryOptions = {}, config?: VexflowConfigInstance) {
     this.config = config;
     L('New factory: ', options);
     this.options = {
@@ -187,7 +187,7 @@ export class Factory {
 
   /** Return pixels from current stave spacing. */
 
-  Stave(config: VexflowConfigInstance, params?: { x?: number; y?: number; width?: number; options?: StaveOptions }): Stave {
+  Stave(params?: { x?: number; y?: number; width?: number; options?: StaveOptions }, config?: VexflowConfigInstance): Stave {
     const staveSpace = this.options.stave.space;
     const p = {
       x: 0,
@@ -671,7 +671,7 @@ export class Factory {
    */
   EasyScore(options: EasyScoreOptions = {}): EasyScore {
     options.factory = this;
-    return new EasyScore(this.config, options);
+    return new EasyScore(options, this.config);
   }
 
   PedalMarking(params?: { notes?: StaveNote[]; options?: { style: string } }): PedalMarking {
