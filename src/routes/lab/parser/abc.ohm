@@ -36,8 +36,8 @@ Abc {
   MusicCodePart =
     | NoteSeq+ --noteseq
     | rest --rest
-    | "(" --slurStart
-    | ")" --slurEnd
+    | slurStart --slurStart
+    | slurEnd --slurEnd
     | bar --bar
 
   rest =
@@ -45,6 +45,8 @@ Abc {
       | ("Z" | "X") number? --cross
 
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
+  slurStart = "("
+  slurEnd = ")"
 
   NoteSeq =
     | PairingAnnotatedNote --pairedAnnotation
@@ -73,7 +75,7 @@ Abc {
   ChordedNote = chordAnnotation? annotatedNote
 
   // slur symbols could exist between annotation and baseNote
-  annotatedNote = (annotationOp spaces)? ("(" spaces)? baseNote
+  annotatedNote = (annotationOp spaces)? (slurStart spaces)? baseNote
   annotationOp =
     | annotationOp annotationOp --concat
     | annotationOp space+ annotationOp --gap
