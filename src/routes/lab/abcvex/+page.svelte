@@ -17,11 +17,12 @@
     Beam,
     Note,
     StemmableNote,
+    Formatter,
   } from "$lib/vexflow/vexflow-core";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\nFA>c");
+  let abcInputText = $state("M:3/4\nL:1/8\nF");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -445,19 +446,21 @@
     renderer.resize(800, 200);
     let rctx = renderer.getContext();
     const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 }, cfg);
-    stave.addClef("treble");
-    stave.addTimeSignature(pc.meter.toString());
+    // stave.addClef("treble");
+    // stave.addTimeSignature(pc.meter.toString());
     stave.setContext(rctx).drawWithStyle();
+    debugger;
+    Formatter.FormatAndDraw(rctx, stave, { notes: pc.notes }, {});
 
-    const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
-    let beams = pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
-    new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
-      alignRests: true,
-      stave,
-      config: cfg,
-    });
-    voice.setContext(rctx).setStave(stave).drawWithStyle();
-    beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
+    // const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
+    // let beams = pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
+    // new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
+    //   alignRests: true,
+    //   stave,
+    //   config: cfg,
+    // });
+    // voice.setContext(rctx).setStave(stave).drawWithStyle();
+    // beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
   }
 </script>
 

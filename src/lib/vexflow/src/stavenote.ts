@@ -139,13 +139,13 @@ export class StaveNote extends StemmableNote {
           line +
           Math.ceil(
             notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxAscent /
-              Tables.STAVE_LINE_DISTANCE,
+            Tables.STAVE_LINE_DISTANCE,
           );
         minL =
           line -
           Math.ceil(
             notes[i]._noteHeads[0].getTextMetrics().actualBoundingBoxDescent /
-              Tables.STAVE_LINE_DISTANCE,
+            Tables.STAVE_LINE_DISTANCE,
           );
       } else {
         maxL =
@@ -251,10 +251,10 @@ export class StaveNote extends StemmableNote {
                 .getModifiers()
                 .filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
                 .length !==
-                noteL.note
-                  .getModifiers()
-                  .filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
-                  .length ||
+              noteL.note
+                .getModifiers()
+                .filter((item) => item.getCategory() === Category.Dot && item.getIndex() === 0)
+                .length ||
               // If the notes are quite close but not on the same line, shift
               (lineDiff < 1 && lineDiff > 0) ||
               // If styles are different, shift
@@ -1179,9 +1179,9 @@ export class StaveNote extends StemmableNote {
       const flagY =
         this.getStemDirection() === Stem.DOWN
           ? // Down stems are below the note head and have flags on the right.
-            yTop + noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
+          yTop + noteStemHeight - this.flag.getTextMetrics().actualBoundingBoxDescent
           : // Up stems are above the note head and have flags on the right.
-            yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
+          yBottom - noteStemHeight + this.flag.getTextMetrics().actualBoundingBoxAscent;
 
       // Draw the Flag
       this.flag.setContext(ctx).setX(flagX).setY(flagY).drawWithStyle();
