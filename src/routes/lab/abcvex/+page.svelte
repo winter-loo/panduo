@@ -20,8 +20,8 @@
     Formatter,
     StaveTie,
     Curve,
-  } from "$lib/vexflow/vexflow-core";
-  // } from "vexflow";
+  // } from "$lib/vexflow/vexflow-core";
+  } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
@@ -70,7 +70,7 @@
       }
       let duration = dd.base.toString();
       let dots = dd.dots;
-      let nnote = staffRender.StaveNote({ keys, duration, autoStem: true });
+      let nnote = new StaveNote({ keys, duration, autoStem: true });
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([nnote]);
       }
@@ -125,9 +125,7 @@
     }
 
     buildBeams(): Beam[] {
-      return pc.beams.map((beam) =>
-        staffRender.Beam({ notes: pc.notes.slice(beam[0], beam[1] + 1), options: { autoStem: true } }),
-      );
+      return pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
     }
 
     buildTies(): StaveTie[] {
@@ -140,32 +138,30 @@
         } = {};
         if (tieParam.from != null) param.firstNote = pc.notes[tieParam.from];
         if (tieParam.to != null) param.lastNote = pc.notes[tieParam.to];
-        return staffRender.StaveTie(param);
+        return new StaveTie(param);
       });
     }
 
     buildSlurs(): Curve[] {
-      return pc.slurs.map((slur) =>
-        staffRender.Curve({
-          from: slur[0] == undefined ? undefined : pc.notes[slur[0]],
-          to: slur[1] == undefined ? undefined : pc.notes[slur[1]],
-          options: {
-            positionEnd: VexFlow.CurvePosition.NEAR_HEAD,
-            // copy from vexflow curve_tests.ts
-            xShift: -10,
-            yShift: 30,
-            cps: [
-              { x: 0, y: 20 },
-              { x: 0, y: 50 },
-            ],
-          },
-        }),
+      return pc.slurs.map(
+        (slur) =>
+          new VexFlow.Curve(
+            slur[0] == undefined ? undefined : pc.notes[slur[0]],
+            slur[1] == undefined ? undefined : pc.notes[slur[1]],
+            {
+              positionEnd: VexFlow.CurvePosition.NEAR_HEAD,
+              // copy from vexflow curve_tests.ts
+              xShift: -10,
+              yShift: 30,
+              cps: [
+                { x: 0, y: 20 },
+                { x: 0, y: 50 },
+              ],
+            },
+          ),
       );
     }
   }
-
-  let staffRender = VexFlow.Factory.newFromElementId("abcvex");
-  let stave = staffRender.Stave();
 
   let pc = new ParseContext();
   let actions: ohm.ActionDict<any | undefined> = {
@@ -265,7 +261,9 @@
     // MusicCodePart alternatives
     // MusicCodePart_noteseq(seq) { return seq.toVex(); },
     // MusicCodePart_rest(r) { return r.toVex(); },
-    MusicCodePart_bar(bar) {},
+    MusicCodePart_bar(bar) {
+
+    },
     MusicCodePart_slurStart(s) {
       s.toVex();
     },
@@ -447,7 +445,7 @@
           throw new Error("Wrong note length notation: " + maybeLen.children[0].sourceString);
         }
       }
-      const vfNote = staffRender.StaveNote({ keys: [p.value], duration: duration.toString(), autoStem: true });
+      const vfNote = new StaveNote({ keys: [p.value], duration: duration.toString(), autoStem: true });
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([vfNote]);
       }
@@ -547,6 +545,7 @@
 
   let errMessage = $state("");
   let staffRef: any;
+  let renderer: Renderer;
   function toVex() {
     errMessage = "";
     pc.reset();
@@ -562,12 +561,27 @@
       return;
     }
 
-    const voices = [staffRender.Voice({ time: pc.meter.toString()}).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes)];
-    pc.buildBeams();
-    pc.buildTies();
-    pc.buildSlurs();
-    staffRender.Formatter().joinVoices(voices).formatToStave(voices, stave);
-    staffRender.draw();
+    // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
+    renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
+    renderer.resize(800, 200);
+    let rctx = renderer.getContext();
+    const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+    stave.addClef("treble");
+    stave.addTimeSignature(pc.meter.toString());
+    stave.setContext(rctx).drawWithStyle();
+
+    const voice = new VexFlow.Voice(pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
+    let beams = pc.buildBeams();
+    let ties = pc.buildTies();
+    let slurs = pc.buildSlurs();
+    new VexFlow.Formatter().joinVoices([voice]).formatToStave([voice], stave, {
+      alignRests: true,
+      stave,
+    });
+    voice.setContext(rctx).setStave(stave).drawWithStyle();
+    beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
+    ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
+    slurs.forEach((slur) => slur.setContext(rctx).drawWithStyle());
   }
 </script>
 
