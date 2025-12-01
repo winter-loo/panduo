@@ -23,7 +23,7 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\nF-B>c");
+  let abcInputText = $state("M:3/4\nL:1/8\n[CEG]");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -59,14 +59,14 @@
       this.beams = [];
     }
 
-    rebuildNote(note: Note, dura: Fraction): StaveNote {
+    rebuildNote(keys: string[], dura: Fraction): StaveNote {
       let dd = fractionToDottedDuration(dura, this.unitNoteLength);
       if (!dd) {
         throw new Error("Wrong note length notation: " + dura);
       }
       let duration = dd.base.toString();
       let dots = dd.dots;
-      let nnote = new StaveNote({ keys: note.getKeys(), duration, autoStem: true });
+      let nnote = new StaveNote({ keys, duration, autoStem: true });
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([nnote]);
       }
@@ -93,7 +93,8 @@
       }
       for (let i = 0; i < beamables.length; i++) {
         let current = beamables[i];
-        let l = 0, r = this.beams.length;
+        let l = 0,
+          r = this.beams.length;
         let merged = false;
         while (l < r) {
           // [--l--]--[--current--]
@@ -272,8 +273,8 @@
             }
             nlNewDura = nlDura.clone().divide(Math.pow(2, n));
           }
-          pc.notes[l] = nl = pc.rebuildNote(nl, nlNewDura.multiply(pc.unitNoteLength));
-          pc.notes[r] = nr = pc.rebuildNote(nr, nrNewDura.multiply(pc.unitNoteLength));
+          pc.notes[l] = nl = pc.rebuildNote(nl.getKeys(), nlNewDura.multiply(pc.unitNoteLength));
+          pc.notes[r] = nr = pc.rebuildNote(nr.getKeys(), nrNewDura.multiply(pc.unitNoteLength));
         } else if (ops[i].op == "tie") {
           pc.ties.push({
             from: l,
@@ -323,15 +324,29 @@
       baseNoteGroup.toVex();
     },
 
-    // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
-    //   // annotatedNotes = array of annotatedNote nodes
-    //   const keys = annotatedNotes.children.map(n => n.toVex().key);
-    //   const len = maybeLen.children.length ? maybeLen.children[0].toVex() : {duration: 'q'};
-    //   const dur = len.duration;
-    //   // VexFlow chord uses comma-separated keys in one StaveNote
-    //   const staveNote = new StaveNote({ keys, duration: dur });
-    //   return {type: 'tickable', vf: staveNote};
-    // },
+    baseNoteGroup_chord(_open, _sp1, chordnotes, _sp2, _close, maybeLen) {
+      let notes = chordnotes.toVex();
+      let keys = [];
+      let dur = new Fraction(0, 1);
+      for (let i = 0; i < notes.length; i++) {
+        let note = notes[i] as StaveNote;
+        keys.push(...note.getKeys());
+        if (dur.equals(0)) {
+          dur = note.getTicks().clone().divide(VexFlow.RESOLUTION).simplify().multiply(pc.unitNoteLength);
+        }
+      }
+      if (maybeLen.children.length) {
+        let d = maybeLen.children[0].toVex();
+        dur = new Fraction(d.num, d.den);
+      }
+      pc.notes.push(pc.rebuildNote(keys, dur));
+    },
+
+    chordnote(first, _sp, rest) {
+      let o = [first.toVex()];
+      o.push(...rest.children.map(c => c.toVex()));
+      return o;
+    },
 
     // return a list of StaveNote which should be beamed
     baseNoteGroup(notes) {

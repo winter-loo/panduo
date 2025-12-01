@@ -60,10 +60,11 @@ Abc {
 
   baseNoteGroup =
     | baseNoteGroup spaces binaryOps spaces baseNoteGroup --binary
-    | "[" beamedNotes "]" noteLen? --chord
+    | "[" spaces chordnote spaces "]" noteLen? --chord
     | "(" #(digit) beamedNotes --nplet
     | beamedNotes
 
+  chordnote = annotatedNote (spaces annotatedNote)+
   beamedNotes = annotatedNote+
   NoteGroup = chordAnnotation? baseNoteGroup
 
