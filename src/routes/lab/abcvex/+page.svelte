@@ -18,11 +18,12 @@
     Note,
     StemmableNote,
     Formatter,
+    StaveTie,
   } from "$lib/vexflow/vexflow-core";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\nF");
+  let abcInputText = $state("M:3/4\nL:1/8\nF-B>c");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -30,6 +31,12 @@
     meter: Fraction = new Fraction(0, 1);
     notes: StemmableNote[] = [];
     beams: [number, number][] = [];
+    ties: {
+      from?: number | null;
+      to?: number | null;
+      firstIndexes?: number[];
+      lastIndexes?: number[];
+    }[] = [];
 
     constructor() {
       this.reset();
@@ -67,14 +74,7 @@
     }
 
     createBeam(start: number, end: number) {
-      const merge = (beamable: [number, number]) => {
-        let prev = this.beams[this.beams.length - 1];
-        if (prev && prev[1] == beamable[0]) {
-          prev[1] = beamable[1];
-        } else {
-          this.beams.push(beamable);
-        }
-      };
+      let beamables: [number, number][] = [];
       let beamable: [number, number] = [-1, -1];
       for (let i = start; i <= end; i++) {
         let n = this.notes[i];
@@ -83,13 +83,39 @@
           else beamable[1] = i;
         } else {
           if (beamable[1] > 0) {
-            merge(beamable);
+            beamables.push(beamable);
           }
           beamable = [-1, -1];
         }
       }
       if (beamable[1] > 0) {
-        merge(beamable);
+        beamables.push(beamable);
+      }
+      for (let i = 0; i < beamables.length; i++) {
+        let current = beamables[i];
+        let l = 0, r = this.beams.length;
+        let merged = false;
+        while (l < r) {
+          // [--l--]--[--current--]
+          if (current[0] > this.beams[l][1]) {
+            l++;
+            continue;
+          }
+          // [--current--]--[--l--]
+          if (current[1] < this.beams[l][0]) {
+            this.beams.splice(l, 0, beamable);
+          } else {
+            // [--current--[--]--l--]
+            // [--l--[--current--]--]
+            this.beams[l][0] = Math.min(this.beams[l][0], current[0]);
+            this.beams[l][1] = Math.max(this.beams[l][1], current[1]);
+          }
+          merged = true;
+          break;
+        }
+        if (!merged) {
+          this.beams.push(current);
+        }
       }
     }
   }
@@ -207,9 +233,12 @@
     // return {type: 'tickable', vf: new VF.StaveNote({ keys: ['b/4'], duration: duration + 'r' })};
     // },
 
-    NoteSeq_groupBinary(lg, sp1, o, sp2, rg) {
-      let [_l, l] = lg.toVex();
-      let [r, _r] = rg.toVex();
+    baseNoteGroup_binary(lg, sp1, o, sp2, rg) {
+      lg.toVex();
+      let l = pc.notes.length - 1;
+      rg.toVex();
+      let r = l + 1;
+
       let nl = pc.notes[l];
       let nr = pc.notes[r];
       const ops = o.toVex();
@@ -245,6 +274,13 @@
           }
           pc.notes[l] = nl = pc.rebuildNote(nl, nlNewDura.multiply(pc.unitNoteLength));
           pc.notes[r] = nr = pc.rebuildNote(nr, nrNewDura.multiply(pc.unitNoteLength));
+        } else if (ops[i].op == "tie") {
+          pc.ties.push({
+            from: l,
+            to: r,
+            firstIndexes: [0],
+            lastIndexes: [0],
+          });
         }
       }
       if (sp1.sourceString.length == 0 && sp2.sourceString.length == 0) {
@@ -284,12 +320,7 @@
     },
 
     NoteGroup(ca, baseNoteGroup) {
-      let notes = baseNoteGroup.toVex();
-      let start = pc.notes.length;
-      pc.notes.push(...notes);
-      let end = pc.notes.length - 1;
-      pc.createBeam(start, end);
-      return [start, end];
+      baseNoteGroup.toVex();
     },
 
     // baseNoteGroup_chord(_open, annotatedNotes, _close, maybeLen) {
@@ -302,10 +333,19 @@
     //   return {type: 'tickable', vf: staveNote};
     // },
 
+    // return a list of StaveNote which should be beamed
     baseNoteGroup(notes) {
-      return notes.children.map((n) => n.toVex());
+      notes.toVex();
     },
 
+    beamedNotes(notes) {
+      let start = pc.notes.length;
+      pc.notes.push(...notes.children.map((n) => n.toVex()));
+      let end = pc.notes.length - 1;
+      pc.createBeam(start, end);
+    },
+
+    // return a single StaveNote
     annotatedNote(maybeAnnotationOp, _i1, maybeSlurStart, _i2, baseNote) {
       return baseNote.toVex();
     },
@@ -446,21 +486,31 @@
     renderer.resize(800, 200);
     let rctx = renderer.getContext();
     const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 }, cfg);
-    // stave.addClef("treble");
-    // stave.addTimeSignature(pc.meter.toString());
+    stave.addClef("treble");
+    stave.addTimeSignature(pc.meter.toString());
     stave.setContext(rctx).drawWithStyle();
-    debugger;
-    Formatter.FormatAndDraw(rctx, stave, { notes: pc.notes }, {});
 
-    // const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
-    // let beams = pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
-    // new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
-    //   alignRests: true,
-    //   stave,
-    //   config: cfg,
-    // });
-    // voice.setContext(rctx).setStave(stave).drawWithStyle();
-    // beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
+    const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
+    let beams = pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
+    let ties = pc.ties.map((tieParam) => {
+      let param: {
+        firstNote?: Note | null;
+        lastNote?: Note | null;
+        firstIndexes?: number[];
+        lastIndexes?: number[];
+      } = {};
+      if (tieParam.from != null) param.firstNote = pc.notes[tieParam.from];
+      if (tieParam.to != null) param.lastNote = pc.notes[tieParam.to];
+      return new StaveTie(param);
+    });
+    new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
+      alignRests: true,
+      stave,
+      config: cfg,
+    });
+    voice.setContext(rctx).setStave(stave).drawWithStyle();
+    beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
+    ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
   }
 </script>
 

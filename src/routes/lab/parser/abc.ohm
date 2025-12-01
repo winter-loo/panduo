@@ -47,8 +47,6 @@ Abc {
   bar = ":|2" | "||" | "[|" | "|]" | "|:" | ":|" | "[1" | "[2" | "::" | "|1" | "|"
 
   NoteSeq =
-    | NoteGroup #(spaces) binaryOps #(spaces) NoteGroup --groupBinary
-    | NoteGroup brokenOp --dotted
     | PairingAnnotatedNote --pairedAnnotation
     | NoteGroup --group
     | NoteConstruct
@@ -60,11 +58,13 @@ Abc {
   brokenOp = ">"+ | "<"+
   tieOp = "-"
 
-  baseNoteGroup
-    = "[" annotatedNote+ "]" noteLen? --chord
-    | "(" #(digit) annotatedNote+ --nplet
-    | annotatedNote+
+  baseNoteGroup =
+    | baseNoteGroup spaces binaryOps spaces baseNoteGroup --binary
+    | "[" beamedNotes "]" noteLen? --chord
+    | "(" #(digit) beamedNotes --nplet
+    | beamedNotes
 
+  beamedNotes = annotatedNote+
   NoteGroup = chordAnnotation? baseNoteGroup
 
   NoteConstruct = GraceNote? ChordedNote
@@ -260,8 +260,8 @@ Abc {
   MeterSetting = "M:" meterValue
   meterValue = fraction | meterValueLiteral
   meterValueLiteral =
-    | "C"
     | "C|"
+    | "C"
     | "none"
 
   fraction = number spaces "/" spaces number
