@@ -57,7 +57,7 @@ export class Voice extends Element {
   protected readonly tickables: Tickable[] = [];
   protected readonly time: Required<VoiceTime>;
 
-  constructor(config?: VexflowConfigInstance, time?: VoiceTime | string) {
+  constructor(time?: VoiceTime | string, config?: VexflowConfigInstance) {
     super(config);
 
     this.options = {

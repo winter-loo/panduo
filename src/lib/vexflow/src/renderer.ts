@@ -38,12 +38,12 @@ export class Renderer {
   static lastContext?: RenderContext = undefined;
 
   static buildContext(
-    config: VexflowConfigInstance,
     elementId: string | HTMLCanvasElement | HTMLDivElement,
     backend: number,
     width: number,
     height: number,
     background: string = '#FFF',
+    config?: VexflowConfigInstance,
   ): RenderContext {
     const renderer = new Renderer(elementId, backend, config);
     if (width && height) {
@@ -63,7 +63,7 @@ export class Renderer {
     height: number,
     background?: string,
   ): RenderContext {
-    return Renderer.buildContext(config, elementId, Renderer.Backends.CANVAS, width, height, background);
+    return Renderer.buildContext(elementId, Renderer.Backends.CANVAS, width, height, background, config);
   }
 
   static getSVGContext(
@@ -73,7 +73,7 @@ export class Renderer {
     height: number,
     background?: string,
   ): RenderContext {
-    return Renderer.buildContext(config, elementId, Renderer.Backends.SVG, width, height, background);
+    return Renderer.buildContext(elementId, Renderer.Backends.SVG, width, height, background, config);
   }
 
   // Draw a dashed line (horizontal, vertical or diagonal

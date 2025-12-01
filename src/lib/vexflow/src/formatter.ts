@@ -249,13 +249,13 @@ export class Formatter {
     };
 
     // Start by creating a voice and adding all the notes to it.
-    const voice = new Voice(options.config, mm.timeSignature).setMode(Voice.Mode.SOFT).addTickables(mm.notes);
+    const voice = new Voice(mm.timeSignature, options.config).setMode(Voice.Mode.SOFT).addTickables(mm.notes);
 
     // Then create beams, if requested.
     const beams = config.autoBeam ? Beam.applyAndGetBeams(voice, options.config) : [];
 
     // Instantiate a `Formatter` and format the notes.
-    new Formatter(options.config, { softmaxFactor: 1 })
+    new Formatter({ softmaxFactor: 1 }, options.config)
       .joinVoices([voice]) // , { alignRests: options.alignRests })
       .formatToStave([voice], stave, {
         alignRests: config.alignRests,
@@ -307,16 +307,16 @@ export class Formatter {
     };
 
     // Create a `4/4` voice for `notes`.
-    const notevoice = new Voice(config, Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(notes);
+    const notevoice = new Voice(Tables.TIME4_4, config).setMode(Voice.Mode.SOFT).addTickables(notes);
 
     // Create a `4/4` voice for `tabnotes`.
-    const tabvoice = new Voice(config, Tables.TIME4_4).setMode(Voice.Mode.SOFT).addTickables(tabnotes);
+    const tabvoice = new Voice(Tables.TIME4_4, config).setMode(Voice.Mode.SOFT).addTickables(tabnotes);
 
     // Then create beams, if requested.
     const beams = opts.autoBeam ? Beam.applyAndGetBeams(notevoice, config) : [];
 
     // Instantiate a `Formatter` and align tab and stave notes.
-    new Formatter(config)
+    new Formatter({}, config)
       .joinVoices([notevoice]) // , { alignRests: opts.alignRests })
       .joinVoices([tabvoice])
       .formatToStave([notevoice, tabvoice], stave, { alignRests: opts.alignRests, config });
@@ -379,7 +379,7 @@ export class Formatter {
     });
   }
 
-  constructor(config?: VexflowConfigInstance, options?: FormatterOptions) {
+  constructor(options?: FormatterOptions, config?: VexflowConfigInstance) {
     const resolvedOptions = options ?? {};
     const { ...formatterOptions } = resolvedOptions;
     this.config = config ?? VexflowConfig.defaults();

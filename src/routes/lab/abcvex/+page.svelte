@@ -8,9 +8,9 @@
     StaveConnector,
     StaveNote,
     VexFlow,
-    VexflowConfig,
+    // VexflowConfig,
     Font,
-    VexflowConfigInstance,
+    // VexflowConfigInstance,
     type StaveNoteStruct,
     Fraction,
     Dot,
@@ -20,11 +20,12 @@
     Formatter,
     StaveTie,
     Curve,
-  } from "$lib/vexflow/vexflow-core";
+  // } from "$lib/vexflow/vexflow-core";
+  } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\n(Cfdg) (d'fd>g)");
+  let abcInputText = $state("M:3/4\nL:1/8\n(Cfg) (fd>g)");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -260,7 +261,9 @@
     // MusicCodePart alternatives
     // MusicCodePart_noteseq(seq) { return seq.toVex(); },
     // MusicCodePart_rest(r) { return r.toVex(); },
-    // MusicCodePart_bar(bar) { return {type: 'bar', text: bar.sourceString}; },
+    MusicCodePart_bar(bar) {
+
+    },
     MusicCodePart_slurStart(s) {
       s.toVex();
     },
@@ -558,23 +561,22 @@
       return;
     }
 
-    let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
-    renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG, cfg);
+    // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
+    renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
     renderer.resize(800, 200);
     let rctx = renderer.getContext();
-    const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 }, cfg);
+    const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     stave.addClef("treble");
     stave.addTimeSignature(pc.meter.toString());
     stave.setContext(rctx).drawWithStyle();
 
-    const voice = new VexFlow.Voice(cfg, pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
+    const voice = new VexFlow.Voice(pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
     let beams = pc.buildBeams();
     let ties = pc.buildTies();
     let slurs = pc.buildSlurs();
-    new VexFlow.Formatter(cfg).joinVoices([voice]).formatToStave([voice], stave, {
+    new VexFlow.Formatter().joinVoices([voice]).formatToStave([voice], stave, {
       alignRests: true,
       stave,
-      config: cfg,
     });
     voice.setContext(rctx).setStave(stave).drawWithStyle();
     beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());

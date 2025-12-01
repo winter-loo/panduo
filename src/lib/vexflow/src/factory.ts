@@ -197,7 +197,7 @@ export class Factory {
       ...params,
     };
 
-    const stave: Stave = new Stave(p.x, p.y, p.width, config, p.options);
+    const stave: Stave = new Stave(p.x, p.y, p.width, p.options, config);
     this.staves.push(stave);
     stave.setContext(this.context);
     this.stave = stave;
@@ -221,8 +221,8 @@ export class Factory {
     return stave;
   }
 
-  StaveNote(config: VexflowConfigInstance, noteStruct: StaveNoteStruct): StaveNote {
-    const note = new StaveNote(config, noteStruct);
+  StaveNote(noteStruct: StaveNoteStruct, config?: VexflowConfigInstance): StaveNote {
+    const note = new StaveNote(noteStruct, config);
     if (this.stave) note.setStave(this.stave);
     note.setContext(this.context);
     this.renderQ.push(note);

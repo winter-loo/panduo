@@ -32,7 +32,8 @@
     "svelte-eslint-parser": "^1.4.0",
     "tailwindcss": "^4.1.13",
     "tone": "^15.1.22",
-    "tone-piano-next": "^1.0.0"
+    "tone-piano-next": "^1.0.0",
+    "vexflow": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",

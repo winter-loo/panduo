@@ -32,8 +32,8 @@ export class BarNote extends Note {
   // Initialized by the constructor via this.setType(type)
   protected type!: BarlineType;
 
-  constructor(config: VexflowConfigInstance, type: string | BarlineType = BarlineType.SINGLE) {
-    super(config, { duration: 'b' });
+  constructor(type: string | BarlineType = BarlineType.SINGLE, config?: VexflowConfigInstance) {
+    super({ duration: 'b' }, config);
 
     this.metrics = {
       widths: {},
