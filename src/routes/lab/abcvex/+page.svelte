@@ -26,7 +26,7 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("T:hello world\n\nM:3/4\nL:1/8\n(Cfg) (fd>g) | CD EF GD | C D E F G A");
+  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/8\nCD EF GD | \nC D E \\ \nF G A");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -42,26 +42,45 @@
     }[] = [];
     slurs: [number | undefined, number | undefined][] = [];
     staves: Stave[] = [];
+    currentStave: Stave | null = null;
+
     staveX: number = 0;
-    voices: [number, number][] = [[0, Infinity]];
+    staveY: number = 0;
+    staveHeight: number = 200;
+    staveWidth: number = 400;
+    voices: [number, number][] = [];
 
     constructor() {
       this.reset();
     }
+    reset() {
+      this._unitNoteLength = null;
+      this.meter = new Fraction(0, 1);
+      this.notes = [];
+      this.beams = [];
+      this.ties = [];
+      this.slurs = [];
+      this.staves = [];
+      this.currentStave = null;
+      this.staveX = 0;
+      this.staveY = 0;
+      this.voices = [];
+    }
 
     NewStave(): Stave {
-      const staveWidth = 400;
-      const stave = new Stave(this.staveX, 0, staveWidth, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+      const stave = new Stave(this.staveX, this.staveY, this.staveWidth, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
       this.staves.push(stave);
-      this.staveX += staveWidth;
+      this.staveX += this.staveWidth;
       return stave;
     }
 
+    // should be invoked on note createtion, i.e., baseNote
     CurrentStave(): Stave {
-      if (this.staves.length == 0) {
-        throw new Error("you must create a stave first")!;
+      if (this.currentStave == null) {
+        this.currentStave = this.NewStave();
+        this.NewVoice();
       }
-      return this.staves[this.staves.length - 1];
+      return this.currentStave;
     }
 
     NewVoice() {
@@ -80,18 +99,6 @@
       } else {
         return 8;
       }
-    }
-
-    reset() {
-      this._unitNoteLength = null;
-      this.meter = new Fraction(0, 1);
-      this.notes = [];
-      this.beams = [];
-      this.ties = [];
-      this.slurs = [];
-      this.staves = [];
-      this.staveX = 0;
-      this.voices = [[0, Infinity]];
     }
 
     NewNote(keys: string[], notelen: Fraction): StaveNote {
@@ -197,16 +204,17 @@
     buildVoices(): (Voice | undefined)[] {
       let voices: (Voice | undefined)[] = [];
       for (let i = 0; i < this.voices.length; i++) {
-        if (i + 1 == this.voices.length && this.voices[i][0] >= this.notes.length)
-          break;
+        if (i + 1 == this.voices.length && this.voices[i][0] >= this.notes.length) break;
         let vr = this.voices[i];
         // empty voice
         if (vr[1] - vr[0] < 0) {
-          voices.push(undefined)
+          voices.push(undefined);
         } else {
-          voices.push(new VexFlow.Voice(this.meter.toString())
-            .setMode(VexFlow.Voice.Mode.SOFT)
-            .addTickables(pc.notes.slice(vr[0], vr[1] + 1)));
+          voices.push(
+            new VexFlow.Voice(this.meter.toString())
+              .setMode(VexFlow.Voice.Mode.SOFT)
+              .addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
+          );
         }
       }
       return voices;
@@ -237,16 +245,18 @@
     // use ohm '_default' semantic action for undefined non terminals
     FileHeaders(first, _eol, rest) {
       first.toVex();
-      rest.children.map(h => h.toVex());
+      rest.children.map((h) => h.toVex());
     },
 
     FileHeader_unknown(_) {
-      console.warn('unknown file header field: ', this.sourceString);
+      console.warn("unknown file header field: ", this.sourceString);
     },
+
+    ReservedHeaderOnlyField(_key, _value) {},
 
     TuneBook(firstTune, _sp1, _sp2, restTunes, _sp3) {
       firstTune.toVex();
-      restTunes.children.map(t => t.toVex());
+      restTunes.children.map((t) => t.toVex());
     },
 
     Tune_empty() {},
@@ -320,10 +330,21 @@
     //   return {tempo: qv.sourceString};
     // },
 
-    TuneBody(l1, _e1, part, _e2, morePart, _e3, l2) {
-      pc.NewStave();
+    TuneBody(_l1, _e1, part, eol, morePart, _e3, _l2) {
       part.toVex();
-      morePart.toVex();
+
+      let lineBreaks = eol.children.map((c) => (c.children.length > 0 ? c.children[0].toVex() : null));
+
+      for (let i = 0; i < morePart.children.length; i++) {
+        let ap = morePart.children[i];
+        if (lineBreaks[i].type == 'newline') {
+          pc.staveX = 0;
+          pc.staveY += pc.staveHeight;
+          // reset it so we can initialize a new stave lately on demand
+          pc.currentStave = null;
+        }
+        ap.toVex();
+      }
     },
 
     // MusicCode(...children) {
@@ -334,9 +355,10 @@
     // MusicCodePart_rest(r) { return r.toVex(); },
     MusicCodePart_bar(bar) {
       let voice = pc.CurrentVoice();
-      voice[1] = pc.notes.length - 1;
-      pc.NewStave();
-      pc.NewVoice();
+      if (voice != undefined)
+        voice[1] = pc.notes.length - 1;
+      // reset it so we can initialize a new stave lately on demand
+      pc.currentStave = null;
     },
     MusicCodePart_slurStart(s) {
       s.toVex();
@@ -553,6 +575,18 @@
     UnknownField(_a1, _a2) {
       return null;
     },
+
+    eol_lineContinue(_backslash, _sp, _eol) {
+      return { type: "lineContinue" };
+    },
+
+    eol_lineComment(_eol, _commentLine) {
+      return { type: "lineComment" };
+    },
+
+    eol_newline(_) {
+      return { type: "newline" };
+    },
   };
   const semantics = abcGrammar.createSemantics().addOperation("toVex", actions);
 
@@ -625,7 +659,7 @@
 
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
-    renderer.resize(pc.staveX, 200);
+    renderer.resize(pc.staveX, pc.staveY + pc.staveHeight);
     let rctx = renderer.getContext();
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     // stave.addClef("treble");

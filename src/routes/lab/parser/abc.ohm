@@ -336,9 +336,10 @@ Abc {
   word = alnum+
 
   eol =
-    | eol commentLine --lineComment
-    | "\\" spaces eol --lineContinue
-    | "\r\n" | "\n" | "\r"
+    | eol_markers commentLine --lineComment
+    | "\\" spaces eol_markers? --lineContinue
+    | eol_markers --newline
+  eol_markers = "\r\n" | "\n" | "\r"
   space := " " | "\t" | comment
   number = digit+
   positiveNumber = "+"? number
