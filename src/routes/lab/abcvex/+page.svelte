@@ -26,7 +26,7 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\n(Cfg) (fd>g) | CD EF GD | C D E F G A");
+  let abcInputText = $state("T:hello world\n\nM:3/4\nL:1/8\n(Cfg) (fd>g) | CD EF GD | C D E F G A");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -230,6 +230,25 @@
       return r;
     },
 
+    File(_sp1, fileHeaders, _sp2, _sp3, tunebook) {
+      fileHeaders.toVex();
+      tunebook.toVex();
+    },
+    // use ohm '_default' semantic action for undefined non terminals
+    FileHeaders(first, _eol, rest) {
+      first.toVex();
+      rest.children.map(h => h.toVex());
+    },
+
+    FileHeader_unknown(_) {
+      console.warn('unknown file header field: ', this.sourceString);
+    },
+
+    TuneBook(firstTune, _sp1, _sp2, restTunes, _sp3) {
+      firstTune.toVex();
+      restTunes.children.map(t => t.toVex());
+    },
+
     Tune_empty() {},
 
     Tune_onlyHeader(h) {
@@ -250,6 +269,7 @@
       fieldRest.children.map((c) => c.toVex());
     },
 
+    // use ohm '_default' semantic action for ReservedTuneHeaderField
     TuneHeaderField(f) {
       f.toVex();
     },
@@ -594,7 +614,7 @@
     if (staffRef) {
       staffRef.innerHTML = "";
     }
-    let mr = abcGrammar.match(abcInputText, "Tune");
+    let mr = abcGrammar.match(abcInputText, "File");
 
     try {
       semantics(mr).toVex();
