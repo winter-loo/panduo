@@ -20,12 +20,13 @@
     Formatter,
     StaveTie,
     Curve,
-  // } from "$lib/vexflow/vexflow-core";
+    Voice,
+    // } from "$lib/vexflow/vexflow-core";
   } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("M:3/4\nL:1/8\n(Cfg) (fd>g)");
+  let abcInputText = $state("M:3/4\nL:1/8\n(Cfg) (fd>g) | CD EF GD | C D E F G A");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -39,11 +40,36 @@
       firstIndexes?: number[];
       lastIndexes?: number[];
     }[] = [];
-    slurStarts: number[] = [];
     slurs: [number | undefined, number | undefined][] = [];
+    staves: Stave[] = [];
+    staveX: number = 0;
+    voices: [number, number][] = [[0, Infinity]];
 
     constructor() {
       this.reset();
+    }
+
+    NewStave(): Stave {
+      const staveWidth = 400;
+      const stave = new Stave(this.staveX, 0, staveWidth, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+      this.staves.push(stave);
+      this.staveX += staveWidth;
+      return stave;
+    }
+
+    CurrentStave(): Stave {
+      if (this.staves.length == 0) {
+        throw new Error("you must create a stave first")!;
+      }
+      return this.staves[this.staves.length - 1];
+    }
+
+    NewVoice() {
+      this.voices.push([this.notes.length, Infinity]);
+    }
+
+    CurrentVoice(): [number, number] {
+      return this.voices[this.voices.length - 1];
     }
 
     get unitNoteLength(): number {
@@ -61,12 +87,17 @@
       this.meter = new Fraction(0, 1);
       this.notes = [];
       this.beams = [];
+      this.ties = [];
+      this.slurs = [];
+      this.staves = [];
+      this.staveX = 0;
+      this.voices = [[0, Infinity]];
     }
 
-    rebuildNote(keys: string[], dura: Fraction): StaveNote {
-      let dd = fractionToDottedDuration(dura, this.unitNoteLength);
+    NewNote(keys: string[], notelen: Fraction): StaveNote {
+      let dd = fractionToDottedDuration(notelen, this.unitNoteLength);
       if (!dd) {
-        throw new Error("Wrong note length notation: " + dura);
+        throw new Error("Wrong note length notation: " + notelen);
       }
       let duration = dd.base.toString();
       let dots = dd.dots;
@@ -74,6 +105,7 @@
       for (let i = 0; i < dots; i++) {
         Dot.buildAndAttach([nnote]);
       }
+      nnote.setStave(this.CurrentStave());
       return nnote;
     }
 
@@ -125,29 +157,29 @@
     }
 
     buildBeams(): Beam[] {
-      return pc.beams.map((beam) => new Beam(pc.notes.slice(beam[0], beam[1] + 1), true));
+      return this.beams.map((beam) => new Beam(this.notes.slice(beam[0], beam[1] + 1), true));
     }
 
     buildTies(): StaveTie[] {
-      return pc.ties.map((tieParam) => {
+      return this.ties.map((tieParam) => {
         let param: {
           firstNote?: Note | null;
           lastNote?: Note | null;
           firstIndexes?: number[];
           lastIndexes?: number[];
         } = {};
-        if (tieParam.from != null) param.firstNote = pc.notes[tieParam.from];
-        if (tieParam.to != null) param.lastNote = pc.notes[tieParam.to];
+        if (tieParam.from != null) param.firstNote = this.notes[tieParam.from];
+        if (tieParam.to != null) param.lastNote = this.notes[tieParam.to];
         return new StaveTie(param);
       });
     }
 
     buildSlurs(): Curve[] {
-      return pc.slurs.map(
+      return this.slurs.map(
         (slur) =>
           new VexFlow.Curve(
-            slur[0] == undefined ? undefined : pc.notes[slur[0]],
-            slur[1] == undefined ? undefined : pc.notes[slur[1]],
+            slur[0] == undefined ? undefined : this.notes[slur[0]],
+            slur[1] == undefined ? undefined : this.notes[slur[1]],
             {
               positionEnd: VexFlow.CurvePosition.NEAR_HEAD,
               // copy from vexflow curve_tests.ts
@@ -160,6 +192,16 @@
             },
           ),
       );
+    }
+
+    buildVoices(): Voice[] {
+      return this.voices
+        .filter((vr) => vr[0] < this.notes.length)
+        .map((vr) =>
+          new VexFlow.Voice(this.meter.toString())
+            .setMode(VexFlow.Voice.Mode.SOFT)
+            .addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
+        );
     }
   }
 
@@ -251,6 +293,7 @@
     // },
 
     TuneBody(l1, _e1, part, _e2, morePart, _e3, l2) {
+      pc.NewStave();
       part.toVex();
       morePart.toVex();
     },
@@ -262,7 +305,10 @@
     // MusicCodePart_noteseq(seq) { return seq.toVex(); },
     // MusicCodePart_rest(r) { return r.toVex(); },
     MusicCodePart_bar(bar) {
-
+      let voice = pc.CurrentVoice();
+      voice[1] = pc.notes.length - 1;
+      pc.NewStave();
+      pc.NewVoice();
     },
     MusicCodePart_slurStart(s) {
       s.toVex();
@@ -337,8 +383,8 @@
             }
             nlNewDura = nlDura.clone().divide(Math.pow(2, n));
           }
-          pc.notes[l] = nl = pc.rebuildNote(nl.getKeys(), nlNewDura.multiply(pc.unitNoteLength));
-          pc.notes[r] = nr = pc.rebuildNote(nr.getKeys(), nrNewDura.multiply(pc.unitNoteLength));
+          pc.notes[l] = nl = pc.NewNote(nl.getKeys(), nlNewDura.multiply(pc.unitNoteLength));
+          pc.notes[r] = nr = pc.NewNote(nr.getKeys(), nrNewDura.multiply(pc.unitNoteLength));
         } else if (ops[i].op == "tie") {
           pc.ties.push({
             from: l,
@@ -403,7 +449,7 @@
         let d = maybeLen.children[0].toVex();
         dur = new Fraction(d.num, d.den);
       }
-      pc.notes.push(pc.rebuildNote(keys, dur));
+      pc.notes.push(pc.NewNote(keys, dur));
     },
 
     chordnote(first, _sp, rest) {
@@ -432,24 +478,12 @@
 
     baseNote(_acc, pitch, maybeLen) {
       const p = pitch.toVex();
-      let duration = pc.unitNoteLength,
-        dots = 0;
+      let notelen = new Fraction(1, 1);
       if (maybeLen.children.length) {
         let dur = maybeLen.children[0].toVex();
-        let frac = new Fraction(dur.num, dur.den);
-        let dd = fractionToDottedDuration(frac, pc.unitNoteLength);
-        if (dd) {
-          duration = dd.base;
-          dots = dd.dots;
-        } else {
-          throw new Error("Wrong note length notation: " + maybeLen.children[0].sourceString);
-        }
+        notelen = new Fraction(dur.num, dur.den);
       }
-      const vfNote = new StaveNote({ keys: [p.value], duration: duration.toString(), autoStem: true });
-      for (let i = 0; i < dots; i++) {
-        Dot.buildAndAttach([vfNote]);
-      }
-      return vfNote;
+      return pc.NewNote([p.value], notelen);
     },
 
     pitch(name, maybeOctave) {
@@ -563,22 +597,27 @@
 
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
-    renderer.resize(800, 200);
+    renderer.resize(pc.staveX, 200);
     let rctx = renderer.getContext();
-    const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
-    stave.addClef("treble");
-    stave.addTimeSignature(pc.meter.toString());
-    stave.setContext(rctx).drawWithStyle();
+    // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+    // stave.addClef("treble");
+    // stave.addTimeSignature(pc.meter.toString());
+    pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
-    const voice = new VexFlow.Voice(pc.meter.toString()).setMode(VexFlow.Voice.Mode.SOFT).addTickables(pc.notes);
     let beams = pc.buildBeams();
     let ties = pc.buildTies();
     let slurs = pc.buildSlurs();
-    new VexFlow.Formatter().joinVoices([voice]).formatToStave([voice], stave, {
-      alignRests: true,
-      stave,
-    });
-    voice.setContext(rctx).setStave(stave).drawWithStyle();
+    let voices = pc.buildVoices();
+    let formatter = new VexFlow.Formatter();
+    for (let i = 0; i < pc.staves.length; i++) {
+      if (voices[i] != undefined) {
+        formatter.joinVoices([voices[i]]).formatToStave([voices[i]], pc.staves[i], {
+          alignRests: true,
+          stave: pc.staves[i],
+        });
+      }
+    }
+    voices.forEach((voice) => voice.setContext(rctx).drawWithStyle());
     beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
     ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
     slurs.forEach((slur) => slur.setContext(rctx).drawWithStyle());
