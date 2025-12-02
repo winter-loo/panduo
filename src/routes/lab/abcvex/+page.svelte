@@ -194,14 +194,22 @@
       );
     }
 
-    buildVoices(): Voice[] {
-      return this.voices
-        .filter((vr) => vr[0] < this.notes.length)
-        .map((vr) =>
-          new VexFlow.Voice(this.meter.toString())
+    buildVoices(): (Voice | undefined)[] {
+      let voices: (Voice | undefined)[] = [];
+      for (let i = 0; i < this.voices.length; i++) {
+        if (i + 1 == this.voices.length && this.voices[i][0] >= this.notes.length)
+          break;
+        let vr = this.voices[i];
+        // empty voice
+        if (vr[1] - vr[0] < 0) {
+          voices.push(undefined)
+        } else {
+          voices.push(new VexFlow.Voice(this.meter.toString())
             .setMode(VexFlow.Voice.Mode.SOFT)
-            .addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
-        );
+            .addTickables(pc.notes.slice(vr[0], vr[1] + 1)));
+        }
+      }
+      return voices;
     }
   }
 
@@ -611,13 +619,13 @@
     let formatter = new VexFlow.Formatter();
     for (let i = 0; i < pc.staves.length; i++) {
       if (voices[i] != undefined) {
-        formatter.joinVoices([voices[i]]).formatToStave([voices[i]], pc.staves[i], {
+        formatter.joinVoices([voices[i]!]).formatToStave([voices[i]!], pc.staves[i], {
           alignRests: true,
           stave: pc.staves[i],
         });
       }
     }
-    voices.forEach((voice) => voice.setContext(rctx).drawWithStyle());
+    voices.forEach((voice) => voice?.setContext(rctx).drawWithStyle());
     beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
     ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
     slurs.forEach((slur) => slur.setContext(rctx).drawWithStyle());
