@@ -4,13 +4,12 @@
   import opentype from "opentype.js";
   import { SvelteMap } from "svelte/reactivity";
 
-  let fontSize = 40;
   let bravuraFont: opentype.Font | null = null;
   let glyphPath = $state("");
   let glyphStatus = $state<"loading" | "ready" | "error">("loading");
   let glyphError = $state("");
 
-  let glyphs = new SvelteMap<string, { width: number; height: number; path: string } | null>();
+  let glyphs = new SvelteMap<string, Map<number, { width: number; height: number; path: string }> | null>();
 
   function addGlyph(glyphChar: string) {
     glyphs.set(glyphChar, null);
@@ -24,16 +23,23 @@
     }
   }
 
+  type FontSizeScale = 16 | 20 | 32 | 40 | 56 | 72; // in pixel
+  const FontSizeScales = [16, 20, 32, 40, 56, 72];
   function GlyphPath(glyphChar: string) {
     if (!bravuraFont) return null;
     const glyph = bravuraFont.charToGlyph(glyphChar);
     if (!glyph) return null;
-    const path = glyph.getPath(0, 0, fontSize);
-    const bbox = path.getBoundingBox();
-    const width = bbox.x2 - bbox.x1;
-    const height = bbox.y2 - bbox.y1;
-    glyphPath = path.toPathData(5);
-    return { width, height, path: glyphPath };
+    const glyphProps = new Map<number, { width: number; height: number; path: string }>();
+    for (let i = 0; i < FontSizeScales.length; i++) {
+      let fs = FontSizeScales[i];
+      const path = glyph.getPath(0, 0, fs);
+      const bbox = path.getBoundingBox();
+      const width = bbox.x2 - bbox.x1;
+      const height = bbox.y2 - bbox.y1;
+      glyphPath = path.toPathData(5);
+      glyphProps.set(fs, { width, height, path: glyphPath });
+    }
+    return glyphProps;
   }
 
   onMount(() => {
@@ -85,22 +91,25 @@
   </div>
 </section>
 
-{#snippet noteGlyph(glyphChar: string)}
+{#snippet noteGlyph(glyphChar: string, fontSize: FontSizeScale = 16)}
   {@const glyph = glyphs.get(glyphChar)}
 
   {#if glyphStatus === "loading"}
     <span>…</span>
   {:else if glyphStatus === "error"}
     <span>?</span>
+  {:else if glyph == undefined}
+    <span>?</span>
   {:else}
+    {@const g = glyph.get(fontSize)}
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="{glyph?.width}px"
-      height="{glyph?.height}px"
+      width="{g?.width}px"
+      height="{g?.height}px"
       class="inline-block overflow-visible"
     >
       <g fill="currentColor" class="text-slate-800">
-        <path d={glyph?.path} />
+        <path d={g?.path} />
       </g>
     </svg>
   {/if}
@@ -113,11 +122,9 @@
   </p>
   <p>Show me a quarter note: {@render noteGlyph("\ue1d5")} . The same here.</p>
   <p>
-    Those are too small! Bigger one in 40px: <span class="font-[Bravura] text-[40px]">&#xe1d5;</span>. The same size but
-    in a different unit(30pt):<span class="font-[Bravura] text-[30pt]">&#xe1d5;</span>. This time, the height of this
-    notehead symbol is about 160px! Huge!
+    Those are too small! Bigger one in 40px: {@render noteGlyph("\ue1d5", 40)}.
   </p>
-  <p>Here's the eighth note: <span class="font-[Bravura]">&#xe1d7;</span></p>
+  <p>Here's the eighth note: {@render noteGlyph("\ue1d7", 32)}</p>
 
   <p>how about this? {@render noteGlyph("\ue1d7")}. It does not work! Hover your mouse on!</p>
 </section>
