@@ -234,7 +234,7 @@
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
         // Scale is positive (0.08, 0.08) to ensure the standard tilt direction (bottom-left to top-right: /)
-        g.setAttribute("transform", `translate(${currentX}, ${yPos}) scale(0.08, 0.08)`);
+        g.setAttribute("transform", `translate(${currentX}, ${yPos}) scale(0.08, -0.08)`);
 
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", pathData); // Use the global path data
@@ -398,7 +398,7 @@
     --note-color: #1f2937; /* Gray-800 */
   }
 
-  .note-animate {
+  :global(.note-animate) {
     transform-box: fill-box;
     transform-origin: center;
     animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
