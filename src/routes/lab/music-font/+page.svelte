@@ -1,68 +1,52 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import bravuraFontUrl from "@vexflow-fonts/bravura/bravura.otf?url";
   // woff2 need be decompressed first, https://github.com/opentypejs/opentype.js/issues/183#issuecomment-1147228025
   import opentype from "opentype.js";
-  import { SvelteMap } from "svelte/reactivity";
+  import { onMount } from "svelte";
 
-  let bravuraFont: opentype.Font | null = null;
-  let glyphPath = $state("");
   let glyphStatus = $state<"loading" | "ready" | "error">("loading");
 
-  let glyphs = new SvelteMap<string, Map<number, { width: number; height: number; path: string }> | null>();
+  async function GlyphPath(glyphChar: string, fontSize: number = 16): Promise<string> {
+    let font = await loadFont(bravuraFontUrl);
+    if (!font) return "▤";
+    const glyph = font.charToGlyph(glyphChar);
+    if (!glyph) return "▤";
+    const path = glyph.getPath(0, 0, fontSize);
+    const bbox = path.getBoundingBox();
+    const width = bbox.x2 - bbox.x1;
+    const height = bbox.y2 - bbox.y1;
+    let pd = path.toPathData(5);
+    // console.log("width: ", width, ", height: ", height, ", path: ", pd);
 
-  function addGlyph(glyphChar: string) {
-    glyphs.set(glyphChar, null);
-  }
-
-  function updateGlyphs() {
-    for (const [glyphChar, glyphProp] of glyphs) {
-      if (glyphProp == null) {
-        glyphs.set(glyphChar, GlyphPath(glyphChar));
-      }
+    if (glyphStatus === "loading") {
+      return `<span>…</span>`;
+    } else if (glyphStatus === "error") {
+      return `<span>${glyphChar}</span>`;
     }
+    return (
+      "" +
+        // - use `fontSize` as the height so the font render spacing is 1em
+        // - move path down 1em
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${fontSize}" class="inline-block overflow-visible">
+         <g fill="currentColor" class="text-slate-800" transform="translate(0, ${fontSize})">
+           <path d="${pd}" />
+         </g>
+       </svg>`
+    );
   }
 
-  type FontSizeScale = 16 | 20 | 32 | 40 | 56 | 72; // in pixel
-  const FontSizeScales = [16, 20, 32, 40, 56, 72];
-  function GlyphPath(glyphChar: string) {
-    if (!bravuraFont) return null;
-    const glyph = bravuraFont.charToGlyph(glyphChar);
-    if (!glyph) return null;
-    const glyphProps = new Map<number, { width: number; height: number; path: string }>();
-    for (let i = 0; i < FontSizeScales.length; i++) {
-      let fs = FontSizeScales[i];
-      const path = glyph.getPath(0, 0, fs);
-      const bbox = path.getBoundingBox();
-      const width = bbox.x2 - bbox.x1;
-      const height = bbox.y2 - bbox.y1;
-      glyphPath = path.toPathData(5);
-      glyphProps.set(fs, { width, height, path: glyphPath });
+  async function loadFont(fontUrl: string): Promise<opentype.Font | null> {
+    try {
+      const response = await fetch(fontUrl);
+      const buffer = await response.arrayBuffer();
+      let font = opentype.parse(buffer);
+      glyphStatus = "ready";
+      return font;
+    } catch (error) {
+      glyphStatus = "error";
     }
-    return glyphProps;
+    return null;
   }
-
-  onMount(() => {
-    addGlyph("\ue050");
-    addGlyph("\ue0a4");
-    addGlyph("\ue1d5");
-    addGlyph("\ue1d7");
-    addGlyph("\ue010");
-    addGlyph("\ue014");
-
-    (async () => {
-      try {
-        const response = await fetch(bravuraFontUrl);
-        const buffer = await response.arrayBuffer();
-        bravuraFont = opentype.parse(buffer);
-        glyphStatus = "ready";
-        updateGlyphs();
-        renderNotes(["A4"]);
-      } catch (error) {
-        glyphStatus = "error";
-      }
-    })();
-  });
 
   //
   // render onto staff
@@ -95,32 +79,37 @@
   type NoteMapKey = keyof typeof NOTE_MAP;
 
   let svgRef: SVGElement | undefined = $state();
-  function renderNotes(noteArray: NoteMapKey[]) {
-    const glyph = bravuraFont?.charToGlyph("\ue0a4");
+  async function renderNote() {
+    let font = await loadFont(bravuraFontUrl);
+    if (!font) return null;
+    const glyph = font.charToGlyph("\ue0a4");
     if (glyph == undefined) return;
 
     let path = glyph.getPath(0, 0, 80);
     let pathData = path.toPathData(4);
-    console.log(pathData);
+    // console.log(pathData);
 
     const currentX = 150; // Center position
 
-    noteArray.forEach((notePitch, _index) => {
-      const yPos = NOTE_MAP[notePitch] || 70;
+    const yPos = NOTE_MAP["A4"] || 70;
 
-      // 2. Draw Notehead
-      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-      // use 'g' tag to position the element
-      g.setAttribute("transform", `translate(${currentX}, ${yPos})`);
+    // 2. Draw Notehead
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    // use 'g' tag to position the element
+    g.setAttribute("transform", `translate(${currentX}, ${yPos})`);
 
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      path.setAttribute("d", pathData);
-      path.setAttribute("fill", "black");
+    const svgPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    svgPath.setAttribute("d", pathData);
+    svgPath.setAttribute("fill", "black");
+    svgPath.setAttribute("class", "hover:fill-indigo-500");
 
-      g.appendChild(path);
-      svgRef?.appendChild(g);
-    });
+    g.appendChild(svgPath);
+    svgRef?.appendChild(g);
   }
+
+  onMount(async () => {
+    await renderNote();
+  });
 </script>
 
 <h1 class="text-2xl font-bold leading-tight mb-6">Music Font Lab</h1>
@@ -156,60 +145,47 @@
   </div>
 </section>
 
-{#snippet noteGlyph(glyphChar: string, fontSize: FontSizeScale = 16)}
-  {@const glyph = glyphs.get(glyphChar)}
-
-  {#if glyphStatus === "loading"}
-    <span>…</span>
-  {:else if glyphStatus === "error"}
-    <span>?</span>
-  {:else if glyph == undefined}
-    <span>?</span>
-  {:else}
-    {@const g = glyph.get(fontSize)}
-    <svg xmlns="http://www.w3.org/2000/svg" width="{g?.width}px" height="1em" class="inline-block overflow-visible">
-      <g fill="currentColor" class="text-slate-800">
-        <path d={g?.path} />
-      </g>
-    </svg>
-  {/if}
-{/snippet}
-
-<section class="p-4">
+<section class="p-4 mb-6">
   <h2 class="text-xl font-bold leading-tight mb-6">To SVG path</h2>
   <p class="text-base">
-    show me the notehead symbol: {@render noteGlyph("\ue0a4")}. Not have a correct aligement!
+    show me the notehead symbol: {@html await GlyphPath("\ue0a4")}. Not have a correct aligement!
   </p>
-  <p class="text-base">Show me a quarter note: {@render noteGlyph("\ue1d5")} . The same here.</p>
+  <p class="text-base">Show me a quarter note: {@html await GlyphPath("\ue1d5")} . The same here.</p>
   <p>
-    Those are too small! Bigger one in 40px: {@render noteGlyph("\ue1d5", 40)}.
+    Those are too small! Bigger one in 40px: {@html await GlyphPath("\ue1d5", 40)}.
   </p>
-  <p>Here's the eighth note: {@render noteGlyph("\ue1d7", 32)}</p>
+  <p>Here's the eighth note: {@html await GlyphPath("\ue1d7", 32)}</p>
 
-  <p>how about this? {@render noteGlyph("\ue1d7")}. It does not work! Hover your mouse on!</p>
+  <p>how about this? {@html await GlyphPath("\ue1d7")}. It does work! Hover your mouse on!</p>
   <p>A line of music symbols:</p>
-  <p class="text-bottom">
-    {@render noteGlyph("\ue050")}
-    {@render noteGlyph("\ue010")}
-    {@render noteGlyph("\ue014")}
-    {@render noteGlyph("\ue0a4")}
-    {@render noteGlyph("\ue1d5")}
-    {@render noteGlyph("\ue1d7")}
+  <p>
+    {@html await GlyphPath("\ue050")}
+    {@html await GlyphPath("\ue010")}
+    {@html await GlyphPath("\ue014")}
+    {@html await GlyphPath("\ue0a4")}
+    {@html await GlyphPath("\ue1d5")}
+    {@html await GlyphPath("\ue1d7")}
+  </p>
+
+  <p>A line of larger music symbols:</p>
+  <p>
+    {@html await GlyphPath("\ue050", 40)}
+    {@html await GlyphPath("\ue010", 40)}
+    {@html await GlyphPath("\ue014", 40)}
+    {@html await GlyphPath("\ue0a4", 40)}
+    {@html await GlyphPath("\ue1d5", 40)}
+    {@html await GlyphPath("\ue1d7", 40)}
   </p>
 </section>
 
-<section>
+<section class="p-4 mb-6">
+  <h2 class="text-xl font-bold leading-tight mb-6">Render onto staff</h2>
+
   <!-- Rendering Canvas -->
   <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative">
     <!-- Staff Container -->
     <div class="p-8 flex justify-center overflow-x-auto">
-      <svg
-        width="300"
-        height="120"
-        viewBox="0 0 300 120"
-        xmlns="http://www.w3.org/2000/svg"
-        bind:this={svgRef}
-      >
+      <svg width="300" height="120" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg" bind:this={svgRef}>
         <!-- Staff Group -->
         <g id="staff-lines" stroke="black" stroke-width="1" stroke-linecap="round">
           <line x1="20" y1="20" x2="280" y2="20" />
