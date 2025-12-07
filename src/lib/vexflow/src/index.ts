@@ -40,7 +40,9 @@ export * from './modifier';
 export * from './modifiercontext';
 export * from './multimeasurerest';
 export * from './music';
+export * from './glyphfont';
 export * from './note';
+
 export * from './notehead';
 export * from './notesubgroup';
 export * from './ornament';

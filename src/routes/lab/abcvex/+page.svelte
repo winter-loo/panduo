@@ -21,8 +21,11 @@
     StaveTie,
     Curve,
     Voice,
-    // } from "$lib/vexflow/vexflow-core";
-  } from "vexflow";
+    GlyphFont,
+  } from "$lib/vexflow/vexflow-core";
+  // } from "vexflow";
+
+  import { onMount } from "svelte";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
@@ -68,7 +71,10 @@
     }
 
     NewStave(): Stave {
-      const stave = new Stave(this.staveX, this.staveY, this.staveWidth, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+      const stave = new Stave(this.staveX, this.staveY, this.staveWidth, {
+        spaceAboveStaffLn: 8,
+        spaceBelowStaffLn: 8,
+      });
       this.staves.push(stave);
       this.staveX += this.staveWidth;
       return stave;
@@ -337,7 +343,7 @@
 
       for (let i = 0; i < morePart.children.length; i++) {
         let ap = morePart.children[i];
-        if (lineBreaks[i].type == 'newline') {
+        if (lineBreaks[i].type == "newline") {
           pc.staveX = 0;
           pc.staveY += pc.staveHeight;
           // reset it so we can initialize a new stave lately on demand
@@ -355,8 +361,7 @@
     // MusicCodePart_rest(r) { return r.toVex(); },
     MusicCodePart_bar(bar) {
       let voice = pc.CurrentVoice();
-      if (voice != undefined)
-        voice[1] = pc.notes.length - 1;
+      if (voice != undefined) voice[1] = pc.notes.length - 1;
       // reset it so we can initialize a new stave lately on demand
       pc.currentStave = null;
     },
@@ -635,6 +640,7 @@
     return null;
   }
 
+  await GlyphFont.load("Bravura");
   $effect(() => {
     toVex();
   });

@@ -4,6 +4,7 @@
 import { VexflowConfigInstance } from './config';
 import { ElementStyle } from './element';
 import { Note, NoteStruct } from './note';
+import { GlyphFont } from './glyphfont';
 import { Stave } from './stave';
 import { StaveNote } from './stavenote';
 import { Stem } from './stem';
@@ -175,7 +176,14 @@ export class NoteHead extends Note {
     console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);
 
     this.x = this.getAbsoluteX();
-    this.renderText(ctx, 0, 0, { fill: 'currentColor' });
+
+    const fontName = this.fontInfo.family;
+    if (GlyphFont.get(fontName)) {
+      GlyphFont.renderGlyph(ctx, this.glyphProps.codeHead, fontName, this.fontSizeInPixels, this.x + this.xShift, this.y + this.yShift);
+    } else {
+      this.renderText(ctx, 0, 0, { fill: 'currentColor' });
+    }
+
     (this.parent as StaveNote)?.drawModifiers(this);
     console.log('current notehead width: ', this.width);
     this.drawPointerRect();

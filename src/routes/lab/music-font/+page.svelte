@@ -1,6 +1,5 @@
 <script lang="ts">
   import bravuraFontUrl from "@vexflow-fonts/bravura/bravura.otf?url";
-  // woff2 need be decompressed first, https://github.com/opentypejs/opentype.js/issues/183#issuecomment-1147228025
   import opentype from "opentype.js";
   import { onMount } from "svelte";
 
@@ -25,8 +24,8 @@
     }
     return (
       "" +
-        // - use `fontSize` as the height so the font render spacing is 1em
-        // - move path down 1em
+      // - use `fontSize` as the height so the font render spacing is 1em
+      // - move path down 1em
       `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${fontSize}" class="inline-block overflow-visible">
          <g fill="currentColor" class="text-slate-800" transform="translate(0, ${fontSize})">
            <path d="${pd}" />

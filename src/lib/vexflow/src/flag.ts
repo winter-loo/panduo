@@ -2,6 +2,7 @@
 // MIT License
 
 import { Element } from './element';
+import { GlyphFont } from './glyphfont';
 import { Category } from './typeguard';
 import { log } from './util';
 
@@ -29,7 +30,14 @@ export class Flag extends Element {
     ctx.openGroup('flag', this.getAttribute('id'));
 
     L("Drawing flag '", this.text, "' at", this.x, this.y);
-    this.renderText(ctx, 0, 0);
+    GlyphFont.renderGlyph(
+      ctx,
+      this.text,
+      this.fontInfo.family,
+      this.fontSizeInPixels,
+      this.x + this.xShift,
+      this.y + this.yShift
+    );
     this.drawPointerRect();
     ctx.closeGroup();
   }
