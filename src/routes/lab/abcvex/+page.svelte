@@ -21,21 +21,21 @@
     StaveTie,
     Curve,
     Voice,
-    GlyphFont,
-  } from "$lib/vexflow/vexflow-core";
-  // } from "vexflow";
-
-  import { onMount } from "svelte";
+    // GlyphFont,
+    BarNote,
+    BarlineType,
+  // } from "$lib/vexflow/vexflow-core";
+  } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/8\nCD EF GD | \nC D E \\ \nF G A");
+  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/4\n | C E G | ");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
     // default: free meteer
     meter: Fraction = new Fraction(0, 1);
-    notes: StemmableNote[] = [];
+    notes: Note[] = [];
     beams: [number, number][] = [];
     ties: {
       from?: number | null;
@@ -72,8 +72,10 @@
 
     NewStave(): Stave {
       const stave = new Stave(this.staveX, this.staveY, this.staveWidth, {
-        spaceAboveStaffLn: 8,
-        spaceBelowStaffLn: 8,
+        spaceAboveStaffLn: 2,
+        spaceBelowStaffLn: 2,
+        leftBar: false,
+        rightBar: false,
       });
       this.staves.push(stave);
       this.staveX += this.staveWidth;
@@ -89,6 +91,7 @@
       return this.currentStave;
     }
 
+    // REQUIRES: new voice then push notes
     NewVoice() {
       this.voices.push([this.notes.length, Infinity]);
     }
@@ -170,7 +173,7 @@
     }
 
     buildBeams(): Beam[] {
-      return this.beams.map((beam) => new Beam(this.notes.slice(beam[0], beam[1] + 1), true));
+      return this.beams.map((beam) => new Beam(this.notes.slice(beam[0], beam[1] + 1) as StemmableNote[], true));
     }
 
     buildTies(): StaveTie[] {
@@ -359,11 +362,39 @@
     // MusicCodePart alternatives
     // MusicCodePart_noteseq(seq) { return seq.toVex(); },
     // MusicCodePart_rest(r) { return r.toVex(); },
-    MusicCodePart_bar(bar) {
-      let voice = pc.CurrentVoice();
-      if (voice != undefined) voice[1] = pc.notes.length - 1;
-      // reset it so we can initialize a new stave lately on demand
-      pc.currentStave = null;
+    MusicCodePart_bar(_bar) {
+      let barType = BarlineType.NONE;
+      if (this.sourceString == "|") {
+        barType = BarlineType.SINGLE;
+      } else if (this.sourceString == "||") {
+        barType = BarlineType.DOUBLE;
+      } else if (this.sourceString == "|]") {
+        barType = BarlineType.END;
+      } else if (this.sourceString == "|:") {
+        barType = BarlineType.REPEAT_BEGIN;
+      } else if (this.sourceString == ":|") {
+        barType = BarlineType.REPEAT_END;
+      } else if (this.sourceString == "::") {
+        barType = BarlineType.REPEAT_BOTH;
+      }
+      const barNote = new BarNote(barType);
+
+      if (pc.currentStave) {
+        // right bar
+        // push notes first so that the current voice includes this bar
+        pc.notes.push(barNote);
+        barNote.setStave(pc.currentStave);
+
+        let voice = pc.CurrentVoice();
+        if (voice != undefined) voice[1] = pc.notes.length - 1;
+        // reset it so we can initialize a new stave lately on demand
+        pc.currentStave = null;
+      } else {
+        // left bar
+        // new voice first so that the new voice includes this bar
+        barNote.setStave(pc.CurrentStave());
+        pc.notes.push(barNote);
+      }
     },
     MusicCodePart_slurStart(s) {
       s.toVex();
@@ -640,7 +671,7 @@
     return null;
   }
 
-  await GlyphFont.load("Bravura");
+  // await GlyphFont.load("Bravura");
   $effect(() => {
     toVex();
   });
