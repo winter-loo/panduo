@@ -29,7 +29,7 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/4\n | C E G | ");
+  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/4\n C E G | c e g\n c e g \n C E G ");
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -51,6 +51,7 @@
     staveY: number = 0;
     staveHeight: number = 200;
     staveWidth: number = 400;
+    maxStaveWidth: number = 400;
     voices: [number, number][] = [];
 
     constructor() {
@@ -79,6 +80,7 @@
       });
       this.staves.push(stave);
       this.staveX += this.staveWidth;
+      this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
       return stave;
     }
 
@@ -349,6 +351,9 @@
         if (lineBreaks[i].type == "newline") {
           pc.staveX = 0;
           pc.staveY += pc.staveHeight;
+
+          let voice = pc.CurrentVoice();
+          if (voice != undefined) voice[1] = pc.notes.length - 1;
           // reset it so we can initialize a new stave lately on demand
           pc.currentStave = null;
         }
@@ -696,7 +701,7 @@
 
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
-    renderer.resize(pc.staveX, pc.staveY + pc.staveHeight);
+    renderer.resize(pc.maxStaveWidth, pc.staveY + pc.staveHeight);
     let rctx = renderer.getContext();
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     // stave.addClef("treble");
