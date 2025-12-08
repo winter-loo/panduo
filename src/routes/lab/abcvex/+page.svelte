@@ -49,7 +49,10 @@
 
     staveX: number = 0;
     staveY: number = 0;
-    staveHeight: number = 200;
+    // Each stave is a measure.
+    // Multiple measures make up a System (one horizontal row).
+    // Multiple Systems make up the full sheet of music (stacked vertically).
+    systems: Stave[][] = [];
     staveWidth: number = 400;
     maxStaveWidth: number = 400;
     voices: [number, number][] = [];
@@ -65,6 +68,7 @@
       this.ties = [];
       this.slurs = [];
       this.staves = [];
+      this.systems = [[]];
       this.currentStave = null;
       this.staveX = 0;
       this.staveY = 0;
@@ -72,13 +76,16 @@
     }
 
     NewStave(): Stave {
-      const stave = new Stave(this.staveX, this.staveY, this.staveWidth, {
-        spaceAboveStaffLn: 2,
-        spaceBelowStaffLn: 2,
+      const stave = new Stave(this.staveX, 0, this.staveWidth, {
+        spaceAboveStaffLn: 0,
+        spaceBelowStaffLn: 0,
         leftBar: false,
         rightBar: false,
       });
       this.staves.push(stave);
+      if (this.systems.length === 0) this.systems.push([]);
+      this.systems[this.systems.length - 1].push(stave);
+
       this.staveX += this.staveWidth;
       this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
       return stave;
@@ -350,7 +357,7 @@
         let ap = morePart.children[i];
         if (lineBreaks[i].type == "newline") {
           pc.staveX = 0;
-          pc.staveY += pc.staveHeight;
+          pc.systems.push([]);
 
           let voice = pc.CurrentVoice();
           if (voice != undefined) voice[1] = pc.notes.length - 1;
@@ -701,17 +708,17 @@
 
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
-    renderer.resize(pc.maxStaveWidth, pc.staveY + pc.staveHeight);
     let rctx = renderer.getContext();
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     // stave.addClef("treble");
     // stave.addTimeSignature(pc.meter.toString());
-    pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
     let beams = pc.buildBeams();
     let ties = pc.buildTies();
     let slurs = pc.buildSlurs();
     let voices = pc.buildVoices();
+    
+    // 1. Format voices
     let formatter = new VexFlow.Formatter();
     for (let i = 0; i < pc.staves.length; i++) {
       if (voices[i] != undefined) {
@@ -721,6 +728,125 @@
         });
       }
     }
+
+    // 2. Layout
+    let currentY = 0;
+    const PIXELS_PER_SPACE = 10;
+    const DEFAULT_TOP_PADDING = 10; // pixels
+    const DEFAULT_BOTTOM_PADDING = 10; // pixels
+    const SYSTEM_SPACING = 20; // pixels between systems
+
+    for (let system of pc.systems) {
+      if (system.length === 0) continue;
+
+      let maxTopY = 0;
+      let maxBottomY = 0;
+      
+      // First pass: Calculate required space
+      for (let stave of system) {
+         // Find voice for this stave
+         const staveIndex = pc.staves.indexOf(stave);
+         const voice = voices[staveIndex];
+
+         let topY = stave.getYForLine(0); // Top line Y (0-indexed)
+         let bottomY = stave.getYForLine(4); // Bottom line Y
+
+         if (voice) {
+           const bbox = voice.getBoundingBox();
+           if (bbox) {
+              // Check extension above
+              // bbox.y is the top-most coordinate
+              if (bbox.y < topY) {
+                 // Calculate spaces needed
+                 const pixelsAbove = topY - bbox.y;
+                 const spacesAbove = Math.ceil(pixelsAbove / PIXELS_PER_SPACE);
+                 // We want at least some padding
+                 // We kept the calculation to know how much to offset layout,
+                 // but we do NOT set it on the stave to avoid drawing tall barlines.
+               }
+              
+              // Check extension below
+              // bbox.y + bbox.h is bottom
+              const voiceBottom = bbox.y + bbox.h;
+              if (voiceBottom > bottomY) {
+                  const pixelsBelow = voiceBottom - bottomY;
+                  const spacesBelow = Math.ceil(pixelsBelow / PIXELS_PER_SPACE);
+                  // We kept the calculation to know how much to offset layout,
+                  // but we do NOT set it on the stave to avoid drawing tall barlines.
+              }
+           }
+         }
+         
+         // After setting options, recalculate extents for layout
+         // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y, 
+         // but getBox or getHeight might change. 
+         // Actually we control Y, giving it space is about placing the next system.
+         
+         // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
+         // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually? 
+         // Actually: new Stave(x, y, ...). y is the top line of the staff.
+         // Wait, let's verify VexFlow coordinate system.
+         // Usually y passed to Stave constructor is the y position of the top line.
+         
+         // Let's just use the voice bounding box relative to stave.
+         // But voice bounding box is absolute coordinates based on current stave Y.
+         // Since we initialized staves with Y=0, the bounding box is relative to 0.
+         
+         if (voice) {
+            const bbox = voice.getBoundingBox();
+            if (bbox) {
+               // bbox.y is absolute (currently relative to 0)
+               // bbox.y might be negative if notes are very high
+               // We need enough room above (negative Y)
+               // maxTopY should be positive value of required space above 0
+               if (bbox.y < -DEFAULT_TOP_PADDING) {
+                   maxTopY = Math.max(maxTopY, Math.abs(bbox.y));
+               } else {
+                   maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+               }
+               
+               // bbox.y + bbox.h is absolute bottom
+               // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
+               const bottomLineY = 40; 
+               const voiceBottom = bbox.y + bbox.h;
+               if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
+                   maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
+               } else {
+                   maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+               }
+            } else {
+                maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+                maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+            }
+         } else {
+             maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+             maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+         }
+      }
+
+      // Apply Layout
+      // currentY is where the previous system ended. 
+      // We need to place the top line of current system such that we accommodate maxTopY.
+      // So Stave Y = currentY + maxTopY.
+      
+      const systemStaveY = currentY + maxTopY;
+      
+      for (let stave of system) {
+         stave.setY(systemStaveY);
+      }
+      
+      // Advance currentY
+      // The system lines take ~40px (for 5 lines). 
+      // Plus maxBottomY.
+      // Plus spacing between systems.
+      const staveHeight = 40; // 5 lines * 10 spacing = 40 height diff.
+      currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
+    }
+
+    renderer.resize(pc.maxStaveWidth, currentY);
+
+    pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
+
     voices.forEach((voice) => voice?.setContext(rctx).drawWithStyle());
     beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
     ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
