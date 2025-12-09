@@ -126,7 +126,16 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     }
 
     NewStave(): Stave {
-      const stave = new Stave(this.staveX, 0, this.staveWidth, {
+      const currentSystemIndex = this.systems.length - 1;
+      const isFirstInSystem = this.systems[currentSystemIndex].length === 0;
+      const isFirstInScore = this.staves.length === 0;
+
+      let w = this.staveWidth;
+      if (isFirstInSystem) {
+        w += 60; // Extra space for Clef, Key, Time signatures
+      }
+
+      const stave = new Stave(this.staveX, 0, w, {
         spaceAboveStaffLn: 0,
         spaceBelowStaffLn: 0,
         leftBar: false,
@@ -134,9 +143,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       });
 
       // Apply modifiers only at start of system or if changed (logic simplified for start of system)
-      const currentSystemIndex = this.systems.length - 1;
-      const isFirstInSystem = this.systems[currentSystemIndex].length === 0;
-      const isFirstInScore = this.staves.length === 0;
+      // ... (code for adding modifiers remains, effectively using the extra space) ...
 
       if (isFirstInSystem) {
           stave.addClef(this.clef);
@@ -167,7 +174,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       if (this.systems.length === 0) this.systems.push([]);
       this.systems[this.systems.length - 1].push(stave);
 
-      this.staveX += this.staveWidth;
+      this.staveX += w;
       this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
       
       // Visual fix: make staves look connected
