@@ -540,29 +540,63 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     //   return {tempo: qv.sourceString};
     // },
 
+    // EOL actions to support system breaking checks
+    eol_newline(_markers) {
+      return { type: "newline" };
+    },
+    eol_lineComment(_markers, _comment) {
+      return { type: "newline" }; // Comments at end of line still break the line
+    },
+    eol_lineContinue(_slash, _markers) {
+      return { type: "continue" };
+    },
+
     TuneBody(_l1, _e1, part, eol, morePart, _e3, _l2) {
       part.toVex();
-
-      let lineBreaks = eol.children.map((c) => (c.children.length > 0 ? c.children[0].toVex() : null));
-
+      
+      // eol and morePart are iterators of same length
       for (let i = 0; i < morePart.children.length; i++) {
-        let ap = morePart.children[i];
-        if (lineBreaks[i].type == "newline") {
-          pc.staveX = 0;
-          pc.systems.push([]);
-
-          let voice = pc.CurrentVoice();
-          if (voice != undefined) voice[1] = pc.notes.length - 1;
-          // reset it so we can initialize a new stave lately on demand
-          pc.currentStave = null;
+        // eol.children[i] corresponds to the eol? before the part
+        // The grammar is: (~(eol InBodyInfoFieldList) eol? TuneBodyPart)*
+        // eol is the eol? node.
+        
+        let eolNode = eol.children[i];
+        if (eolNode.children.length > 0) {
+            let type = eolNode.children[0].toVex().type;
+            if (type == "newline") {
+                 pc.staveX = 0;
+                 pc.systems.push([]);
+                 let voice = pc.CurrentVoice();
+                 if (voice != undefined) voice[1] = pc.notes.length - 1;
+                 pc.currentStave = null;
+            }
         }
-        ap.toVex();
+        
+        morePart.children[i].toVex();
       }
     },
 
-    TuneBodyPart_middle(part1, _eol1, fields, _eol2, part2) {
+    TuneBodyPart_middle(part1, eol1, fields, eol2, part2) {
       part1.toVex();
+      
+      if (eol1.toVex().type == "newline") {
+         pc.staveX = 0;
+         pc.systems.push([]);
+         let voice = pc.CurrentVoice();
+         if (voice != undefined) voice[1] = pc.notes.length - 1;
+         pc.currentStave = null;
+      }
+      
       fields.toVex();
+      
+      if (eol2.toVex().type == "newline") {
+         pc.staveX = 0;
+         pc.systems.push([]);
+         let voice = pc.CurrentVoice();
+         if (voice != undefined) voice[1] = pc.notes.length - 1;
+         pc.currentStave = null;
+      }
+      
       part2.toVex();
     },
 
@@ -859,18 +893,6 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     // fallback for unknowns
     UnknownField(_a1, _a2) {
       return null;
-    },
-
-    eol_lineContinue(_backslash, _sp, _eol) {
-      return { type: "lineContinue" };
-    },
-
-    eol_lineComment(_eol, _commentLine) {
-      return { type: "lineComment" };
-    },
-
-    eol_newline(_) {
-      return { type: "newline" };
     },
   };
   const semantics = abcGrammar.createSemantics().addOperation("toVex", actions);
