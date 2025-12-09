@@ -547,7 +547,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     eol_lineComment(_markers, _comment) {
       return { type: "newline" }; // Comments at end of line still break the line
     },
-    eol_lineContinue(_slash, _markers) {
+    eol_lineContinue(_slash, _sp, _markers) {
       return { type: "continue" };
     },
 
