@@ -32,22 +32,6 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  // Debug error logging
-  if (typeof window !== 'undefined') {
-    window.onerror = function(msg, url, line, col, error) {
-      const div = document.getElementById('debug-errors');
-      if (div) {
-        div.innerText += `Error: ${msg}\nLine: ${line}:${col}\n${error?.stack || ''}\n\n`;
-      }
-    };
-    window.addEventListener('unhandledrejection', function(event) {
-       const div = document.getElementById('debug-errors');
-       if (div) {
-         div.innerText += `Unhandled Rejection: ${event.reason}\n\n`;
-       }
-    });
-  }
-
   let abcInputText = $state(`
 X: 5
 T:Princess Royal, Stanton Harcourt
@@ -81,7 +65,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     slurs: [number | undefined, number | undefined][] = [];
     staves: Stave[] = [];
     currentStave: Stave | null = null;
-    
+
     // Song metadata state
     title: string = "";
     keySignature: string = "C";
@@ -89,7 +73,6 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     clef: string = "treble";
     tempo: { duration: string; bpm: number } | null = null;
     nextRehearsalMark: string | null = null;
-
 
     staveX: number = 0;
     staveY: number = 0;
@@ -146,21 +129,21 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       // ... (code for adding modifiers remains, effectively using the extra space) ...
 
       if (isFirstInSystem) {
-          stave.addClef(this.clef);
-          if (this.keySignature) {
-             stave.addKeySignature(this.keySignature);
-          }
+        stave.addClef(this.clef);
+        if (this.keySignature) {
+          stave.addKeySignature(this.keySignature);
+        }
       }
 
       // Time signature only at very beginning (or if we supported changes mid-stream)
-      if (isFirstInScore && this.timeSignature) { 
-           stave.addTimeSignature(this.timeSignature);
+      if (isFirstInScore && this.timeSignature) {
+        stave.addTimeSignature(this.timeSignature);
       }
-      
+
       // Add tempo marking if pending
       if (this.tempo) {
-          stave.setTempo({ duration: this.tempo.duration, dots: 0, bpm: this.tempo.bpm }, 0);
-          this.tempo = null; // Clear
+        stave.setTempo({ duration: this.tempo.duration, dots: 0, bpm: this.tempo.bpm }, 0);
+        this.tempo = null; // Clear
       }
 
       // Add Rehearsal Mark if pending
@@ -176,13 +159,13 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
 
       this.staveX += w;
       this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
-      
+
       // Visual fix: make staves look connected
       // If not the first stave in system, remove the begin bar (clef/key/time takes care of "headers", but barline is separate)
       if (!isFirstInSystem) {
-         stave.setBegBarType(BarlineType.NONE);
+        stave.setBegBarType(BarlineType.NONE);
       }
-      
+
       return stave;
     }
 
@@ -324,9 +307,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
           voices.push(undefined);
         } else {
           voices.push(
-            new Voice(this.meter.toString())
-              .setMode(Voice.Mode.SOFT)
-              .addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
+            new Voice(this.meter.toString()).setMode(Voice.Mode.SOFT).addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
           );
         }
       }
@@ -398,7 +379,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     Field_X(_x, number) {
-      console.log('tune id=', this.sourceString);
+      console.log("tune id=", this.sourceString);
     },
 
     Field_T(_t, title) {
@@ -406,89 +387,95 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     Field_P(_p, part) {
-       pc.nextRehearsalMark = part.sourceString.trim();
+      pc.nextRehearsalMark = part.sourceString.trim();
     },
 
-    Field_W(_w, words) {
-
-    },
+    Field_W(_w, words) {},
 
     Field_Q(_q, tempo) {
-       // Format: 1/4=120
-       const t = tempo.toVex();
-       if(t) {
+      // Format: 1/4=120
+      const t = tempo.toVex();
+      if (t) {
         pc.tempo = t;
-       }
+      }
     },
 
     QKeyedValue(_str1, num1, _slash, num2, _eq, bpm, _str2) {
-       // rule: dqTextString? (number "/" number "=")? number dqTextString?
-       // args: 7
-       // num1, _slash, num2, _eq are all iteration nodes (0 or 1 element) due to the optional group
-       
-       if (num1.children.length > 0 && num2.children.length > 0) {
-           const n = num1.children[0].toVex(); // { type: 'number', num: ... }
-           const d = num2.children[0].toVex(); // { type: 'number', num: ... }
-           
-           // default: quarter
-           let duration = "q";
-           if (d.num === 2) duration = "h";
-           if (d.num === 1) duration = "w";
-           if (d.num === 8) duration = "8";
-           if (d.num === 16) duration = "16";
-           
-           return { duration: duration, bpm: Number(bpm.sourceString) };
-       }
-       // If just number, assume quarter note?
-       return { duration: "q", bpm: Number(bpm.sourceString) };
+      // rule: dqTextString? (number "/" number "=")? number dqTextString?
+      // args: 7
+      // num1, _slash, num2, _eq are all iteration nodes (0 or 1 element) due to the optional group
+
+      if (num1.children.length > 0 && num2.children.length > 0) {
+        const n = num1.children[0].toVex(); // { type: 'number', num: ... }
+        const d = num2.children[0].toVex(); // { type: 'number', num: ... }
+
+        // default: quarter
+        let duration = "q";
+        if (d.num === 2) duration = "h";
+        if (d.num === 1) duration = "w";
+        if (d.num === 8) duration = "8";
+        if (d.num === 16) duration = "16";
+
+        return { duration: duration, bpm: Number(bpm.sourceString) };
+      }
+      // If just number, assume quarter note?
+      return { duration: "q", bpm: Number(bpm.sourceString) };
     },
 
     Field_K(_k, tonic, mode, _sp, accidental, noteName) {
-        // Parse key. VexFlow keys: "C", "Am", "F#", "Gb", etc.
-        // ABC tonic: C, C#, Cb
-        // ABC mode: maj, min, m, etc.
-        let k = tonic.sourceString; 
-        // Normalize ABC accidentals # and b are fine. ABC uses 'b' for flat.
-        // Check mode
-        let m = "";
-        if (mode.children.length > 0) {
-           m = mode.children[0].sourceString;
+      // Parse key. VexFlow keys: "C", "Am", "F#", "Gb", etc.
+      // ABC tonic: C, C#, Cb
+      // ABC mode: maj, min, m, etc.
+      let k = tonic.sourceString;
+      // Normalize ABC accidentals # and b are fine. ABC uses 'b' for flat.
+      // Check mode
+      let m = "";
+      if (mode.children.length > 0) {
+        m = mode.children[0].sourceString;
+      }
+
+      // Map ABC mode to VexFlow key signature format
+      // VexFlow `KeySignature` expects major keys (e.g. "C", "F#", "Bb") or minor keys ("Am", "F#m").
+      // Actually VexFlow supports various modes using key specs, but `addKeySignature` usually takes the root + 'm' for minor.
+
+      let vfKey = k;
+      if (
+        m.startsWith("m") ||
+        m === "Min" ||
+        m === "Dor" ||
+        m === "Phrygian" ||
+        m === "Lyd" ||
+        m === "Mix" ||
+        m === "Loc"
+      ) {
+        // Simplify: if it's minor, append 'm'. VexFlow handles relative minor keys automatically?
+        // "Gm" is valid in
+        // What about modes? "D Mixolydian" -> G major signature.
+        // VexFlow KeySignature class usually handles standard keys.
+        // If the user input "Gm", we pass "Gm".
+        if (m.toLowerCase().startsWith("m")) {
+          vfKey += "m";
         }
-        
-        // Map ABC mode to VexFlow key signature format
-        // VexFlow `KeySignature` expects major keys (e.g. "C", "F#", "Bb") or minor keys ("Am", "F#m").
-        // Actually VexFlow supports various modes using key specs, but `addKeySignature` usually takes the root + 'm' for minor.
-        
-        let vfKey = k;
-        if (m.startsWith("m") || m === "Min" || m === "Dor" || m === "Phrygian" || m === "Lyd" || m === "Mix" || m==="Loc") {
-            // Simplify: if it's minor, append 'm'. VexFlow handles relative minor keys automatically?
-            // "Gm" is valid in 
-            // What about modes? "D Mixolydian" -> G major signature.
-            // VexFlow KeySignature class usually handles standard keys. 
-            // If the user input "Gm", we pass "Gm".
-             if (m.toLowerCase().startsWith("m")) {
-                vfKey += "m";
-             }
-        }
-        
-        pc.keySignature = vfKey;
-        
-        // If we are mid-stream (staves already exist), we might need to add a key signature change to the *current* or *text* note?
-        // Or if a new stave starts, it will pick this up.
-        // ABC typically puts K: at start or inline.
-        // If inline, it affects the *next* notes.
-        // We'll update state, and if there's a current stave, we might need to add a key signature modifier.
-        if (pc.currentStave) {
-            pc.currentStave.addKeySignature(pc.keySignature);
-        }
+      }
+
+      pc.keySignature = vfKey;
+
+      // If we are mid-stream (staves already exist), we might need to add a key signature change to the *current* or *text* note?
+      // Or if a new stave starts, it will pick this up.
+      // ABC typically puts K: at start or inline.
+      // If inline, it affects the *next* notes.
+      // We'll update state, and if there's a current stave, we might need to add a key signature modifier.
+      if (pc.currentStave) {
+        pc.currentStave.addKeySignature(pc.keySignature);
+      }
     },
 
     UnknownFileHeaderField(_k, _v) {
-      console.warn('unknown file header field: ', this.sourceString);
+      console.warn("unknown file header field: ", this.sourceString);
     },
 
     UnknownTuneHeaderField(_k, _v) {
-      console.warn('unknown tune header field: ', this.sourceString);
+      console.warn("unknown tune header field: ", this.sourceString);
     },
 
     // TuneHeaderField_unknown(f) {
@@ -509,7 +496,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       let v = value.sourceString;
       let r = new Fraction(0, 1); // free meter
       let timeSigString = "4/4"; // default for VexFlow rendering
-      
+
       if (v == "C") {
         r = new Fraction(4, 4);
         timeSigString = "C";
@@ -525,9 +512,9 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       }
       pc.meter = r;
       pc.timeSignature = timeSigString;
-      
+
       if (pc.currentStave && timeSigString) {
-          pc.currentStave.addTimeSignature(timeSigString);
+        pc.currentStave.addTimeSignature(timeSigString);
       }
     },
 
@@ -553,56 +540,56 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
 
     TuneBody(_l1, _e1, part, eol, morePart, _e3, _l2) {
       part.toVex();
-      
+
       // eol and morePart are iterators of same length
       for (let i = 0; i < morePart.children.length; i++) {
         // eol.children[i] corresponds to the eol? before the part
         // The grammar is: (~(eol InBodyInfoFieldList) eol? TuneBodyPart)*
         // eol is the eol? node.
-        
+
         let eolNode = eol.children[i];
         if (eolNode.children.length > 0) {
-            let type = eolNode.children[0].toVex().type;
-            if (type == "newline") {
-                 pc.staveX = 0;
-                 pc.systems.push([]);
-                 let voice = pc.CurrentVoice();
-                 if (voice != undefined) voice[1] = pc.notes.length - 1;
-                 pc.currentStave = null;
-            }
+          let type = eolNode.children[0].toVex().type;
+          if (type == "newline") {
+            pc.staveX = 0;
+            pc.systems.push([]);
+            let voice = pc.CurrentVoice();
+            if (voice != undefined) voice[1] = pc.notes.length - 1;
+            pc.currentStave = null;
+          }
         }
-        
+
         morePart.children[i].toVex();
       }
     },
 
     TuneBodyPart_middle(part1, eol1, fields, eol2, part2) {
       part1.toVex();
-      
+
       if (eol1.toVex().type == "newline") {
-         pc.staveX = 0;
-         pc.systems.push([]);
-         let voice = pc.CurrentVoice();
-         if (voice != undefined) voice[1] = pc.notes.length - 1;
-         pc.currentStave = null;
+        pc.staveX = 0;
+        pc.systems.push([]);
+        let voice = pc.CurrentVoice();
+        if (voice != undefined) voice[1] = pc.notes.length - 1;
+        pc.currentStave = null;
       }
-      
+
       fields.toVex();
-      
+
       if (eol2.toVex().type == "newline") {
-         pc.staveX = 0;
-         pc.systems.push([]);
-         let voice = pc.CurrentVoice();
-         if (voice != undefined) voice[1] = pc.notes.length - 1;
-         pc.currentStave = null;
+        pc.staveX = 0;
+        pc.systems.push([]);
+        let voice = pc.CurrentVoice();
+        if (voice != undefined) voice[1] = pc.notes.length - 1;
+        pc.currentStave = null;
       }
-      
+
       part2.toVex();
     },
 
     InBodyInfoFieldList(field, _eol, restFields) {
       field.toVex();
-      restFields.children.map(f => f.toVex());
+      restFields.children.map((f) => f.toVex());
     },
 
     InBodyInfoField(f) {
@@ -610,7 +597,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     InBodyInfoField_unknown(_) {
-      console.warn('unknown in body info field: ', this.sourceString);
+      console.warn("unknown in body info field: ", this.sourceString);
     },
 
     // MusicCode(...children) {
@@ -826,32 +813,32 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
         let dur = maybeLen.children[0].toVex();
         notelen = new Fraction(dur.num, dur.den);
       }
-      
+
       let note = pc.NewNote([p.value], notelen);
-      
+
       // Handle Accidentals
       if (acc.children.length > 0) {
-          // acc.children[0] is the accidental node
-          // We need custom 'accidental' rule or just grab sourceString
-          let accStr = acc.sourceString;
-          // Map ABC accidentals to VexFlow
-          // ^ = sharp (#)
-          // ^^ = double sharp (##)
-          // _ = flat (b)
-          // __ = double flat (bb)
-          // = = natural (n)
-          let vfAcc = "";
-          if (accStr === "^") vfAcc = "#";
-          else if (accStr === "^^") vfAcc = "##";
-          else if (accStr === "_") vfAcc = "b";
-          else if (accStr === "__") vfAcc = "bb";
-          else if (accStr === "=") vfAcc = "n";
-          
-          if (vfAcc) {
-              note.addModifier(new Accidental(vfAcc));
-          }
+        // acc.children[0] is the accidental node
+        // We need custom 'accidental' rule or just grab sourceString
+        let accStr = acc.sourceString;
+        // Map ABC accidentals to VexFlow
+        // ^ = sharp (#)
+        // ^^ = double sharp (##)
+        // _ = flat (b)
+        // __ = double flat (bb)
+        // = = natural (n)
+        let vfAcc = "";
+        if (accStr === "^") vfAcc = "#";
+        else if (accStr === "^^") vfAcc = "##";
+        else if (accStr === "_") vfAcc = "b";
+        else if (accStr === "__") vfAcc = "bb";
+        else if (accStr === "=") vfAcc = "n";
+
+        if (vfAcc) {
+          note.addModifier(new Accidental(vfAcc));
+        }
       }
-      
+
       return note;
     },
 
@@ -968,7 +955,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
     // Reset staff HTML before drawing
     if (staffRef) staffRef.innerHTML = "";
-    
+
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
     let rctx = renderer.getContext();
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
@@ -1000,17 +987,17 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
 
     // Render Title if exists
     if (pc.title) {
-       // Simple SVG text for title
-       // rendering context text
-       rctx.save();
-       rctx.setFont("Times New Roman", 24, "bold"); // VexFlow font handling is tricky, simpler to use standard canvas/svg text if possible?
-       // VexFlow RenderContext doesn't always support setFont clearly across backends?
-       // Let's use standard VexFlow text drawing if possible, or just append HTML?
-       // Renderer is SVG. We can't easily append HTML inside the SVG without foreignObject.
-       // Let's try rctx.fillText
-       rctx.fillText(pc.title, pc.maxStaveWidth / 2, 30);
-       rctx.restore();
-       currentY += 50; 
+      // Simple SVG text for title
+      // rendering context text
+      rctx.save();
+      rctx.setFont("Times New Roman", 24, "bold"); // VexFlow font handling is tricky, simpler to use standard canvas/svg text if possible?
+      // VexFlow RenderContext doesn't always support setFont clearly across backends?
+      // Let's use standard VexFlow text drawing if possible, or just append HTML?
+      // Renderer is SVG. We can't easily append HTML inside the SVG without foreignObject.
+      // Let's try rctx.fillText
+      rctx.fillText(pc.title, pc.maxStaveWidth / 2, 30);
+      rctx.restore();
+      currentY += 50;
     }
 
     for (let system of pc.systems) {
@@ -1021,84 +1008,84 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
 
       // First pass: Calculate required space
       for (let stave of system) {
-         // Find voice for this stave
-         const staveIndex = pc.staves.indexOf(stave);
-         const voice = voices[staveIndex];
+        // Find voice for this stave
+        const staveIndex = pc.staves.indexOf(stave);
+        const voice = voices[staveIndex];
 
-         let topY = stave.getYForLine(0); // Top line Y (0-indexed)
-         let bottomY = stave.getYForLine(4); // Bottom line Y
+        let topY = stave.getYForLine(0); // Top line Y (0-indexed)
+        let bottomY = stave.getYForLine(4); // Bottom line Y
 
-         if (voice) {
-           const bbox = voice.getBoundingBox();
-           if (bbox) {
-              // Check extension above
-              // bbox.y is the top-most coordinate
-              if (bbox.y < topY) {
-                 // Calculate spaces needed
-                 const pixelsAbove = topY - bbox.y;
-                 const spacesAbove = Math.ceil(pixelsAbove / PIXELS_PER_SPACE);
-                 // We want at least some padding
-                 // We kept the calculation to know how much to offset layout,
-                 // but we do NOT set it on the stave to avoid drawing tall barlines.
-               }
-
-              // Check extension below
-              // bbox.y + bbox.h is bottom
-              const voiceBottom = bbox.y + bbox.h;
-              if (voiceBottom > bottomY) {
-                  const pixelsBelow = voiceBottom - bottomY;
-                  const spacesBelow = Math.ceil(pixelsBelow / PIXELS_PER_SPACE);
-                  // We kept the calculation to know how much to offset layout,
-                  // but we do NOT set it on the stave to avoid drawing tall barlines.
-              }
-           }
-         }
-
-         // After setting options, recalculate extents for layout
-         // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y,
-         // but getBox or getHeight might change.
-         // Actually we control Y, giving it space is about placing the next system.
-
-         // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
-         // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually?
-         // Actually: new Stave(x, y, ...). y is the top line of the staff.
-         // Wait, let's verify VexFlow coordinate system.
-         // Usually y passed to Stave constructor is the y position of the top line.
-
-         // Let's just use the voice bounding box relative to stave.
-         // But voice bounding box is absolute coordinates based on current stave Y.
-         // Since we initialized staves with Y=0, the bounding box is relative to 0.
-
-         if (voice) {
-            const bbox = voice.getBoundingBox();
-            if (bbox) {
-               // bbox.y is absolute (currently relative to 0)
-               // bbox.y might be negative if notes are very high
-               // We need enough room above (negative Y)
-               // maxTopY should be positive value of required space above 0
-               if (bbox.y < -DEFAULT_TOP_PADDING) {
-                   maxTopY = Math.max(maxTopY, Math.abs(bbox.y));
-               } else {
-                   maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
-               }
-
-               // bbox.y + bbox.h is absolute bottom
-               // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
-               const bottomLineY = 40;
-               const voiceBottom = bbox.y + bbox.h;
-               if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
-                   maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
-               } else {
-                   maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
-               }
-            } else {
-                maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
-                maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+        if (voice) {
+          const bbox = voice.getBoundingBox();
+          if (bbox) {
+            // Check extension above
+            // bbox.y is the top-most coordinate
+            if (bbox.y < topY) {
+              // Calculate spaces needed
+              const pixelsAbove = topY - bbox.y;
+              const spacesAbove = Math.ceil(pixelsAbove / PIXELS_PER_SPACE);
+              // We want at least some padding
+              // We kept the calculation to know how much to offset layout,
+              // but we do NOT set it on the stave to avoid drawing tall barlines.
             }
-         } else {
-             maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
-             maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
-         }
+
+            // Check extension below
+            // bbox.y + bbox.h is bottom
+            const voiceBottom = bbox.y + bbox.h;
+            if (voiceBottom > bottomY) {
+              const pixelsBelow = voiceBottom - bottomY;
+              const spacesBelow = Math.ceil(pixelsBelow / PIXELS_PER_SPACE);
+              // We kept the calculation to know how much to offset layout,
+              // but we do NOT set it on the stave to avoid drawing tall barlines.
+            }
+          }
+        }
+
+        // After setting options, recalculate extents for layout
+        // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y,
+        // but getBox or getHeight might change.
+        // Actually we control Y, giving it space is about placing the next system.
+
+        // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
+        // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually?
+        // Actually: new Stave(x, y, ...). y is the top line of the staff.
+        // Wait, let's verify VexFlow coordinate system.
+        // Usually y passed to Stave constructor is the y position of the top line.
+
+        // Let's just use the voice bounding box relative to stave.
+        // But voice bounding box is absolute coordinates based on current stave Y.
+        // Since we initialized staves with Y=0, the bounding box is relative to 0.
+
+        if (voice) {
+          const bbox = voice.getBoundingBox();
+          if (bbox) {
+            // bbox.y is absolute (currently relative to 0)
+            // bbox.y might be negative if notes are very high
+            // We need enough room above (negative Y)
+            // maxTopY should be positive value of required space above 0
+            if (bbox.y < -DEFAULT_TOP_PADDING) {
+              maxTopY = Math.max(maxTopY, Math.abs(bbox.y));
+            } else {
+              maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+            }
+
+            // bbox.y + bbox.h is absolute bottom
+            // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
+            const bottomLineY = 40;
+            const voiceBottom = bbox.y + bbox.h;
+            if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
+              maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
+            } else {
+              maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+            }
+          } else {
+            maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+            maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+          }
+        } else {
+          maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+          maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+        }
       }
 
       // Apply Layout
@@ -1109,7 +1096,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       const systemStaveY = currentY + maxTopY;
 
       for (let stave of system) {
-         stave.setY(systemStaveY);
+        stave.setY(systemStaveY);
       }
 
       // Advance currentY
