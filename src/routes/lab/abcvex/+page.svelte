@@ -97,8 +97,8 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     // Multiple measures make up a System (one horizontal row).
     // Multiple Systems make up the full sheet of music (stacked vertically).
     systems: Stave[][] = [];
-    staveWidth: number = 220;
-    maxStaveWidth: number = 220;
+    staveWidth: number = 180;
+    maxStaveWidth: number = 180;
     voices: [number, number][] = [];
 
     constructor() {
@@ -133,31 +133,27 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
         rightBar: false,
       });
 
-      // Apply current key and time signature if this is the start of a system or if they changed?
-      // For VexFlow, we generally need to add them to every stave if we want them visible on every system,
-      // or at least where they change. 
-      // VexFlow's Stave keeps track of them.
-      
-      stave.addClef(this.clef);
-      if (this.keySignature) {
-         stave.addKeySignature(this.keySignature);
+      // Apply modifiers only at start of system or if changed (logic simplified for start of system)
+      const currentSystemIndex = this.systems.length - 1;
+      const isFirstInSystem = this.systems[currentSystemIndex].length === 0;
+      const isFirstInScore = this.staves.length === 0;
+
+      if (isFirstInSystem) {
+          stave.addClef(this.clef);
+          if (this.keySignature) {
+             stave.addKeySignature(this.keySignature);
+          }
       }
-      // Only add time signature if it's the first stave or if it changed recently (logic simplified for now: add if exists)
-      // Standard notation rules: Time sig only at start or change. Key sig at start of every system.
-      // We will handle "only at start" logic by checking if it is the very first stave.
-      // But for simplicity/robustness in VexFlow, adding it to the first stave of the score is good.
-      // Re-adding it on new systems is also standard for Key Signature.
-      // Time signature is usually NOT repeated on every system unless changed.
-      
-      if (this.timeSignature && (this.staves.length === 0 || this.staves.length === 1)) { 
-          // Assuming 1st stave. Logic can be improved to track "dirty" time sig.
-          stave.addTimeSignature(this.timeSignature);
+
+      // Time signature only at very beginning (or if we supported changes mid-stream)
+      if (isFirstInScore && this.timeSignature) { 
+           stave.addTimeSignature(this.timeSignature);
       }
       
       // Add tempo marking if pending
       if (this.tempo) {
           stave.setTempo({ duration: this.tempo.duration, dots: 0, bpm: this.tempo.bpm }, 0);
-          this.tempo = null; // Clear after applying
+          this.tempo = null; // Clear
       }
 
       // Add Rehearsal Mark if pending
@@ -173,6 +169,13 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
 
       this.staveX += this.staveWidth;
       this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
+      
+      // Visual fix: make staves look connected
+      // If not the first stave in system, remove the begin bar (clef/key/time takes care of "headers", but barline is separate)
+      if (!isFirstInSystem) {
+         stave.setBegBarType(BarlineType.NONE);
+      }
+      
       return stave;
     }
 
