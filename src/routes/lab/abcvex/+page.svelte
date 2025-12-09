@@ -24,10 +24,29 @@
     // GlyphFont,
     BarNote,
     BarlineType,
-  // } from "$lib/vexflow/vexflow-core";
+    Accidental,
+    KeySignature,
+    TimeSignature,
+    CurvePosition,
   } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
+
+  // Debug error logging
+  if (typeof window !== 'undefined') {
+    window.onerror = function(msg, url, line, col, error) {
+      const div = document.getElementById('debug-errors');
+      if (div) {
+        div.innerText += `Error: ${msg}\nLine: ${line}:${col}\n${error?.stack || ''}\n\n`;
+      }
+    };
+    window.addEventListener('unhandledrejection', function(event) {
+       const div = document.getElementById('debug-errors');
+       if (div) {
+         div.innerText += `Unhandled Rejection: ${event.reason}\n\n`;
+       }
+    });
+  }
 
   let abcInputText = $state(`
 X: 5
@@ -62,6 +81,15 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     slurs: [number | undefined, number | undefined][] = [];
     staves: Stave[] = [];
     currentStave: Stave | null = null;
+    
+    // Song metadata state
+    title: string = "";
+    keySignature: string = "C";
+    timeSignature: string | null = null;
+    clef: string = "treble";
+    tempo: { duration: string; bpm: number } | null = null;
+    nextRehearsalMark: string | null = null;
+
 
     staveX: number = 0;
     staveY: number = 0;
@@ -69,8 +97,8 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     // Multiple measures make up a System (one horizontal row).
     // Multiple Systems make up the full sheet of music (stacked vertically).
     systems: Stave[][] = [];
-    staveWidth: number = 300;
-    maxStaveWidth: number = 300;
+    staveWidth: number = 220;
+    maxStaveWidth: number = 220;
     voices: [number, number][] = [];
 
     constructor() {
@@ -78,7 +106,13 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     }
     reset() {
       this._unitNoteLength = null;
+      this.title = "";
       this.meter = new Fraction(0, 1);
+      this.keySignature = "C";
+      this.timeSignature = null;
+      this.clef = "treble";
+      this.tempo = null;
+      this.nextRehearsalMark = null;
       this.notes = [];
       this.beams = [];
       this.ties = [];
@@ -98,6 +132,41 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
         leftBar: false,
         rightBar: false,
       });
+
+      // Apply current key and time signature if this is the start of a system or if they changed?
+      // For VexFlow, we generally need to add them to every stave if we want them visible on every system,
+      // or at least where they change. 
+      // VexFlow's Stave keeps track of them.
+      
+      stave.addClef(this.clef);
+      if (this.keySignature) {
+         stave.addKeySignature(this.keySignature);
+      }
+      // Only add time signature if it's the first stave or if it changed recently (logic simplified for now: add if exists)
+      // Standard notation rules: Time sig only at start or change. Key sig at start of every system.
+      // We will handle "only at start" logic by checking if it is the very first stave.
+      // But for simplicity/robustness in VexFlow, adding it to the first stave of the score is good.
+      // Re-adding it on new systems is also standard for Key Signature.
+      // Time signature is usually NOT repeated on every system unless changed.
+      
+      if (this.timeSignature && (this.staves.length === 0 || this.staves.length === 1)) { 
+          // Assuming 1st stave. Logic can be improved to track "dirty" time sig.
+          stave.addTimeSignature(this.timeSignature);
+      }
+      
+      // Add tempo marking if pending
+      if (this.tempo) {
+          stave.setTempo({ duration: this.tempo.duration, dots: 0, bpm: this.tempo.bpm }, 0);
+          this.tempo = null; // Clear after applying
+      }
+
+      // Add Rehearsal Mark if pending
+      if (this.nextRehearsalMark) {
+        // Use SystemText or similar for Rehearsal Marks, or Section modifiers
+        stave.setSection(this.nextRehearsalMark, 0);
+        this.nextRehearsalMark = null;
+      }
+
       this.staves.push(stave);
       if (this.systems.length === 0) this.systems.push([]);
       this.systems[this.systems.length - 1].push(stave);
@@ -222,7 +291,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
             slur[0] == undefined ? undefined : this.notes[slur[0]],
             slur[1] == undefined ? undefined : this.notes[slur[1]],
             {
-              positionEnd: VexFlow.CurvePosition.NEAR_HEAD,
+              positionEnd: CurvePosition.NEAR_HEAD,
               // copy from vexflow curve_tests.ts
               xShift: -10,
               yShift: 30,
@@ -245,8 +314,8 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
           voices.push(undefined);
         } else {
           voices.push(
-            new VexFlow.Voice(this.meter.toString())
-              .setMode(VexFlow.Voice.Mode.SOFT)
+            new Voice(this.meter.toString())
+              .setMode(Voice.Mode.SOFT)
               .addTickables(pc.notes.slice(vr[0], vr[1] + 1)),
           );
         }
@@ -323,11 +392,11 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     Field_T(_t, title) {
-
+      pc.title = title.sourceString.trim();
     },
 
     Field_P(_p, part) {
-
+       pc.nextRehearsalMark = part.sourceString.trim();
     },
 
     Field_W(_w, words) {
@@ -335,11 +404,73 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     Field_Q(_q, tempo) {
+       // Format: 1/4=120
+       const t = tempo.toVex();
+       if(t) {
+        pc.tempo = t;
+       }
+    },
 
+    QKeyedValue(_str1, num1, _slash, num2, _eq, bpm, _str2) {
+       // rule: dqTextString? (number "/" number "=")? number dqTextString?
+       // args: 7
+       // num1, _slash, num2, _eq are all iteration nodes (0 or 1 element) due to the optional group
+       
+       if (num1.children.length > 0 && num2.children.length > 0) {
+           const n = num1.children[0].toVex(); // { type: 'number', num: ... }
+           const d = num2.children[0].toVex(); // { type: 'number', num: ... }
+           
+           // default: quarter
+           let duration = "q";
+           if (d.num === 2) duration = "h";
+           if (d.num === 1) duration = "w";
+           if (d.num === 8) duration = "8";
+           if (d.num === 16) duration = "16";
+           
+           return { duration: duration, bpm: Number(bpm.sourceString) };
+       }
+       // If just number, assume quarter note?
+       return { duration: "q", bpm: Number(bpm.sourceString) };
     },
 
     Field_K(_k, tonic, mode, _sp, accidental, noteName) {
-
+        // Parse key. VexFlow keys: "C", "Am", "F#", "Gb", etc.
+        // ABC tonic: C, C#, Cb
+        // ABC mode: maj, min, m, etc.
+        let k = tonic.sourceString; 
+        // Normalize ABC accidentals # and b are fine. ABC uses 'b' for flat.
+        // Check mode
+        let m = "";
+        if (mode.children.length > 0) {
+           m = mode.children[0].sourceString;
+        }
+        
+        // Map ABC mode to VexFlow key signature format
+        // VexFlow `KeySignature` expects major keys (e.g. "C", "F#", "Bb") or minor keys ("Am", "F#m").
+        // Actually VexFlow supports various modes using key specs, but `addKeySignature` usually takes the root + 'm' for minor.
+        
+        let vfKey = k;
+        if (m.startsWith("m") || m === "Min" || m === "Dor" || m === "Phrygian" || m === "Lyd" || m === "Mix" || m==="Loc") {
+            // Simplify: if it's minor, append 'm'. VexFlow handles relative minor keys automatically?
+            // "Gm" is valid in 
+            // What about modes? "D Mixolydian" -> G major signature.
+            // VexFlow KeySignature class usually handles standard keys. 
+            // If the user input "Gm", we pass "Gm".
+             if (m.toLowerCase().startsWith("m")) {
+                vfKey += "m";
+             }
+        }
+        
+        pc.keySignature = vfKey;
+        
+        // If we are mid-stream (staves already exist), we might need to add a key signature change to the *current* or *text* note?
+        // Or if a new stave starts, it will pick this up.
+        // ABC typically puts K: at start or inline.
+        // If inline, it affects the *next* notes.
+        // We'll update state, and if there's a current stave, we might need to add a key signature modifier.
+        if (pc.currentStave) {
+            pc.currentStave.addKeySignature(pc.keySignature);
+        }
     },
 
     UnknownFileHeaderField(_k, _v) {
@@ -367,16 +498,27 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     Field_M(_Mcolon, value) {
       let v = value.sourceString;
       let r = new Fraction(0, 1); // free meter
+      let timeSigString = "4/4"; // default for VexFlow rendering
+      
       if (v == "C") {
         r = new Fraction(4, 4);
+        timeSigString = "C";
       } else if (v == "C|") {
         r = new Fraction(2, 2);
+        timeSigString = "C|";
       } else if (v == "none") {
         // use default value
+        timeSigString = "";
       } else {
         r = value.toVex();
+        timeSigString = r.numerator + "/" + r.denominator;
       }
       pc.meter = r;
+      pc.timeSignature = timeSigString;
+      
+      if (pc.currentStave && timeSigString) {
+          pc.currentStave.addTimeSignature(timeSigString);
+      }
     },
 
     fraction(num, _sp1, _slash, _sp2, den) {
@@ -633,14 +775,40 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       return baseNote.toVex();
     },
 
-    baseNote(_acc, pitch, maybeLen) {
+    baseNote(acc, pitch, maybeLen) {
       const p = pitch.toVex();
       let notelen = new Fraction(1, 1);
       if (maybeLen.children.length) {
         let dur = maybeLen.children[0].toVex();
         notelen = new Fraction(dur.num, dur.den);
       }
-      return pc.NewNote([p.value], notelen);
+      
+      let note = pc.NewNote([p.value], notelen);
+      
+      // Handle Accidentals
+      if (acc.children.length > 0) {
+          // acc.children[0] is the accidental node
+          // We need custom 'accidental' rule or just grab sourceString
+          let accStr = acc.sourceString;
+          // Map ABC accidentals to VexFlow
+          // ^ = sharp (#)
+          // ^^ = double sharp (##)
+          // _ = flat (b)
+          // __ = double flat (bb)
+          // = = natural (n)
+          let vfAcc = "";
+          if (accStr === "^") vfAcc = "#";
+          else if (accStr === "^^") vfAcc = "##";
+          else if (accStr === "_") vfAcc = "b";
+          else if (accStr === "__") vfAcc = "bb";
+          else if (accStr === "=") vfAcc = "n";
+          
+          if (vfAcc) {
+              note.addModifier(new Accidental(vfAcc));
+          }
+      }
+      
+      return note;
     },
 
     pitch(name, maybeOctave) {
@@ -766,6 +934,9 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     }
 
     // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
+    // Reset staff HTML before drawing
+    if (staffRef) staffRef.innerHTML = "";
+    
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
     let rctx = renderer.getContext();
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
@@ -791,9 +962,24 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     // 2. Layout
     let currentY = 0;
     const PIXELS_PER_SPACE = 10;
-    const DEFAULT_TOP_PADDING = 10; // pixels
-    const DEFAULT_BOTTOM_PADDING = 10; // pixels
-    const SYSTEM_SPACING = 20; // pixels between systems
+    const DEFAULT_TOP_PADDING = 30; // pixels
+    const DEFAULT_BOTTOM_PADDING = 30; // pixels
+    const SYSTEM_SPACING = 50; // pixels between systems
+
+    // Render Title if exists
+    if (pc.title) {
+       // Simple SVG text for title
+       // rendering context text
+       rctx.save();
+       rctx.setFont("Times New Roman", 24, "bold"); // VexFlow font handling is tricky, simpler to use standard canvas/svg text if possible?
+       // VexFlow RenderContext doesn't always support setFont clearly across backends?
+       // Let's use standard VexFlow text drawing if possible, or just append HTML?
+       // Renderer is SVG. We can't easily append HTML inside the SVG without foreignObject.
+       // Let's try rctx.fillText
+       rctx.fillText(pc.title, pc.maxStaveWidth / 2, 30);
+       rctx.restore();
+       currentY += 50; 
+    }
 
     for (let system of pc.systems) {
       if (system.length === 0) continue;
