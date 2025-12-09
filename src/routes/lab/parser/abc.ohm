@@ -16,8 +16,6 @@ Abc {
 
   TuneHeader = TuneHeaderField (eol TuneHeaderField)*
   TuneHeaderField =
-    | TuneHeaderStartField --start
-    | TuneHeaderEndField --end
     | ReservedTuneHeaderField
     | UnknownTuneHeaderField --unknown
 
@@ -193,49 +191,48 @@ Abc {
     | ReservedInBodyField
     | UnknownField --unknown
 
-  TuneHeaderStartField = "X:" number
-  TuneHeaderEndField   = KeySignatureSetting
-
   ReservedFileHeaderField
     = ReservedHeaderOnlyField
-    | ReservedCommonField<oneLineValue>
+    | ReservedCommonField
 
   ReservedTuneHeaderField =
     | ReservedTuneHeaderFieldX
     | ReservedHeaderOnlyField
-    | ReservedCommonField<oneLineValue>
+    | ReservedCommonField
 
   ReservedTuneHeaderFieldX =
-    | "P:" oneLineValue --part
-    | TempoSetting --tempo
-    | "T:" oneLineValue --title
-    | VoiceSetting --voice
-    | "W:" oneLineValue --wordsAfter
+    | Field_X
+    | Field_P
+    | Field_Q
+    | Field_T
+    | Field_V
+    | Field_W
+    | Field_K
 
   ReservedInBodyField =
     | ReservedInBodyFieldX
-    | ReservedCommonField<oneLineValue>
+    | ReservedCommonField
 
   ReservedInBodyFieldX =
-  	| KeySignatureSetting --keysig
-    | "P:" oneLineValue --part
-    | TempoSetting --tempo
-    | "s:" oneLineValue --symbolLine
-    | "T:" oneLineValue --tuneTitle
-    | VoiceSetting --voice
-    | "W:" oneLineValue --wordsAfter
-    | "w:" oneLineValue --wordsParallel
+  	| Field_K
+    | Field_P
+    | Field_Q
+    | Field_s
+    | Field_T
+    | Field_V
+    | Field_W
+    | Field_w
 
   ReservedInlineField =
     | ReservedInlineFieldX
-    | ReservedCommonField<inlineFieldValue>
+    | ReservedCommonField
 
   ReservedInlineFieldX =
-   	| KeySignatureSetting --keysig
-    | "P:" inlineFieldValue --part
-    | TempoSetting --tempo
-    | "R:" inlineFieldValue --rhythm
-    | VoiceSetting --voice
+   	| Field_K
+    | Field_P
+    | Field_Q
+    | Field_R
+    | Field_V
 
   ReservedHeaderOnlyField =
     | "A:" oneLineValue
@@ -249,18 +246,31 @@ Abc {
     | "Z:" manyLineValue
     | "O:" oneLineValue
 
-  ReservedCommonField<value> =
-    | "I:" "linebreak" space+ linebreakMarks --instruction
-    | UnitNoteLengthSetting --unitlen
-    | MeterSetting
-    | "m:" value --macro
-    | "N:" value --notes
-    | "R:" value --rhythm
-    | "r:" value --remark
-    | "U:" value --userDefined
-    | fieldContinue value --fieldContinue
+  ReservedCommonField =
+    | Field_I
+    | Field_L
+    | Field_M
+    | Field_m
+    | Field_N
+    | Field_R
+    | Field_r
+    | Field_U
+    | Field_continue
 
-  MeterSetting = "M:" meterValue
+  Field_X = "X:" number
+  Field_T = "T:" oneLineValue
+  Field_P = "P:" oneLineValue
+  Field_W = "W:" oneLineValue
+  Field_s = "s:" oneLineValue
+  Field_w = "w:" oneLineValue
+  Field_R = "R:" inlineFieldValue
+  Field_continue = fieldContinue oneLineValue
+  Field_U = "U:" oneLineValue
+  Field_r = "r:" oneLineValue
+  Field_N = "N:" oneLineValue
+  Field_m = "m:" oneLineValue
+  Field_I = "I:" "linebreak" space+ linebreakMarks
+  Field_M = "M:" meterValue
   meterValue = fraction | meterValueLiteral
   meterValueLiteral =
     | "C|"
@@ -269,10 +279,10 @@ Abc {
 
   fraction = number spaces "/" spaces number
 
-  UnitNoteLengthSetting = "L:" "1" "/" unitNoteLength
+  Field_L = "L:" "1" "/" unitNoteLength
   unitNoteLength = "16" | "32" | "64" | "1" | "2" | "4" | "8"
 
-  VoiceSetting = "V:" word VoiceProperty*
+  Field_V = "V:" word VoiceProperty*
   VoiceProperty
     = voicePropertyName "=" "\"" (~"\"" any)+ "\"" --name
     | voicePropertySubName "=" "\"" (~"\"" any)+ "\"" --subname
@@ -281,11 +291,10 @@ Abc {
   voicePropertyName = "name" | "nm"
   voicePropertySubName = "subname" | "sname" | "snm"
 
-  TempoSetting
-    = "Q:" QKeyedValue --tempo
+  Field_Q = "Q:" QKeyedValue
   QKeyedValue = dqTextString? (number "/" number "=")? number dqTextString?
 
-  KeySignatureSetting
+  Field_K
     = "K:" keySignatureTonic keySignatureMode? (space+ accidental noteName)?
   keySignatureTonic = "A".."G" ("#" | "b")?
   keySignatureMode = "maj" | "min" | "m" | "Mix" | "Dor" | "Phr" | "Lyd" | "Loc"
@@ -307,7 +316,7 @@ Abc {
     | "<none>"
 
   UnknownFileHeaderField = ~(ReservedFileHeaderField) key oneLineValue
-  UnknownTuneHeaderField = ~(ReservedTuneHeaderField | TuneHeaderStartField | TuneHeaderEndField) key oneLineValue
+  UnknownTuneHeaderField = ~(ReservedTuneHeaderField) key oneLineValue
   UnknownField = ~(ReservedInBodyField | ReservedInlineField | ReservedTuneHeaderField | ReservedFileHeaderField) key (oneLineValue | inlineFieldValue)
 
   key = letter ":"

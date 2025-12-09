@@ -29,7 +29,23 @@
 
   const abcGrammar = ohm.grammar(abcNotation);
 
-  let abcInputText = $state("A:Winter.Loo\n\nM:3/4\nL:1/4\n C E G | c e g\n c e g \n C E G ");
+  let abcInputText = $state(`
+X: 5
+T:Princess Royal, Stanton Harcourt
+M:4/4
+L:1/8
+Q:1/4=120
+A:Stanton Harcourt
+P:A2B4
+K:Gm
+P:A
+GA|B2AB G2cB |B2AB G2d2|e2c2  cdef|d2c2 B3d |
+ccB2 A2G2 |FGFE D2d2|cBAG  F2A2|G4   G2 ||
+P:B
+d=e|f2d2 d=efd|g2d2 c4  |gg=ed cBAG|A2F2 F4  |
+G2GA B2B2 |c2c2 g2g2|f2d2  e2fe|d2G2 c2dc|
+BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
+`);
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -53,8 +69,8 @@
     // Multiple measures make up a System (one horizontal row).
     // Multiple Systems make up the full sheet of music (stacked vertically).
     systems: Stave[][] = [];
-    staveWidth: number = 400;
-    maxStaveWidth: number = 400;
+    staveWidth: number = 300;
+    maxStaveWidth: number = 300;
     voices: [number, number][] = [];
 
     constructor() {
@@ -302,12 +318,36 @@
       f.toVex();
     },
 
-    TuneHeaderField_start(fs) {
-      fs.toVex();
+    Field_X(_x, number) {
+      console.log('tune id=', this.sourceString);
     },
 
-    TuneHeaderField_end(fe) {
-      fe.toVex();
+    Field_T(_t, title) {
+
+    },
+
+    Field_P(_p, part) {
+
+    },
+
+    Field_W(_w, words) {
+
+    },
+
+    Field_Q(_q, tempo) {
+
+    },
+
+    Field_K(_k, tonic, mode, _sp, accidental, noteName) {
+
+    },
+
+    UnknownFileHeaderField(_k, _v) {
+      console.warn('unknown file header field: ', this.sourceString);
+    },
+
+    UnknownTuneHeaderField(_k, _v) {
+      console.warn('unknown tune header field: ', this.sourceString);
     },
 
     // TuneHeaderField_unknown(f) {
@@ -319,12 +359,12 @@
     //   return {key: tonic.sourceString.toLowerCase(), mode: maybeMode.children.length ? maybeMode.children[0].sourceString : null};
     // },
 
-    UnitNoteLengthSetting(_Lcolon, _one, _slash, unitNoteLength) {
+    Field_L(_Lcolon, _one, _slash, unitNoteLength) {
       pc._unitNoteLength = Number(unitNoteLength.sourceString);
     },
 
     // A simple meter mapping, expects "M:" spaces noteLen
-    MeterSetting(_Mcolon, value) {
+    Field_M(_Mcolon, value) {
       let v = value.sourceString;
       let r = new Fraction(0, 1); // free meter
       if (v == "C") {
@@ -366,6 +406,25 @@
         }
         ap.toVex();
       }
+    },
+
+    TuneBodyPart_middle(part1, _eol1, fields, _eol2, part2) {
+      part1.toVex();
+      fields.toVex();
+      part2.toVex();
+    },
+
+    InBodyInfoFieldList(field, _eol, restFields) {
+      field.toVex();
+      restFields.children.map(f => f.toVex());
+    },
+
+    InBodyInfoField(f) {
+      f.toVex();
+    },
+
+    InBodyInfoField_unknown(_) {
+      console.warn('unknown in body info field: ', this.sourceString);
     },
 
     // MusicCode(...children) {
@@ -717,7 +776,7 @@
     let ties = pc.buildTies();
     let slurs = pc.buildSlurs();
     let voices = pc.buildVoices();
-    
+
     // 1. Format voices
     let formatter = new VexFlow.Formatter();
     for (let i = 0; i < pc.staves.length; i++) {
@@ -741,7 +800,7 @@
 
       let maxTopY = 0;
       let maxBottomY = 0;
-      
+
       // First pass: Calculate required space
       for (let stave of system) {
          // Find voice for this stave
@@ -764,7 +823,7 @@
                  // We kept the calculation to know how much to offset layout,
                  // but we do NOT set it on the stave to avoid drawing tall barlines.
                }
-              
+
               // Check extension below
               // bbox.y + bbox.h is bottom
               const voiceBottom = bbox.y + bbox.h;
@@ -776,22 +835,22 @@
               }
            }
          }
-         
+
          // After setting options, recalculate extents for layout
-         // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y, 
-         // but getBox or getHeight might change. 
+         // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y,
+         // but getBox or getHeight might change.
          // Actually we control Y, giving it space is about placing the next system.
-         
+
          // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
-         // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually? 
+         // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually?
          // Actually: new Stave(x, y, ...). y is the top line of the staff.
          // Wait, let's verify VexFlow coordinate system.
          // Usually y passed to Stave constructor is the y position of the top line.
-         
+
          // Let's just use the voice bounding box relative to stave.
          // But voice bounding box is absolute coordinates based on current stave Y.
          // Since we initialized staves with Y=0, the bounding box is relative to 0.
-         
+
          if (voice) {
             const bbox = voice.getBoundingBox();
             if (bbox) {
@@ -804,10 +863,10 @@
                } else {
                    maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
                }
-               
+
                // bbox.y + bbox.h is absolute bottom
                // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
-               const bottomLineY = 40; 
+               const bottomLineY = 40;
                const voiceBottom = bbox.y + bbox.h;
                if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
                    maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
@@ -825,18 +884,18 @@
       }
 
       // Apply Layout
-      // currentY is where the previous system ended. 
+      // currentY is where the previous system ended.
       // We need to place the top line of current system such that we accommodate maxTopY.
       // So Stave Y = currentY + maxTopY.
-      
+
       const systemStaveY = currentY + maxTopY;
-      
+
       for (let stave of system) {
          stave.setY(systemStaveY);
       }
-      
+
       // Advance currentY
-      // The system lines take ~40px (for 5 lines). 
+      // The system lines take ~40px (for 5 lines).
       // Plus maxBottomY.
       // Plus spacing between systems.
       const staveHeight = 40; // 5 lines * 10 spacing = 40 height diff.
