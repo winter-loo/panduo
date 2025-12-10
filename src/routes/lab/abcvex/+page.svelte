@@ -160,12 +160,6 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       this.staveX += w;
       this.maxStaveWidth = Math.max(this.staveX, this.maxStaveWidth);
 
-      // Visual fix: make staves look connected
-      // If not the first stave in system, remove the begin bar (clef/key/time takes care of "headers", but barline is separate)
-      if (!isFirstInSystem) {
-        stave.setBegBarType(BarlineType.NONE);
-      }
-
       return stave;
     }
 
@@ -401,10 +395,6 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     },
 
     QKeyedValue(_str1, num1, _slash, num2, _eq, bpm, _str2) {
-      // rule: dqTextString? (number "/" number "=")? number dqTextString?
-      // args: 7
-      // num1, _slash, num2, _eq are all iteration nodes (0 or 1 element) due to the optional group
-
       if (num1.children.length > 0 && num2.children.length > 0) {
         const n = num1.children[0].toVex(); // { type: 'number', num: ... }
         const d = num2.children[0].toVex(); // { type: 'number', num: ... }
