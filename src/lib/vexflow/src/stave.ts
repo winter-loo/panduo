@@ -207,7 +207,6 @@ export class Stave extends Element {
     const baseOptions = options ? { ...options } : {};
     return {
       ...baseOptions,
-      lineWidth: baseOptions.lineWidth ?? baseStyle.lineWidth,
       style: mergedStyle,
     };
   }

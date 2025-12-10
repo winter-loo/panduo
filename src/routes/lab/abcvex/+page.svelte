@@ -22,7 +22,6 @@
     Curve,
     Voice,
     // GlyphFont,
-    BarNote,
     BarlineType,
     Accidental,
     KeySignature,
@@ -611,13 +610,10 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       } else if (this.sourceString == "::") {
         barType = BarlineType.REPEAT_BOTH;
       }
-      const barNote = new BarNote(barType);
 
       if (pc.currentStave) {
         // right bar
-        // push notes first so that the current voice includes this bar
-        pc.notes.push(barNote);
-        barNote.setStave(pc.currentStave);
+        pc.currentStave.setEndBarType(barType);
 
         let voice = pc.CurrentVoice();
         if (voice != undefined) voice[1] = pc.notes.length - 1;
@@ -625,9 +621,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
         pc.currentStave = null;
       } else {
         // left bar
-        // new voice first so that the new voice includes this bar
-        barNote.setStave(pc.CurrentStave());
-        pc.notes.push(barNote);
+        pc.CurrentStave().setBegBarType(barType);
       }
     },
     MusicCodePart_slurStart(s) {
