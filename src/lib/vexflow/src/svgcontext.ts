@@ -91,7 +91,7 @@ export class SVGContext extends RenderContext {
   constructor(element: HTMLElement, config?: VexflowConfigInstance) {
     super();
     this.element = element;
-    SVGContext.measureTextElement = new Element(config);
+    SVGContext.measureTextElement = new Element(undefined, config);
 
     this.precision = Math.pow(10, Tables.RENDER_PRECISION_PLACES);
 

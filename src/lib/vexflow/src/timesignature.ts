@@ -62,8 +62,8 @@ export class TimeSignature extends StaveModifier {
 
   constructor(config: VexflowConfigInstance, timeSpec: string = '4/4', customPadding = 15, validateArgs = true) {
     super(config);
-    this.topText = new Element(config);
-    this.botText = new Element(config);
+    this.topText = new Element(undefined, config);
+    this.botText = new Element(undefined, config);
     this.validateArgs = validateArgs;
 
     const padding = customPadding;

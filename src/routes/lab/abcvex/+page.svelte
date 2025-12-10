@@ -27,7 +27,8 @@
     KeySignature,
     TimeSignature,
     CurvePosition,
-  } from "vexflow";
+  } from "$lib/vexflow/vexflow-core";
+  // } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 

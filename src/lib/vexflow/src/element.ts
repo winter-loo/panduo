@@ -152,7 +152,7 @@ export class Element {
   protected x: number = 0;
   protected y: number = 0;
 
-  constructor(config?: VexflowConfigInstance, category?: string) {
+  constructor(category?: string, config?: VexflowConfigInstance) {
     this.attrs = {
       id: Element.newID(),
       type: category ?? (<typeof Element>this.constructor).CATEGORY,

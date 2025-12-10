@@ -55,7 +55,7 @@ export abstract class Tickable extends Element {
   private _postFormatted: boolean = false;
 
   constructor(config?: VexflowConfigInstance) {
-    super(config);
+    super(undefined, config);
 
     // These properties represent the duration of
     // this tickable element.
@@ -169,8 +169,8 @@ export abstract class Tickable extends Element {
    * Return the associated voice. Every tickable must be associated with a voice.
    * This allows formatters and preFormatter to associate them with the right modifierContexts.
    */
-  getVoice(): Voice | undefined {
-    return this.voice;
+  getVoice(): Voice {
+    return defined(this.voice, 'NoVoice', 'Tickable has no voice.');
   }
 
   /** Set the associated voice. */

@@ -85,7 +85,7 @@ export class Stave extends Element {
   }
 
   constructor(x: number, y: number, width: number, options?: StaveOptions, config?: VexflowConfigInstance) {
-    super(config);
+    super(undefined, config);
 
     this.x = x;
     this.y = y;
@@ -113,23 +113,19 @@ export class Stave extends Element {
     this.resetLines();
 
     // beg bar
-    if (this.options.leftBar) {
-      const leftOptions = this.normalizeBarlineOptions(
-        typeof this.options.leftBar === 'boolean' ? undefined : this.options.leftBar,
-      );
-      this.addModifier(
-        new Barline(this.config, BarlineType.SINGLE, leftOptions),
-      );
-    }
+    const leftOptions = this.normalizeBarlineOptions(
+      typeof this.options.leftBar === 'boolean' ? undefined : this.options.leftBar,
+    );
+    this.addModifier(
+      new Barline(this.config, this.options.leftBar ? BarlineType.SINGLE : BarlineType.NONE, leftOptions),
+    );
     // end bar
-    if (this.options.rightBar) {
-      const rightOptions = this.normalizeBarlineOptions(
-        typeof this.options.rightBar === 'boolean' ? undefined : this.options.rightBar,
-      );
-      this.addEndModifier(
-        new Barline(this.config, BarlineType.SINGLE, rightOptions),
-      );
-    }
+    const rightOptions = this.normalizeBarlineOptions(
+      typeof this.options.rightBar === 'boolean' ? undefined : this.options.rightBar,
+    );
+    this.addEndModifier(
+      new Barline(this.config, this.options.rightBar ? BarlineType.SINGLE : BarlineType.NONE, rightOptions),
+    );
   }
 
   /** Set default style for ledger lines. */

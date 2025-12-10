@@ -166,7 +166,7 @@ export class StaveConnector extends Element {
 
   /** Set optional associated Text. */
   override setText(text: string, options: { shiftX?: number; shiftY?: number } = {}): this {
-    const textElement = new Element(undefined, 'StaveConnector.text');
+    const textElement = new Element('StaveConnector.text');
     textElement.setText(text);
     textElement.setXShift(options.shiftX ?? 0);
     textElement.setYShift(options.shiftY ?? 0);

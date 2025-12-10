@@ -40,8 +40,8 @@ export class StaveModifier extends Element {
   protected stave?: Stave;
   protected layoutMetrics?: LayoutMetrics;
 
-  constructor(config: VexflowConfigInstance) {
-    super(config);
+  constructor(config?: VexflowConfigInstance) {
+    super(undefined, config);
 
     this.padding = this.config.get('Stave.spacingBetweenModsPx');
     this.position = StaveModifierPosition.ABOVE;
