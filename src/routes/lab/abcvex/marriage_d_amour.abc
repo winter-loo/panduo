@@ -1,0 +1,193 @@
+X:1
+Q:"Moderato"
+V:t clef=treble
+V:b clef=bass octave=-2
+K:Gm
+M:4/4
+[V:t][L:1/8]
+z/ z z2 z4 g/ | [L:1/16] gaab baag gddB BGGf |
+[V:b][L:1/8]
+Gebd bdbd | Gdbd bdbd |
+M:3/4
+[V:t][L:1/16]
+feed ef e4-e2 | [M:7/8] z eeffg gaaf fcce |
+[V:b][L:1/8]
+eg e'g e'g | [M:7/8] Fca ca ca |
+M:6/8
+[V:t][L:1/16]
+eddcde d2-[d'(d]/[d)d'']2-[dd'']-[dd'']/ |
+[V:b][L:1/8]
+Bfb d- [d_g']2 |
+M:12/8
+[V:t][L:1/16]
+d2GBdc d2GBdc d2GBed d2GBed |
+[V:b][L:1/8]
+Gdb dbd Gdb cge' |
+M:9/8
+[V:t][L:1/16]
+e2eedee f2fgfg d4-d2 |
+[V:b][L:1/8]
+ge'g Fca Bb[Aa] |
+M:12/8
+[V:t][L:1/16]
+d'2gbd'c' d'2gbd'c' d'2gbe'd' e'2gbe'd' |
+[V:b][L:1/8]
+Gdb dbd Gdb cge' |
+M:9/8
+[V:t][L:1/16]
+e'2e'd'e'_e' f'2f'g'f'g' d'4-d'2 |
+[V:b][L:1/8]
+ge'g Fca B[Bb][Aa] |
+M:12/8
+[V:t][L:1/16]
+b2-bdde e2-ecag a2-accd d2BBgf |
+[V:b][L:1/8]
+[Gg]db cge' Fca BfA |
+M:9/8
+[V:t][L:1/16]
+g2-gBBc c2-cAdc d4-d2 |
+[V:b][L:1/8]
+Gdb Aec' d[=E=e][_G_g] |
+M:12/8
+[V:t][L:1/16]
+b2-bbbc' c'2-c'bag f2-ffgfd d4-d2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] |
+[V:t][L:1/16]
+b2-bbbc' c'2-c'bag f2-ffgfd d4-d2 |
+[V:b][L:1/8]
+Gdb cge' Fca Gdb |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2[c'c''][bb'][aa'][gg'] [ff']-[ff'][ff'][gg'][ff'] [dd']4-[dd']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] |
+M:9/8
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] |
+[V:b][L:1/8]
+Gdb cge' Fca |
+M:6/8
+[V:t][L:1/4]
+[gg']2- [gg'] |
+[V:b][L:1/8]
+Gdb d'g'b' |
+M:12/8
+[V:t][L:1/16]
+d2GBdc d2GBdc d2GBed e2GBed |
+[V:b][L:1/8]
+Gdb dbd Gdb cgee' |
+M:9/8
+[V:t][L:1/16]
+e2ede=e f2fgfg d4-d2 |
+[V:b][L:1/8]
+ge'g Fca Bb[Aa] |
+M:12/8
+[V:t octave=1][L:1/16]
+d2GBdc d2GBdc d2GBed e2GBeed |
+[V:b][L:1/8]
+Gdb dbd Gdb cge'
+M:9/8
+[V:t octave=1][L:1/16]
+e2ede=e f2fgfg d4-d2 |
+[V:b][L:1/8]
+ge'g Fca B[Bb][Aa] |
+M:12/8
+[V:t octave=0][L:1/16]
+b2-bbbc' c'2-c'bag f2-ffgf d4-d2 | b2-bbbc' c'2-c'bag f2-ffgf g4-g2 | [bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][ff'][gg'][ff'] [dd']4-[dd']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] | Gdb cge' Fca Gdb | Gdb cge' Fca Bb[Aa] |
+M:9/8
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] |
+[V:b][L:1/8]
+Gdb cge' Fca |
+M:6/8
+[V:t][L:1/8]
+[gg']4 [gg'] z/ g/ |
+[V:b][L:1/8]
+Gdb d'g'b' |
+M:4/4
+[V:t][L:1/16]
+gaac'  c'aag gddB BGGf |
+[V:b][L:1/8]
+Gdbd bdbd |
+M:3/4
+[V:t][L:1/16]
+feed ef e4-e2 |
+[V:b][L:1/8]
+ce c'e c'e |
+M:7/8
+[V:t][L:1/16]
+z eeffg gaaf fcce |
+[V:b][L:1/8]
+Fca ca ca |
+M:6/8
+[V:t][L:1/16]
+eddcde d2[-dd']/[dd'']2-[dd'']-[dd'']/ |
+[V:b][L:1/8]
+Bfd' d-[d_g'] |
+M:12/8
+[V:t][L:1/16]
+d2GBdc d2GBdc d2GBed e2GBed |
+[V:b][L:1/8]
+Gdb dbd Gdb cge' |
+M:9/8
+[V:t][L:1/16]
+e2eede=e f2fgfg d4-d2 |
+[V:b][L:1/8]
+ge'g Fca Bb[Aa] |
+M:12/8
+[V:t][L:1/16]
+d'2gbd'c' d'2gbd'c' d'2gbe'd' e'2gbe'd' |
+[V:b][L:1/8]
+Gdb dbd Gdb cge' |
+M:9/8
+[V:t octave=1][L:1/16]
+e2ede=e f2fgfg d4-d2 |
+[V:b][L:1/8]
+ge'g Fca B[Bb][Aa] |
+M:12/8
+[V:t octave=0][L:1/16]
+b2-bdde e2-ecag  a2-accd d2BBgf |
+[V:b][L:1/8]
+Gdb cge' Fca BfA
+M:9/8
+[V:t][L:1/16]
+g2-gBBc c2-cAdc d4-d2 |
+[V:b][L:1/8]
+Gdb Aec' d[=E=e'][_G_g] |
+M:12/8
+[V:t][L:1/16]
+b2bbbc' c'2-c'bag f2-ffgf d4-d2 | b2bbbc' c'2-c'bag f2-ffgf g4-g2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] | Gdb cge' Fca Gdb |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] [dd']4-[dd']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] [gg']4-[gg']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Gdb |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] [dd']4-[dd']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] [gg']4-[gg']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Gdb |
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] [dd']4-[dd']2 |
+[V:b][L:1/8]
+Gdb cge' Fca Bb[Aa] |
+M:9/8
+[V:t][L:1/16]
+[bb']2[bb'][bb'][bb'][c'c''] [c'c'']2-[c'c''][bb'][aa'][gg'] [ff']2-[ff'][ff'][gg'][ff'] |
+[V:b][L:1/8]
+Gdb cge' Fca |
+M:12/8
+[V:t][L:1/2]
+[gg']2 z |]
+[V:b][L:1/8]
+Gdb d'g'd'' g'' z>z g'''> |]
