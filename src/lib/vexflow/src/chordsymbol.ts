@@ -32,13 +32,7 @@ export class ChordSymbolBlock extends Element {
   symbolModifier: SymbolModifiers;
   vAlign: boolean;
 
-  constructor(
-    text: string,
-    symbolModifier: SymbolModifiers,
-    xShift: number,
-    yShift: number,
-    vAlign: boolean,
-  ) {
+  constructor(text: string, symbolModifier: SymbolModifiers, xShift: number, yShift: number, vAlign: boolean) {
     super();
     this.text = text;
     this.symbolModifier = symbolModifier;
@@ -225,12 +219,9 @@ export class ChordSymbol extends Modifier {
     }
     const rightOverlap = Math.min(
       Math.max(rightWidth - maxRightGlyphWidth, 0),
-      Math.max(rightWidth - state.rightShift, 0),
+      Math.max(rightWidth - state.rightShift, 0)
     );
-    const leftOverlap = Math.min(
-      Math.max(leftWidth - maxLeftGlyphWidth, 0),
-      Math.max(leftWidth - state.leftShift, 0),
-    );
+    const leftOverlap = Math.min(Math.max(leftWidth - maxLeftGlyphWidth, 0), Math.max(leftWidth - state.leftShift, 0));
 
     state.leftShift += leftOverlap;
     state.rightShift += rightOverlap;
@@ -272,14 +263,14 @@ export class ChordSymbol extends Modifier {
     params: Partial<{
       text: string;
       symbolModifier: SymbolModifiers;
-    }> = {},
+    }> = {}
   ): ChordSymbolBlock {
     const symbolBlock = new ChordSymbolBlock(
       params.text ?? '',
       params.symbolModifier ?? SymbolModifiers.NONE,
       0,
       0,
-      false,
+      false
     );
 
     if (symbolBlock.isSubscript()) {
@@ -304,7 +295,7 @@ export class ChordSymbol extends Modifier {
     parameters: Partial<{
       text: string;
       symbolModifier: SymbolModifiers;
-    }>,
+    }>
   ): this {
     this.symbolBlocks.push(this.getSymbolBlock(parameters));
     return this;
@@ -317,7 +308,7 @@ export class ChordSymbol extends Modifier {
     text: string,
     parameters: Partial<{
       symbolModifier: SymbolModifiers;
-    }> = {},
+    }> = {}
   ): this {
     return this.addSymbolBlock({ ...parameters, text });
   }
@@ -344,7 +335,7 @@ export class ChordSymbol extends Modifier {
     glyph: string,
     params: Partial<{
       symbolModifier: SymbolModifiers;
-    }> = {},
+    }> = {}
   ): this {
     return this.addText(ChordSymbol.glyphs[glyph], params);
   }
@@ -357,7 +348,7 @@ export class ChordSymbol extends Modifier {
     text: string,
     params: Partial<{
       symbolModifier: SymbolModifiers;
-    }> = {},
+    }> = {}
   ): this {
     let str = '';
     for (let i = 0; i < text.length; ++i) {
@@ -380,7 +371,7 @@ export class ChordSymbol extends Modifier {
   addLine(
     params: Partial<{
       symbolModifier: SymbolModifiers;
-    }> = {},
+    }> = {}
   ): this {
     // Two csymMinor glyphs next to each other.
     return this.addText('\ue874\ue874' /*{csymMinor}{csymMinor}*/, params);
@@ -412,7 +403,8 @@ export class ChordSymbol extends Modifier {
     const note = this.checkAttachedNote() as StemmableNote;
     this.setRendered();
 
-    ctx.openGroup('chordsymbol', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('chordsymbol' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     const start = note.getModifierStartXY(Modifier.Position.ABOVE, this.index);
     ctx.setFont(this.fontInfo);

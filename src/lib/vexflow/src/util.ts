@@ -1,6 +1,5 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
-
 // Note: Keep this module free of imports to reduce the chance of circular dependencies.
 
 /** `RuntimeError` will be thrown by VexFlow classes in case of error. */
@@ -129,7 +128,7 @@ export function sumArray(arr: number[]): number {
 
       return newArr;
     } else {
-      return [].concat(arr); // 
+      return [].concat(arr); //
     }
   }
   */

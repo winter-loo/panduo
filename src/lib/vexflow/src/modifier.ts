@@ -1,7 +1,6 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
-import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { ModifierContext } from './modifiercontext';
 import { Note } from './note';
@@ -65,8 +64,8 @@ export class Modifier extends Element {
   protected spacingFromNextModifier: number;
   protected modifierContext?: ModifierContext;
 
-  constructor(config?: VexflowConfigInstance) {
-    super(config);
+  constructor() {
+    super();
 
     this.width = 0;
 
@@ -208,10 +207,7 @@ export class Modifier extends Element {
     const subNoteXOffset =
       position === Modifier.Position.RIGHT
         ? tickContext.getX() + this.getSpacingFromNextModifier() * subNotes.length + 10
-        : tickContext.getX() -
-          metrics.modLeftPx -
-          metrics.modRightPx +
-          this.getSpacingFromNextModifier();
+        : tickContext.getX() - metrics.modLeftPx - metrics.modRightPx + this.getSpacingFromNextModifier();
 
     subNotes.forEach((subNote) => {
       const subTickContext = subNote.getTickContext();

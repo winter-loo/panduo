@@ -2,10 +2,8 @@
 // MIT License
 // Co-author: Benjamin W. Bohl
 
-import { VexflowConfig } from './config';
-import type { ClefConfigEntry, VexflowConfigInstance, DeepPartial } from './config';
-import { ElementStyle } from './element';
 import { Glyphs } from './glyphs';
+import { Metrics } from './metrics';
 import { Stave } from './stave';
 import { StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Category } from './typeguard';
@@ -14,11 +12,6 @@ import { log } from './util';
 // eslint-disable-next-line
 function L(...args: any[]) {
   if (Clef.DEBUG) log('VexFlow.Clef', args);
-}
-
-export interface ClefOptions {
-  annotation?: string;
-  style?: ElementStyle;
 }
 
 /**
@@ -41,6 +34,7 @@ export class Clef extends StaveModifier {
   code = Clef.types['treble'].code;
   line = Clef.types['treble'].line;
 
+  protected size = 'default';
   protected type = 'treble';
 
   /**
@@ -103,29 +97,20 @@ export class Clef extends StaveModifier {
   }
 
   /** Create a new clef. */
-  constructor(type: string, config: VexflowConfigInstance, options?: ClefOptions) {
-    super(config);
-
-    const { ...optionOverrides } = options ?? {};
-    const configInstance = config ?? VexflowConfig.defaults();
-    const resolved = configInstance.clef(
-      type,
-      optionOverrides as DeepPartial<ClefConfigEntry>,
-    );
+  constructor(type: string, size?: string, annotation?: string) {
+    super();
 
     this.setPosition(StaveModifierPosition.BEGIN);
-    this.setType(type, resolved.annotation);
-
-    const style = resolved.style;
-    if (style && Object.keys(style).length > 0) this.setStyle(style);
+    this.setType(type, size, annotation);
     L('Creating clef:', type);
   }
 
   /** Set clef type, size and annotation. */
-  setType(type: string, annotation?: string): this {
+  setType(type: string, size: string = 'default', annotation?: string): this {
     this.type = type;
     this.code = Clef.types[type].code;
     this.line = Clef.types[type].line;
+    this.size = size ?? 'default';
 
     // If an annotation, such as 8va, is specified, add it to the Clef object.
     if (annotation === '8va') {
@@ -145,14 +130,15 @@ export class Clef extends StaveModifier {
       }
     }
     this.text = this.code;
-    this.fontInfo.size = Math.floor(this.getPoint());
+    this.fontInfo.size = Math.floor(Clef.getPoint(this.size));
 
     return this;
   }
 
   /** Get point for clefs. */
-  getPoint(): number {
-    return this.config.get('Clef.fontSize');
+  static getPoint(size?: string): number {
+    // for sizes other than 'default', clef is 2/3 of the default value
+    return size === 'default' ? Metrics.get('fontSize') : (Metrics.get('fontSize') * 2) / 3;
   }
 
   /** Set associated stave. */
@@ -167,13 +153,11 @@ export class Clef extends StaveModifier {
     const ctx = stave.checkContext();
     this.setRendered();
 
-    ctx.openGroup('clef', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('clef' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     this.y = stave.getYForLine(this.line);
-    let fillStyle = this.getStyle().fillStyle ?? 'currentColor';
-    this.renderText(ctx, 0, 0, {
-      fill: fillStyle,
-    });
+    this.renderText(ctx, 0, 0);
     this.drawPointerRect();
     ctx.closeGroup();
   }

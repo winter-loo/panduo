@@ -6,7 +6,6 @@
 // representation
 
 import { BoundingBox } from './boundingbox';
-import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Glyphs } from './glyphs';
 import { RenderContext } from './rendercontext';
@@ -27,10 +26,7 @@ const assertIsValidTimeSig = (timeSpec: string) => {
   numbers.forEach((number) => {
     // Characters consisting in number 0..9, '+', '-', '(' or ')'
     if (/^[0-9+\-()]+$/.test(number) === false) {
-      throw new RuntimeError(
-        'BadTimeSignature',
-        `Invalid time spec: ${timeSpec}. Must contain valid signatures.`,
-      );
+      throw new RuntimeError('BadTimeSignature', `Invalid time spec: ${timeSpec}. Must contain valid signatures.`);
     }
   });
 };
@@ -59,11 +55,12 @@ export class TimeSignature extends StaveModifier {
   protected validateArgs: boolean;
   protected topStartX: number = 0;
   protected botStartX: number = 0;
+  protected lineShift: number = 0;
 
-  constructor(config: VexflowConfigInstance, timeSpec: string = '4/4', customPadding = 15, validateArgs = true) {
-    super(config);
-    this.topText = new Element(undefined, config);
-    this.botText = new Element(undefined, config);
+  constructor(timeSpec: string = '4/4', customPadding = 15, validateArgs = true) {
+    super();
+    this.topText = new Element();
+    this.botText = new Element();
     this.validateArgs = validateArgs;
 
     const padding = customPadding;
@@ -130,6 +127,10 @@ export class TimeSignature extends StaveModifier {
     botWidth = this.botText.getWidth();
     height = Math.max(height, this.botText.getHeight());
 
+    // If the height of the digits is more than three staff spaces (30), shift half a line line
+    // in order to center the digits on lines 1.5 and 4.5 rather than 2 and 4.
+    this.lineShift = height > 30 ? 0.5 : 0;
+
     this.width = Math.max(topWidth, botWidth);
     this.topStartX = (this.width - topWidth) / 2.0;
     this.botStartX = (this.width - botWidth) / 2.0;
@@ -167,7 +168,7 @@ export class TimeSignature extends StaveModifier {
   }
 
   /**
-   * Return the staff line that the TimeSignature sits on. Generally 0 for numerator/
+   * Return the staff line that the TimeSignature sits on.  Generally 0 for numerator/
    * denominator time signatures such as 3/4 and 2 for cut/common.
    */
   getLine(): number {
@@ -206,7 +207,8 @@ export class TimeSignature extends StaveModifier {
     const stave = this.checkStave();
     const ctx = stave.checkContext();
     this.setRendered();
-    ctx.openGroup('timesignature', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('timesignature' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
     this.drawAt(ctx, stave, this.x);
     this.drawPointerRect();
     ctx.closeGroup();
@@ -219,22 +221,15 @@ export class TimeSignature extends StaveModifier {
       // render top text
       let startX = x + this.topStartX;
       if (this.botText.getText().length > 0) {
-        this.topRenderY = stave.getYForLine(this.topLine);
+        this.topRenderY = stave.getYForLine(this.topLine - this.lineShift);
       } else {
-        this.topRenderY =
-          (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
-      }
-      // make time signature text fit in stave
-      if (this.topText.height * 2 >= 4 * this.config.get("Stave.spacingBetweenLinesPx")) {
-        const fontSize = parseInt(this.topText.fontSize) * 0.8;
-        this.topText.fontSize = fontSize;
-        this.botText.fontSize = fontSize;
+        this.topRenderY = (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
       }
       this.topText.renderText(ctx, startX, this.topRenderY);
 
       // render bottom text
       startX = x + this.botStartX;
-      this.botRenderY = stave.getYForLine(this.bottomLine);
+      this.botRenderY = stave.getYForLine(this.bottomLine + this.lineShift);
       this.botText.renderText(ctx, startX, this.botRenderY);
     } else {
       this.renderText(ctx, x - this.x, stave.getYForLine(this.line));

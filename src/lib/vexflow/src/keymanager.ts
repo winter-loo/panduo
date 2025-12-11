@@ -46,7 +46,7 @@ export class KeyManager {
 
     this.scale = this.music.getScaleTones(
       this.music.getNoteValue(this.keyString),
-      Music.scaleTypes[this.keyParts.type],
+      Music.scaleTypes[this.keyParts.type]
     );
 
     this.scaleMap = {};

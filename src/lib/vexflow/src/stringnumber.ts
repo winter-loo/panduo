@@ -66,10 +66,7 @@ export class StringNumber extends Modifier {
       if (note !== prevNote) {
         for (let n = 0; n < note.keys.length; ++n) {
           if (pos === Modifier.Position.LEFT) {
-            extraXSpaceForDisplacedNotehead = Math.max(
-              note.getLeftDisplacedHeadPx(),
-              extraXSpaceForDisplacedNotehead,
-            );
+            extraXSpaceForDisplacedNotehead = Math.max(note.getLeftDisplacedHeadPx(), extraXSpaceForDisplacedNotehead);
           }
           if (rightShift === 0) {
             shiftRight = Math.max(note.getRightDisplacedHeadPx(), shiftRight);
@@ -218,9 +215,7 @@ export class StringNumber extends Modifier {
             dotY = stemExt.topY + Metrics.get('StringNumber.stemPadding');
           }
           dotY -=
-            this.radius +
-            Metrics.get('StringNumber.verticalPadding') +
-            this.textLine * Tables.STAVE_LINE_DISTANCE;
+            this.radius + Metrics.get('StringNumber.verticalPadding') + this.textLine * Tables.STAVE_LINE_DISTANCE;
         }
         break;
       case Modifier.Position.BELOW:
@@ -231,9 +226,7 @@ export class StringNumber extends Modifier {
             dotY = stemExt.topY - Metrics.get('StringNumber.stemPadding');
           }
           dotY +=
-            this.radius +
-            Metrics.get('StringNumber.verticalPadding') +
-            this.textLine * Tables.STAVE_LINE_DISTANCE;
+            this.radius + Metrics.get('StringNumber.verticalPadding') + this.textLine * Tables.STAVE_LINE_DISTANCE;
         }
         break;
       case Modifier.Position.LEFT:

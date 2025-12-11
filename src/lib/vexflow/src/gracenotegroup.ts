@@ -90,7 +90,7 @@ export class GraceNoteGroup extends Modifier {
       const gracenoteGroup = groupList[i].gracenoteGroup;
       formatWidth = gracenoteGroup.getWidth() + groupList[i].spacing;
       gracenoteGroup.setSpacingFromNextModifier(
-        groupShift - Math.min(formatWidth, groupShift) + StaveNote.minNoteheadPadding,
+        groupShift - Math.min(formatWidth, groupShift) + StaveNote.minNoteheadPadding
       );
     }
 

@@ -16,8 +16,6 @@ export abstract class RenderContext {
     return Category.RenderContext;
   }
 
-  abstract get height(): number;
-  abstract get width(): number;
   abstract clear(): void;
   abstract setFillStyle(style: string): this;
   abstract setBackgroundFillStyle(style: string): this;
@@ -28,22 +26,15 @@ export abstract class RenderContext {
   abstract setLineCap(capType: CanvasLineCap): this;
   abstract setLineDash(dashPattern: number[]): this;
   abstract scale(x: number, y: number): this;
-  abstract rect(x: number, y: number, width: number, height: number, attributes?: any): this;
+  abstract rect(x: number, y: number, width: number, height: number): this;
   abstract resize(width: number, height: number): this;
-  abstract fillRect(x: number, y: number, width: number, height: number, attributes?: any): this;
+  abstract fillRect(x: number, y: number, width: number, height: number): this;
   abstract clearRect(x: number, y: number, width: number, height: number): this;
   abstract pointerRect(x: number, y: number, width: number, height: number): this;
   abstract beginPath(): this;
   abstract moveTo(x: number, y: number): this;
   abstract lineTo(x: number, y: number): this;
-  abstract bezierCurveTo(
-    cp1x: number,
-    cp1y: number,
-    cp2x: number,
-    cp2y: number,
-    x: number,
-    y: number,
-  ): this;
+  abstract bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): this;
   abstract quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): this;
   abstract arc(
     x: number,
@@ -51,18 +42,17 @@ export abstract class RenderContext {
     radius: number,
     startAngle: number,
     endAngle: number,
-    counterclockwise: boolean,
+    counterclockwise: boolean
   ): this;
-  abstract polygon(points: string, props?: any): this;
   // eslint-disable-next-line
   abstract fill(attributes?: any): this;
-  abstract stroke(props?: any): this;
+  abstract stroke(): this;
   abstract closePath(): this;
-  abstract fillText(text: string, x: number, y: number, props?: any): this;
+  abstract fillText(text: string, x: number, y: number): this;
   abstract save(): this;
   abstract restore(): this;
   // eslint-disable-next-line
-  abstract openGroup(classList?: string | string[], id?: string): any;
+  abstract openGroup(cls?: string, id?: string): any;
   abstract closeGroup(): void;
   abstract openRotation(angleDegrees: number, x: number, y: number): void;
   abstract closeRotation(): void;
@@ -77,12 +67,7 @@ export abstract class RenderContext {
   abstract set strokeStyle(style: string | CanvasGradient | CanvasPattern);
   abstract get strokeStyle(): string | CanvasGradient | CanvasPattern;
 
-  abstract setFont(
-    f?: string | FontInfo,
-    size?: string | number,
-    weight?: string | number,
-    style?: string,
-  ): this;
+  abstract setFont(f?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this;
   abstract getFont(): string;
 
   set font(f: string) {

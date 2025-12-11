@@ -4,7 +4,7 @@
 
 import { BoundingBox } from './boundingbox';
 import { Font, FontInfo } from './font';
-import { VexflowConfig, type VexflowConfigInstance } from './config';
+import { Metrics } from './metrics';
 import { Registry } from './registry';
 import { RenderContext } from './rendercontext';
 import { Category } from './typeguard';
@@ -58,10 +58,6 @@ export interface ElementStyle {
    * See: [SVG `stroke-dasharray` attribute](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray)
    */
   lineDash?: string;
-  /**
-   * A convenience color applied to both fill & stroke if specific values are not supplied.
-   */
-  backgroundColor?: string;
 }
 
 /**
@@ -97,9 +93,7 @@ export class Element {
 
   // Note: Canvas is node-canvas.
   // https://www.npmjs.com/package/canvas
-  static setTextMeasurementCanvas(
-    canvas: HTMLCanvasElement | OffscreenCanvas /* | Canvas */,
-  ): void {
+  static setTextMeasurementCanvas(canvas: HTMLCanvasElement | OffscreenCanvas /* | Canvas */): void {
     Element.txtCanvas = canvas;
   }
 
@@ -124,7 +118,6 @@ export class Element {
   protected rendered: boolean;
   protected style: ElementStyle = {};
   protected registry?: Registry;
-  protected config: VexflowConfigInstance;
 
   protected _fontInfo: Required<FontInfo>;
   protected fontScale: number;
@@ -152,19 +145,18 @@ export class Element {
   protected x: number = 0;
   protected y: number = 0;
 
-  constructor(category?: string, config?: VexflowConfigInstance) {
+  constructor(category?: string) {
     this.attrs = {
       id: Element.newID(),
       type: category ?? (<typeof Element>this.constructor).CATEGORY,
       class: '',
     };
 
-    this.config = config ?? VexflowConfig.defaults();
     this.rendered = false;
-    this._fontInfo = this.config.getFontInfo(this.attrs.type);
-    this.style = this.config.getStyle(this.attrs.type);
-    this.fontScale = this.config.get(`${this.attrs.type}.fontScale`);
-    this.shouldDrawPointerRect = this.config.get(`${this.attrs.type}.pointerRect`);
+    this._fontInfo = Metrics.getFontInfo(this.attrs.type);
+    this.style = Metrics.getStyle(this.attrs.type);
+    this.fontScale = Metrics.get(`${this.attrs.type}.fontScale`);
+    this.shouldDrawPointerRect = Metrics.get(`${this.attrs.type}.pointerRect`);
 
     // If a default registry exist, then register with it right away.
     Registry.getDefaultRegistry()?.register(this);
@@ -188,10 +180,6 @@ export class Element {
 
   getCategory(): string {
     return this.attrs.type;
-  }
-
-  getConfig(): VexflowConfigInstance {
-    return this.config;
   }
 
   /**
@@ -234,25 +222,12 @@ export class Element {
   }
 
   /** Apply the element style to `context`. */
-  applyStyle(
-    context: RenderContext | undefined = this.context,
-    style: ElementStyle = this.getStyle(),
-  ): this {
+  applyStyle(context: RenderContext | undefined = this.context, style: ElementStyle = this.getStyle()): this {
     if (!context) return this;
-    const backgroundColor = style.backgroundColor;
-
     if (style.shadowColor) context.setShadowColor(style.shadowColor);
     if (style.shadowBlur) context.setShadowBlur(style.shadowBlur);
-    if (style.fillStyle) {
-      context.setFillStyle(style.fillStyle);
-    } else if (backgroundColor) {
-      context.setFillStyle(backgroundColor);
-    }
-    if (style.strokeStyle) {
-      context.setStrokeStyle(style.strokeStyle);
-    } else if (backgroundColor) {
-      context.setStrokeStyle(backgroundColor);
-    }
+    if (style.fillStyle) context.setFillStyle(style.fillStyle);
+    if (style.strokeStyle) context.setStrokeStyle(style.strokeStyle);
     if (style.lineWidth) context.setLineWidth(style.lineWidth);
     if (style.lineDash) context.setLineDash(style.lineDash.split(' ').map(Number));
 
@@ -365,7 +340,7 @@ export class Element {
       this.x + this.xShift,
       this.y + this.yShift - this.textMetrics.actualBoundingBoxAscent,
       this.width,
-      this.height,
+      this.height
     );
   }
 
@@ -378,7 +353,6 @@ export class Element {
   drawPointerRect() {
     if (this.shouldDrawPointerRect) {
       const bb = this.getBoundingBox();
-      console.log('draw rect', bb);
       this.context?.pointerRect(bb.getX(), bb.getY(), bb.getW(), bb.getH());
     }
   }
@@ -425,18 +399,12 @@ export class Element {
    * If no arguments are provided, then the font is set to the default font.
    * Each Element subclass may specify its own default by overriding the static `TEXT_FONT` property.
    */
-  setFont(
-    font?: string | FontInfo,
-    size?: string | number,
-    weight?: string | number,
-    style?: string,
-  ): this {
-    const defaultTextFont: Required<FontInfo> = this.config.getFontInfo(this.attrs.type);
+  setFont(font?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this {
+    const defaultTextFont: Required<FontInfo> = Metrics.getFontInfo(this.attrs.type);
 
     const fontIsObject = typeof font === 'object';
     const fontIsString = typeof font === 'string';
-    const sizeWeightStyleAreUndefined =
-      size === undefined && weight === undefined && style === undefined;
+    const sizeWeightStyleAreUndefined = size === undefined && weight === undefined && style === undefined;
 
     this.metricsValid = false;
     if (fontIsObject) {
@@ -454,7 +422,7 @@ export class Element {
         font ?? defaultTextFont.family,
         size ?? defaultTextFont.size,
         weight ?? defaultTextFont.weight,
-        style ?? defaultTextFont.style,
+        style ?? defaultTextFont.style
       );
     }
     return this;
@@ -636,9 +604,9 @@ export class Element {
   }
 
   /** Render the element text. */
-  renderText(ctx: RenderContext, xPos: number, yPos: number, props?: any): void {
+  renderText(ctx: RenderContext, xPos: number, yPos: number): void {
     ctx.setFont(this._fontInfo);
-    ctx.fillText(this._text, xPos + this.x + this.xShift, yPos + this.y + this.yShift, props);
+    ctx.fillText(this._text, xPos + this.x + this.xShift, yPos + this.y + this.yShift);
     this.children.forEach((child) => {
       // changed -- do not look at private attributes of children.
       ctx.setFont(child.fontInfo);
@@ -658,19 +626,22 @@ export class Element {
     }
     context.font = Font.toCSSString(Font.validate(this.fontInfo));
     this._textMetrics = context.measureText(this.text);
-    this._height =
-      this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
+    this._height = this._textMetrics.actualBoundingBoxAscent + this._textMetrics.actualBoundingBoxDescent;
     this._width = this._textMetrics.width;
     this.metricsValid = true;
-
-    if (this.text != '') {
-      const unicodeEscapes = Array.from(this.text)
-        .map((c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'))
-        .join('');
-      console.log(`text ${unicodeEscapes} width=${this._width} height=${this._height}`);
-    }
-
     return this._textMetrics;
+  }
+
+  /** Measure the text using the FontInfo related with key. */
+  static measureWidth(text: string, key = ''): number {
+    const context = Element.getTextMeasurementCanvas()?.getContext('2d');
+    if (!context) {
+      // eslint-disable-next-line no-console
+      console.warn('Element: No context for txtCanvas. Returning empty text metrics.');
+      return 0;
+    }
+    context.font = Font.toCSSString(Metrics.getFontInfo(key));
+    return context.measureText(text).width;
   }
 
   /** Get the text metrics. */

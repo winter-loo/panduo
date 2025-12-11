@@ -414,8 +414,7 @@ export class Music {
    */
   createScaleMap(keySignature: string): Record<string, string> {
     const keySigParts = this.getKeyParts(keySignature);
-    if (!keySigParts.type)
-      throw new RuntimeError('BadArguments', 'Unsupported key type: undefined');
+    if (!keySigParts.type) throw new RuntimeError('BadArguments', 'Unsupported key type: undefined');
     const scaleName = Music.scaleTypes[keySigParts.type];
 
     let keySigString = keySigParts.root;

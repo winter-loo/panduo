@@ -7,7 +7,6 @@ import { Metrics } from './metrics';
 import { Modifier } from './modifier';
 import { Stem } from './stem';
 import { Category } from './typeguard';
-import { StemmableNote } from './stemmablenote';
 
 /** Tremolo implements tremolo notation. */
 export class Tremolo extends Modifier {
@@ -38,10 +37,8 @@ export class Tremolo extends Modifier {
     const scale = note.getFontScale();
     const ySpacing = Metrics.get(`Tremolo.spacing`) * stemDirection * scale;
 
-    const stemWidth = (note as StemmableNote).getStem()?.getWidth() ?? Stem.WIDTH;
     const x =
-      note.getAbsoluteX() +
-      (stemDirection === Stem.UP ? note.getGlyphWidth() - stemWidth / 2 : stemWidth / 2);
+      note.getAbsoluteX() + (stemDirection === Stem.UP ? note.getGlyphWidth() - Stem.WIDTH / 2 : Stem.WIDTH / 2);
     let y = note.getStemExtents().topY + (this.num <= 3 ? ySpacing : 0);
 
     this.fontInfo.size = Metrics.get(`Tremolo.fontSize`) * scale;

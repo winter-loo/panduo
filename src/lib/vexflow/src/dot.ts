@@ -2,7 +2,6 @@
 //
 // This class implements dot modifiers for notes.
 
-import { VexflowConfigInstance } from './config';
 import { Glyphs } from './glyphs';
 import { Modifier } from './modifier';
 import { ModifierContextState } from './modifiercontext';
@@ -23,18 +22,18 @@ export class Dot extends Modifier {
   }
 
   /** Add a dot on the specified keys to the notes. */
-  static buildAndAttach(notes: Note[], config?: VexflowConfigInstance, options?: { index?: number; all?: boolean }): void {
+  static buildAndAttach(notes: Note[], options?: { index?: number; all?: boolean }): void {
     for (const note of notes) {
       if (options?.all) {
         for (let i = 0; i < note.keys.length; i++) {
-          const dot = new Dot(config);
+          const dot = new Dot();
           note.addModifier(dot, i);
         }
       } else if (options?.index !== undefined) {
-        const dot = new Dot(config);
+        const dot = new Dot();
         note.addModifier(dot, options?.index);
       } else {
-        const dot = new Dot(config);
+        const dot = new Dot();
         note.addModifier(dot, 0);
       }
     }
@@ -99,12 +98,7 @@ export class Dot extends Modifier {
         } else {
           // note is on a line, so shift dot to space above the line
           halfShiftY = 0.5;
-          if (
-            lastNote !== null &&
-            !lastNote.isRest() &&
-            lastLine !== null &&
-            lastLine - line === 0.5
-          ) {
+          if (lastNote !== null && !lastNote.isRest() && lastLine !== null && lastLine - line === 0.5) {
             // previous note on a space, so shift dot to space below the line
             halfShiftY = -0.5;
           } else if (line + halfShiftY === prevDottedSpace) {
@@ -134,8 +128,8 @@ export class Dot extends Modifier {
     return true;
   }
 
-  constructor(config?: VexflowConfigInstance) {
-    super(config);
+  constructor() {
+    super();
 
     this.position = Modifier.Position.RIGHT;
 

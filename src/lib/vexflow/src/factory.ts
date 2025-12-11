@@ -10,7 +10,6 @@ import { BarNote } from './barnote';
 import { Beam, PartialBeamDirection } from './beam';
 import { ChordSymbol } from './chordsymbol';
 import { ClefNote } from './clefnote';
-import { VexflowConfigInstance } from './config';
 import { Curve, CurveOptions } from './curve';
 import { EasyScore, EasyScoreOptions } from './easyscore';
 import { Element } from './element';
@@ -87,8 +86,8 @@ export class Factory {
    *
    * `const vf: Factory = VexFlow.Factory.newFromElementId('boo', 1200, 600 );`
    */
-  static newFromElementId(config: VexflowConfigInstance, elementId: string | null, width = 500, height = 200): Factory {
-    return new Factory(config, { renderer: { elementId, width, height } });
+  static newFromElementId(elementId: string | null, width = 500, height = 200): Factory {
+    return new Factory({ renderer: { elementId, width, height } });
   }
 
   protected options: Required<FactoryOptions>;
@@ -99,7 +98,6 @@ export class Factory {
   protected voices!: Voice[];
   protected renderQ!: Element[];
   protected systems!: System[];
-  protected config: VexflowConfigInstance;
 
   /**
    * Example:
@@ -108,8 +106,7 @@ export class Factory {
    *
    * `const vf: Factory = new VexFlow.Factory({renderer: { elementId: 'boo', width: 1200, height: 600 }});`
    */
-  constructor(config: VexflowConfigInstance, options: FactoryOptions = {}) {
-    this.config = config;
+  constructor(options: FactoryOptions = {}) {
     L('New factory: ', options);
     this.options = {
       stave: {
@@ -187,7 +184,7 @@ export class Factory {
 
   /** Return pixels from current stave spacing. */
 
-  Stave(config: VexflowConfigInstance, params?: { x?: number; y?: number; width?: number; options?: StaveOptions }): Stave {
+  Stave(params?: { x?: number; y?: number; width?: number; options?: StaveOptions }): Stave {
     const staveSpace = this.options.stave.space;
     const p = {
       x: 0,
@@ -197,7 +194,7 @@ export class Factory {
       ...params,
     };
 
-    const stave: Stave = new Stave(p.x, p.y, p.width, p.options, config);
+    const stave: Stave = new Stave(p.x, p.y, p.width, p.options);
     this.staves.push(stave);
     stave.setContext(this.context);
     this.stave = stave;
@@ -221,8 +218,8 @@ export class Factory {
     return stave;
   }
 
-  StaveNote(noteStruct: StaveNoteStruct, config?: VexflowConfigInstance): StaveNote {
-    const note = new StaveNote(noteStruct, config);
+  StaveNote(noteStruct: StaveNoteStruct): StaveNote {
+    const note = new StaveNote(noteStruct);
     if (this.stave) note.setStave(this.stave);
     note.setContext(this.context);
     this.renderQ.push(note);
@@ -269,7 +266,7 @@ export class Factory {
     return barNote;
   }
 
-  ClefNote(config: VexflowConfigInstance, params?: { type?: string; options?: { size?: string; annotation?: string } }): ClefNote {
+  ClefNote(params?: { type?: string; options?: { size?: string; annotation?: string } }): ClefNote {
     const p = {
       type: 'treble',
       options: {
@@ -279,7 +276,7 @@ export class Factory {
       ...params,
     };
 
-    const clefNote = new ClefNote(p.type, config, p.options.annotation);
+    const clefNote = new ClefNote(p.type, p.options.size, p.options.annotation);
     if (this.stave) clefNote.setStave(this.stave);
     clefNote.setContext(this.context);
     this.renderQ.push(clefNote);
@@ -374,8 +371,7 @@ export class Factory {
     // There is a default font based on the engraving font.  Only set then
     // font if it is specific, else use the default
     if (typeof p.fontFamily === 'string' && typeof p.fontSize === 'number') {
-      if (typeof p.fontWeight === 'string')
-        chordSymbol.setFont(p.fontFamily, p.fontSize, p.fontWeight);
+      if (typeof p.fontWeight === 'string') chordSymbol.setFont(p.fontFamily, p.fontSize, p.fontWeight);
       else chordSymbol.setFont(p.fontFamily, p.fontSize, '');
     } else if (typeof p.fontSize === 'number') {
       chordSymbol.setFontSize(p.fontSize);
@@ -384,11 +380,7 @@ export class Factory {
     return chordSymbol;
   }
 
-  Articulation(params?: {
-    betweenLines?: boolean;
-    type?: string;
-    position?: string | number;
-  }): Articulation {
+  Articulation(params?: { betweenLines?: boolean; type?: string; position?: string | number }): Articulation {
     const articulation = new Articulation(params?.type ?? 'a.');
 
     if (params?.position !== undefined) articulation.setPosition(params.position);
@@ -399,12 +391,7 @@ export class Factory {
 
   Ornament(
     type: string,
-    params?: {
-      position?: string | number;
-      upperAccidental?: string;
-      lowerAccidental?: string;
-      delayed?: boolean;
-    },
+    params?: { position?: string | number; upperAccidental?: string; lowerAccidental?: string; delayed?: boolean }
   ) {
     const options = {
       type,
@@ -428,12 +415,7 @@ export class Factory {
     return ornament;
   }
 
-  TextDynamics(params?: {
-    text?: string;
-    duration?: string;
-    dots?: number;
-    line?: number;
-  }): TextDynamics {
+  TextDynamics(params?: { text?: string; duration?: string; dots?: number; line?: number }): TextDynamics {
     const p = {
       text: 'p',
       duration: 'q',
@@ -502,11 +484,7 @@ export class Factory {
     return voice;
   }
 
-  StaveConnector(params: {
-    topStave: Stave;
-    bottomStave: Stave;
-    type: StaveConnectorType;
-  }): StaveConnector {
+  StaveConnector(params: { topStave: Stave; bottomStave: Stave; type: StaveConnectorType }): StaveConnector {
     const connector = new StaveConnector(params.topStave, params.bottomStave);
     connector.setType(params.type).setContext(this.context);
     this.renderQ.push(connector);
@@ -571,7 +549,7 @@ export class Factory {
         firstIndexes: params.firstIndexes,
         lastIndexes: params.lastIndexes,
       },
-      params.text,
+      params.text
     );
 
     if (params.options?.direction) tie.setDirection(params.options.direction);
@@ -671,7 +649,7 @@ export class Factory {
    */
   EasyScore(options: EasyScoreOptions = {}): EasyScore {
     options.factory = this;
-    return new EasyScore(this.config, options);
+    return new EasyScore(options);
   }
 
   PedalMarking(params?: { notes?: StaveNote[]; options?: { style: string } }): PedalMarking {

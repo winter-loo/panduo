@@ -70,13 +70,7 @@ export class TextBracket extends Element {
     };
   }
 
-  constructor({
-    start,
-    stop,
-    text = '',
-    superscript = '',
-    position = TextBracketPosition.TOP,
-  }: TextBracketParams) {
+  constructor({ start, stop, text = '', superscript = '', position = TextBracketPosition.TOP }: TextBracketParams) {
     super();
 
     this.start = start;
@@ -213,7 +207,7 @@ export class TextBracket extends Element {
           lineY + 1 * this.position,
           endX,
           lineY + bracketHeight,
-          this.renderOptions.dash,
+          this.renderOptions.dash
         );
       }
     } else {

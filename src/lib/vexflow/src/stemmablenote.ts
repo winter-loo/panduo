@@ -4,11 +4,9 @@
 // `StemmableNote` is an abstract interface for notes with optional stems.
 // Examples of stemmable notes are `StaveNote` and `TabNote`
 
-import { VexflowConfigInstance } from './config';
 import { Flag } from './flag';
 import { Glyphs } from './glyphs';
 import { GlyphProps, Note, NoteStruct } from './note';
-import { Stave } from './stave';
 import { Stem, StemOptions } from './stem';
 import { Tables } from './tables';
 import { Category } from './typeguard';
@@ -19,25 +17,14 @@ export abstract class StemmableNote extends Note {
     return Category.StemmableNote;
   }
 
-  // see Stem.DOWN/Stem.UP
   stemDirection?: number;
   stem?: Stem;
 
-  protected flag?: Flag;
+  protected flag = new Flag();
   protected stemExtensionOverride?: number;
 
-  constructor(noteStruct: NoteStruct, config?: VexflowConfigInstance) {
-    super(noteStruct, config);
-    this.flag = new Flag(config);
-  }
-
-  protected getBaseStemHeight(): number {
-    return this.getStem()?.getBaseHeight() ?? Stem.HEIGHT;
-  }
-
-  override setStave(stave: Stave): this {
-    super.setStave(stave);
-    return this;
+  constructor(noteStruct: NoteStruct) {
+    super(noteStruct);
   }
 
   // Get and set the note's `Stem`
@@ -60,7 +47,7 @@ export abstract class StemmableNote extends Note {
 
   // Builds and sets a new stem
   buildStem(): this {
-    const stem = new Stem(this, this.config);
+    const stem = new Stem();
     this.setStem(stem);
     return this;
   }
@@ -76,8 +63,8 @@ export abstract class StemmableNote extends Note {
           ? String.fromCodePoint((glyphProps.codeFlagUp?.codePointAt(0) ?? -1) + 1)
           : (glyphProps.codeFlagUp ?? Glyphs.null);
 
-      this.flag?.setText(flagCode);
-      if (this.flag) this.flag.fontInfo = this.fontInfo;
+      this.flag.setText(flagCode);
+      this.flag.fontInfo = this.fontInfo;
     }
   }
 
@@ -92,7 +79,7 @@ export abstract class StemmableNote extends Note {
 
   // Get the full length of stem
   getStemLength(): number {
-    return this.getBaseStemHeight() + this.getStemExtension();
+    return Stem.HEIGHT + this.getStemExtension();
   }
 
   // Get the number of beams for this duration
@@ -189,9 +176,6 @@ export abstract class StemmableNote extends Note {
 
   // Get the stem extension for the current duration
   getStemExtension(): number {
-    if (!this.flag) {
-      return 0;
-    }
     const glyphProps = this.getGlyphProps();
     const flagHeight = this.flag.getHeight();
     const scale = this.getFontScale();
@@ -206,13 +190,12 @@ export abstract class StemmableNote extends Note {
     }
 
     // If the flag is longer than the stem, extend the stem by the difference.
-    const baseHeight = this.getBaseStemHeight();
-    return flagHeight > baseHeight * scale ? flagHeight - baseHeight * scale : 0;
+    return flagHeight > Stem.HEIGHT * scale ? flagHeight - Stem.HEIGHT * scale : 0;
   }
 
   // Set the stem length to a specific. Will override the default length.
   setStemLength(height: number): this {
-    this.stemExtensionOverride = height - this.getBaseStemHeight();
+    this.stemExtensionOverride = height - Stem.HEIGHT;
     return this;
   }
 
@@ -231,7 +214,7 @@ export abstract class StemmableNote extends Note {
 
       return Math.min(
         stave.getYForTopText(textLine),
-        extents.topY - this.renderOptions.annotationSpacing * (textLine + 1),
+        extents.topY - this.renderOptions.annotationSpacing * (textLine + 1)
       );
     } else {
       return stave.getYForTopText(textLine);
@@ -245,10 +228,7 @@ export abstract class StemmableNote extends Note {
       const extents = this.getStemExtents();
       if (!extents) throw new RuntimeError('InvalidState', 'Stem does not have extents.');
 
-      return Math.max(
-        stave.getYForTopText(textLine),
-        extents.baseY + this.renderOptions.annotationSpacing * textLine,
-      );
+      return Math.max(stave.getYForTopText(textLine), extents.baseY + this.renderOptions.annotationSpacing * textLine);
     } else {
       return stave.getYForBottomText(textLine);
     }
@@ -270,10 +250,7 @@ export abstract class StemmableNote extends Note {
     this.checkContext();
     this.setRendered();
 
-    stemOptions = {
-      ...stemOptions,
-    };
-    this.setStem(new Stem(this, this.config, stemOptions));
+    this.setStem(new Stem(stemOptions));
     this.stem?.setContext(this.getContext()).drawWithStyle();
   }
 }

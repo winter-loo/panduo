@@ -2,7 +2,6 @@
 // MIT License
 
 import { CanvasContext } from './canvascontext';
-import { VexflowConfigInstance } from './config';
 import { RenderContext } from './rendercontext';
 import { SVGContext } from './svgcontext';
 import { isRenderContext } from './typeguard';
@@ -42,10 +41,9 @@ export class Renderer {
     backend: number,
     width: number,
     height: number,
-    background: string = '#FFF',
-    config?: VexflowConfigInstance,
+    background: string = '#FFF'
   ): RenderContext {
-    const renderer = new Renderer(elementId, backend, config);
+    const renderer = new Renderer(elementId, backend);
     if (width && height) {
       renderer.resize(width, height);
     }
@@ -56,24 +54,12 @@ export class Renderer {
     return ctx;
   }
 
-  static getCanvasContext(
-    config: VexflowConfigInstance,
-    elementId: string,
-    width: number,
-    height: number,
-    background?: string,
-  ): RenderContext {
-    return Renderer.buildContext(elementId, Renderer.Backends.CANVAS, width, height, background, config);
+  static getCanvasContext(elementId: string, width: number, height: number, background?: string): RenderContext {
+    return Renderer.buildContext(elementId, Renderer.Backends.CANVAS, width, height, background);
   }
 
-  static getSVGContext(
-    config: VexflowConfigInstance,
-    elementId: string,
-    width: number,
-    height: number,
-    background?: string,
-  ): RenderContext {
-    return Renderer.buildContext(elementId, Renderer.Backends.SVG, width, height, background, config);
+  static getSVGContext(elementId: string, width: number, height: number, background?: string): RenderContext {
+    return Renderer.buildContext(elementId, Renderer.Backends.SVG, width, height, background);
   }
 
   // Draw a dashed line (horizontal, vertical or diagonal
@@ -85,7 +71,7 @@ export class Renderer {
     fromY: number,
     toX: number,
     toY: number,
-    dashPattern: number[],
+    dashPattern: number[]
   ): void {
     context.beginPath();
 
@@ -124,24 +110,18 @@ export class Renderer {
    *   - a div element, which will contain the SVG output
    * @param backend Renderer.Backends.CANVAS or Renderer.Backends.SVG
    */
-  constructor(context: RenderContext, config?: VexflowConfigInstance);
-  constructor(canvas: string | HTMLCanvasElement | HTMLDivElement, backend: number, config?: VexflowConfigInstance);
-  constructor(
-    arg0: string | HTMLCanvasElement | HTMLDivElement | RenderContext,
-    arg1?: number | VexflowConfigInstance,
-    arg2?: VexflowConfigInstance,
-  ) {
+  constructor(context: RenderContext);
+  constructor(canvas: string | HTMLCanvasElement | HTMLDivElement, backend: number);
+  constructor(arg0: string | HTMLCanvasElement | HTMLDivElement | RenderContext, arg1?: number) {
     if (isRenderContext(arg0)) {
       // The user has provided what looks like a RenderContext, let's just use it.
       this.ctx = arg0;
     } else {
-      const backend = typeof arg1 === 'number' ? arg1 : undefined;
-      const config = typeof arg1 === 'number' ? arg2 : arg1;
-
-      if (backend === undefined) {
+      if (arg1 === undefined) {
         // The backend must be specified if the render context isn't directly provided.
         throw new RuntimeError('InvalidArgument', 'Missing backend argument');
       }
+      const backend: number = arg1;
 
       let element: HTMLElement;
       if (typeof arg0 === 'string') {
@@ -168,7 +148,7 @@ export class Renderer {
         if (!isHTMLDiv(element)) {
           throw new RuntimeError('BadElement', 'SVG context requires an HTMLDivElement.');
         }
-        this.ctx = new SVGContext(element, config);
+        this.ctx = new SVGContext(element);
       } else {
         throw new RuntimeError('InvalidBackend', `No support for backend: ${backend}`);
       }

@@ -166,10 +166,7 @@ export class Stroke extends Modifier {
       this.boundingBox = new BoundingBox(x + this.xShift, topY, 1, botY - topY);
     } else {
       // Select the wiggle glyph depending on the arrow direction
-      const lineGlyph =
-        arrow === Glyphs.arrowheadBlackDown
-          ? Glyphs.wiggleArpeggiatoDown
-          : Glyphs.wiggleArpeggiatoUp;
+      const lineGlyph = arrow === Glyphs.arrowheadBlackDown ? Glyphs.wiggleArpeggiatoDown : Glyphs.wiggleArpeggiatoUp;
       let txt = '';
       const el = new Element();
       // add glyphs until the required length is achieved
@@ -183,33 +180,25 @@ export class Stroke extends Modifier {
         this.type === Stroke.Type.ARPEGGIO_DIRECTIONLESS
       ) {
         ctx.openRotation(90, x + this.xShift, topY);
-        el.renderText(
-          ctx,
-          x + this.xShift,
-          topY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2,
-        );
+        el.renderText(ctx, x + this.xShift, topY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2);
         ctx.closeRotation();
         textY = topY + el.getWidth() + 5;
         this.boundingBox = new BoundingBox(
           x + this.xShift - el.getHeight() / 2,
           topY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2,
           el.getHeight(),
-          el.getWidth(),
+          el.getWidth()
         );
       } else {
         ctx.openRotation(-90, x + this.xShift, botY);
-        el.renderText(
-          ctx,
-          x + this.xShift,
-          botY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2,
-        );
+        el.renderText(ctx, x + this.xShift, botY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2);
         ctx.closeRotation();
         textY = botY - el.getWidth() - 5;
         this.boundingBox = new BoundingBox(
           x + this.xShift - el.getHeight() / 2,
           botY - el.getTextMetrics().actualBoundingBoxDescent + el.getHeight() / 2 - el.getWidth(),
           el.getHeight(),
-          el.getWidth(),
+          el.getWidth()
         );
       }
     }
@@ -222,15 +211,10 @@ export class Stroke extends Modifier {
         ctx,
         // Center the arrow head substracting its width / 2
         x + this.xShift - el.getWidth() / 2,
-        arrowY,
+        arrowY
       );
       this.boundingBox.mergeWith(
-        new BoundingBox(
-          x + this.xShift - el.getWidth() / 2,
-          arrowY - el.getHeight(),
-          el.getWidth(),
-          el.getHeight(),
-        ),
+        new BoundingBox(x + this.xShift - el.getWidth() / 2, arrowY - el.getHeight(), el.getWidth(), el.getHeight())
       );
     }
 
@@ -241,15 +225,15 @@ export class Stroke extends Modifier {
       el.renderText(
         ctx,
         x + this.xShift - el.getWidth() / 2,
-        textY + (this.type === Stroke.Type.RASGUEADO_DOWN ? el.getHeight() : 0),
+        textY + (this.type === Stroke.Type.RASGUEADO_DOWN ? el.getHeight() : 0)
       );
       this.boundingBox.mergeWith(
         new BoundingBox(
           x + this.xShift - el.getWidth() / 2,
           textY + (this.type === Stroke.Type.RASGUEADO_DOWN ? el.getHeight() : 0) - el.getHeight(),
           el.getWidth(),
-          el.getHeight(),
-        ),
+          el.getHeight()
+        )
       );
     }
   }

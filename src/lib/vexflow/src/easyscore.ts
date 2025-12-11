@@ -4,7 +4,6 @@
 import { Accidental } from './accidental';
 import { Articulation } from './articulation';
 import { PartialBeamDirection } from './beam';
-import { VexflowConfigInstance } from './config';
 import { Dot } from './dot';
 import { Factory } from './factory';
 import { FretHandFinger } from './frethandfinger';
@@ -89,11 +88,7 @@ export class EasyScoreGrammar implements Grammar {
       expect: [this.NOTENAME, this.ACCIDENTAL, this.OCTAVE],
       run: (state) => {
         const s = state!;
-        this.builder.addSingleNote(
-          s.matches[0] as string,
-          s.matches[1] as string,
-          s.matches[2] as string,
-        );
+        this.builder.addSingleNote(s.matches[0] as string, s.matches[1] as string, s.matches[2] as string);
       },
     };
   }
@@ -146,11 +141,7 @@ export class EasyScoreGrammar implements Grammar {
     return {
       expect: [this.KEY, this.EQUALS, this.VAL],
 
-      run: (state) =>
-        this.builder.addNoteOption(
-          state!.matches[0] as string,
-          unquote(state!.matches[2] as string),
-        ),
+      run: (state) => this.builder.addNoteOption(state!.matches[0] as string, unquote(state!.matches[2] as string)),
     };
   }
   VAL(): Rule {
@@ -258,11 +249,9 @@ export class Builder {
   piece!: Piece;
   commitHooks: CommitHook[] = [];
   rollingDuration!: string;
-  config: VexflowConfigInstance;
 
-  constructor(config: VexflowConfigInstance, factory: Factory) {
+  constructor(factory: Factory) {
     this.factory = factory;
-    this.config = config;
     this.reset();
   }
 
@@ -366,7 +355,7 @@ export class Builder {
         notePiece.key +
         (standardAccidentals.includes(notePiece.accid ?? '') ? notePiece.accid : '') +
         '/' +
-        notePiece.octave,
+        notePiece.octave
     );
     const autoStem = stem === 'auto'; // StaveNoteStruct expects the underscore & lowercase.
 
@@ -374,7 +363,7 @@ export class Builder {
     const note =
       type?.toLowerCase() === 'g'
         ? factory.GhostNote({ duration, dots })
-        : factory.StaveNote(this.config, { keys, duration, dots, type, clef, autoStem });
+        : factory.StaveNote({ keys, duration, dots, type, clef, autoStem });
     if (!autoStem) note.setStemDirection(stem === 'up' ? Stem.UP : Stem.DOWN);
 
     // Attach accidentals.
@@ -391,7 +380,7 @@ export class Builder {
     });
 
     // Attach dots.
-    for (let i = 0; i < dots; i++) Dot.buildAndAttach([note], this.config, { all: true });
+    for (let i = 0; i < dots; i++) Dot.buildAndAttach([note], { all: true });
 
     this.commitHooks.forEach((commitHook) => commitHook(options, note, this));
 
@@ -454,10 +443,8 @@ export class EasyScore {
   builder!: Builder;
   grammar!: EasyScoreGrammar;
   parser!: Parser;
-  config: VexflowConfigInstance;
 
-  constructor(config: VexflowConfigInstance, options: EasyScoreOptions = {}) {
-    this.config = config;
+  constructor(options: EasyScoreOptions = {}) {
     this.setOptions(options);
   }
 
@@ -480,7 +467,7 @@ export class EasyScore {
    */
   setOptions(options: EasyScoreOptions): this {
     const factory = options.factory!; // ! operator, because options.factory was set in Factory.EasyScore().
-    const builder = options.builder ?? new Builder(this.config, factory);
+    const builder = options.builder ?? new Builder(factory);
 
     this.options = {
       commitHooks: [setId, setClass, Articulation.easyScoreHook, FretHandFinger.easyScoreHook],
@@ -521,7 +508,7 @@ export class EasyScore {
       partialBeamDirections?: {
         [noteIndex: number]: PartialBeamDirection;
       };
-    },
+    }
   ): StemmableNote[] {
     this.factory.Beam({ notes, options });
     return notes;
@@ -538,10 +525,7 @@ export class EasyScore {
     return this.builder.getElements().notes;
   }
 
-  voice(
-    notes: Note[],
-    options: { time?: string; options?: { softmaxFactor: number } } = {},
-  ): Voice {
+  voice(notes: Note[], options: { time?: string; options?: { softmaxFactor: number } } = {}): Voice {
     options = { time: this.defaults.time, ...options };
     return this.factory.Voice(options).addTickables(notes);
   }

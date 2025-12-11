@@ -24,11 +24,7 @@ import { TabNote } from './tabnote';
  *        If `false`, we do not check the superclass or other ancestors.
  * @returns true if `obj` has a static `CATEGORY` property that matches `category`.
  */
-export function isCategory<T>(
-  obj: any,
-  category: string,
-  checkAncestors: boolean = true,
-): obj is T {
+export function isCategory<T>(obj: any, category: string, checkAncestors: boolean = true): obj is T {
   // obj is undefined, a number, a primitive string, or null.
   if (typeof obj !== 'object' || obj === null) {
     return false;
@@ -56,21 +52,16 @@ export function isCategory<T>(
   }
 }
 
-export const isAccidental = (obj: unknown): obj is Accidental =>
-  isCategory(obj, Category.Accidental);
-export const isAnnotation = (obj: unknown): obj is Annotation =>
-  isCategory(obj, Category.Annotation);
+export const isAccidental = (obj: unknown): obj is Accidental => isCategory(obj, Category.Accidental);
+export const isAnnotation = (obj: unknown): obj is Annotation => isCategory(obj, Category.Annotation);
 export const isBarline = (obj: unknown): obj is Barline => isCategory(obj, Category.Barline);
 export const isDot = (obj: unknown): obj is Dot => isCategory(obj, Category.Dot);
 export const isGraceNote = (obj: unknown): obj is GraceNote => isCategory(obj, Category.GraceNote);
-export const isGraceNoteGroup = (obj: unknown): obj is GraceNoteGroup =>
-  isCategory(obj, Category.GraceNoteGroup);
+export const isGraceNoteGroup = (obj: unknown): obj is GraceNoteGroup => isCategory(obj, Category.GraceNoteGroup);
 export const isNote = (obj: unknown): obj is Note => isCategory(obj, Category.Note);
-export const isRenderContext = (obj: unknown): obj is RenderContext =>
-  isCategory(obj, Category.RenderContext);
+export const isRenderContext = (obj: unknown): obj is RenderContext => isCategory(obj, Category.RenderContext);
 export const isStaveNote = (obj: unknown): obj is StaveNote => isCategory(obj, Category.StaveNote);
-export const isStemmableNote = (obj: unknown): obj is StemmableNote =>
-  isCategory(obj, Category.StemmableNote);
+export const isStemmableNote = (obj: unknown): obj is StemmableNote => isCategory(obj, Category.StemmableNote);
 export const isTabNote = (obj: unknown): obj is TabNote => isCategory(obj, Category.TabNote);
 
 // 'const' enums are erased by the TypeScript compiler. The string values are inlined at all the use sites.
@@ -83,7 +74,6 @@ export const enum Category {
   BarNote = 'BarNote',
   Beam = 'Beam',
   Bend = 'Bend',
-  BlockNote = 'BlockNote',
   ChordSymbol = 'ChordSymbol',
   Clef = 'Clef',
   ClefNote = 'ClefNote',
@@ -105,9 +95,7 @@ export const enum Category {
   Modifier = 'Modifier',
   MultiMeasureRest = 'MultiMeasureRest',
   Note = 'Note',
-  NoteSpan = 'NoteSpan',
   NoteHead = 'NoteHead',
-  NoteRect = 'NoteRect',
   NoteSubGroup = 'NoteSubGroup',
   Ornament = 'Ornament',
   Parenthesis = 'Parenthesis',

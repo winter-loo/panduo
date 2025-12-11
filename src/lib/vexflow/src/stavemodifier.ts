@@ -3,7 +3,6 @@
 // ## Description
 // A base class for stave modifiers (e.g. clefs, key signatures)
 
-import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Stave } from './stave';
 import { Category } from './typeguard';
@@ -40,10 +39,10 @@ export class StaveModifier extends Element {
   protected stave?: Stave;
   protected layoutMetrics?: LayoutMetrics;
 
-  constructor(config?: VexflowConfigInstance) {
-    super(undefined, config);
+  constructor() {
+    super();
 
-    this.padding = this.config.get('Stave.spacingBetweenModsPx');
+    this.padding = 10;
     this.position = StaveModifierPosition.ABOVE;
   }
 
@@ -70,7 +69,7 @@ export class StaveModifier extends Element {
   }
 
   getPadding(index: number): number {
-    return index == undefined ? 0 : this.padding;
+    return index !== undefined && index < 2 ? 0 : this.padding;
   }
 
   setPadding(padding: number): this {

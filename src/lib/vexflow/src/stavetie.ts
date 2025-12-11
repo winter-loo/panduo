@@ -128,13 +128,7 @@ export class StaveTie extends Element {
    * @param params.firstX is specified in pixels.
    * @param params.lastX is specified in pixels.
    */
-  renderTie(params: {
-    direction: number;
-    firstX: number;
-    lastX: number;
-    lastYs: number[];
-    firstYs: number[];
-  }): void {
+  renderTie(params: { direction: number; firstX: number; lastX: number; lastYs: number[]; firstYs: number[] }): void {
     if (params.firstYs.length === 0 || params.lastYs.length === 0) {
       throw new RuntimeError('BadArguments', 'No Y-values to render');
     }
@@ -159,7 +153,8 @@ export class StaveTie extends Element {
     const firstIndexes = this.notes.firstIndexes!;
 
     const lastIndexes = this.notes.lastIndexes!;
-    ctx.openGroup('stavetie', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('stavetie' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
     for (let i = 0; i < firstIndexes.length; ++i) {
       const cpX = (params.lastX + lastXShift + (params.firstX + firstXShift)) / 2;
       // firstY and lastY are specified in pixels.

@@ -1,10 +1,8 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
-import { VexflowConfigInstance } from './config';
 import { ElementStyle } from './element';
 import { Note, NoteStruct } from './note';
-import { GlyphFont } from './glyphfont';
 import { Stave } from './stave';
 import { StaveNote } from './stavenote';
 import { Stem } from './stem';
@@ -27,7 +25,6 @@ export interface NoteHeadStruct extends NoteStruct {
   x?: number;
   y?: number;
   index?: number;
-  pitch: string;
 }
 
 /**
@@ -49,7 +46,6 @@ export class NoteHead extends Note {
   protected stemDirection: number;
 
   protected line: number;
-  protected pitch: string;
   protected index?: number;
   protected slashed: boolean;
 
@@ -59,8 +55,8 @@ export class NoteHead extends Note {
     '\ue4e4' /*restHalf*/: '\ue4f5' /*restHalfLegerLine*/,
   };
 
-  constructor(noteStruct: NoteHeadStruct, config: VexflowConfigInstance) {
-    super(noteStruct, config);
+  constructor(noteStruct: NoteHeadStruct) {
+    super(noteStruct);
 
     this.index = noteStruct.index;
     this.x = noteStruct.x || 0;
@@ -69,11 +65,6 @@ export class NoteHead extends Note {
     this.displaced = noteStruct.displaced || false;
     this.stemDirection = noteStruct.stemDirection || Stem.UP;
     this.line = noteStruct.line || 0;
-    this.pitch = noteStruct.pitch;
-    let i = this.pitch.indexOf('/');
-    if (i != -1) {
-      this.pitch = this.pitch.substring(0, i) + this.pitch.substring(i + 1, i + 2);
-    }
 
     // Get glyph code based on duration and note type. This could be
     // regular notes, rests, or other custom codes.
@@ -81,12 +72,8 @@ export class NoteHead extends Note {
     defined(
       this.glyphProps,
       'BadArguments',
-      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`,
+      `No glyph found for duration '${this.duration}' and type '${this.noteType}'`
     );
-    const unicodeEscapes = Array.from(this.glyphProps.codeHead)
-      .map((c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'))
-      .join('');
-    console.log(`[glyph] pitch=${this.pitch} code=${unicodeEscapes}`);
 
     // Swap out the glyph with ledger lines
     if ((this.line > 5 || this.line < 0) && this.ledger[this.glyphProps.codeHead]) {
@@ -137,9 +124,7 @@ export class NoteHead extends Note {
     // by half the stem width in order to maintain a slight overlap with the stem
     const displacementStemAdjustment = Stem.WIDTH / 2;
 
-    return (
-      x + (this.displaced ? (this.width - displacementStemAdjustment) * this.stemDirection : 0)
-    );
+    return x + (this.displaced ? (this.width - displacementStemAdjustment) * this.stemDirection : 0);
   }
 
   /** Set notehead to a provided `stave`. */
@@ -148,9 +133,7 @@ export class NoteHead extends Note {
 
     this.stave = stave;
     if (this.stave) {
-      let y = this.stave.getYForNote(line);
-      console.log(`[notehead] set y=${y}`);
-      this.setY(y);
+      this.setY(this.stave.getYForNote(line));
       this.setContext(this.stave.getContext());
     }
     return this;
@@ -168,24 +151,13 @@ export class NoteHead extends Note {
   override draw(): void {
     const ctx = this.checkContext();
     this.setRendered();
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('notehead' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
-    const classList = ['notehead', `pitch-${this.pitch}`];
-    ctx.openGroup(classList, this.getAttribute('id'));
-
-    let { x, y, w: width, h: height } = this.getBoundingBox();
-    console.log(`drawing note head, x=${x} y=${y} width=${width} height=${height}`);
-
+    L("Drawing note head '", this.noteType, this.duration, "' at", this.x, this.y);
     this.x = this.getAbsoluteX();
-
-    const fontName = this.fontInfo.family;
-    if (GlyphFont.get(fontName)) {
-      GlyphFont.renderGlyph(ctx, this.glyphProps.codeHead, fontName, this.fontSizeInPixels, this.x + this.xShift, this.y + this.yShift);
-    } else {
-      this.renderText(ctx, 0, 0, { fill: 'currentColor' });
-    }
-
+    this.renderText(ctx, 0, 0);
     (this.parent as StaveNote)?.drawModifiers(this);
-    console.log('current notehead width: ', this.width);
     this.drawPointerRect();
     ctx.closeGroup();
   }

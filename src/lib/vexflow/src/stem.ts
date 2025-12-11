@@ -7,11 +7,9 @@
 import { BoundingBox } from './boundingbox';
 import { Element } from './element';
 import { Metrics } from './metrics';
-import type { VexflowConfigInstance } from './config';
-import { VexflowConfig } from './config';
+import { Tables } from './tables';
 import { Category } from './typeguard';
 import { log, RuntimeError } from './util';
-import { StemmableNote } from './stemmablenote';
 
 // eslint-disable-next-line
 function L(...args: any[]) {
@@ -51,13 +49,11 @@ export class Stem extends Element {
   }
 
   // Theme
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get WIDTH(): number {
-    return VexflowConfig.defaults().stem().width;
+    return Tables.STEM_WIDTH;
   }
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get HEIGHT(): number {
-    return VexflowConfig.defaults().stem().height;
+    return Tables.STEM_HEIGHT;
   }
 
   protected hide: boolean;
@@ -75,13 +71,8 @@ export class Stem extends Element {
   protected stemExtension: number;
   protected renderHeightAdjustment: number;
 
-  // depending note
-  private note: StemmableNote;
-
-  constructor(note: StemmableNote, config: VexflowConfigInstance, options?: StemOptions) {
-    super(config);
-
-    this.note = note;
+  constructor(options?: StemOptions) {
+    super();
 
     // Default notehead x bounds
     this.xBegin = options?.xBegin ?? 0;
@@ -147,9 +138,8 @@ export class Stem extends Element {
   // Gets the entire height for the stem
   override getHeight(): number {
     const yOffset = this.stemDirection === Stem.UP ? this.stemUpYOffset : this.stemDownYOffset;
-    const unsignedHeight =
-      this.yBottom - this.yTop + (this.getBaseHeight() - yOffset + this.stemExtension);
-    return unsignedHeight;
+    const unsignedHeight = this.yBottom - this.yTop + (Stem.HEIGHT - yOffset + this.stemExtension); // parentheses just for grouping.
+    return unsignedHeight * this.stemDirection;
   }
 
   override getBoundingBox(): BoundingBox {
@@ -161,21 +151,13 @@ export class Stem extends Element {
   getExtents(): { topY: number; baseY: number } {
     const isStemUp = this.stemDirection === Stem.UP;
     const ys = [this.yTop, this.yBottom];
-    const stemHeight = this.getBaseHeight() + this.stemExtension;
+    const stemHeight = Stem.HEIGHT + this.stemExtension;
 
     const innerMostNoteheadY = (isStemUp ? Math.min : Math.max)(...ys);
     const outerMostNoteheadY = (isStemUp ? Math.max : Math.min)(...ys);
     const stemTipY = innerMostNoteheadY + stemHeight * -this.stemDirection;
 
     return { topY: stemTipY, baseY: outerMostNoteheadY };
-  }
-
-  getBaseHeight(): number {
-    return this.config.stem().height;
-  }
-
-  override getWidth(): number {
-    return this.config.stem().width;
   }
 
   setVisibility(isVisible: boolean): this {
@@ -194,7 +176,7 @@ export class Stem extends Element {
   }
 
   adjustHeightForBeam(): void {
-    this.renderHeightAdjustment = -this.getWidth() / 2;
+    this.renderHeightAdjustment = -Stem.WIDTH / 2;
   }
 
   // Render the stem onto the canvas
@@ -206,47 +188,35 @@ export class Stem extends Element {
     let stemX;
     let stemY;
     const stemDirection = this.stemDirection;
-    const stemHeight = this.getHeight();
 
     let yBaseOffset: number = 0;
     if (stemDirection === Stem.DOWN) {
       // Down stems are rendered to the left of the head.
       stemX = this.xBegin;
-      stemY = this.yTop - this.getWidth() / 2;
+      stemY = this.yTop + this.stemDownYOffset;
       yBaseOffset = this.stemDownYBaseOffset;
     } else {
       // Up stems are rendered to the right of the head.
       stemX = this.xEnd;
-      stemY = this.yBottom - stemHeight;
+      stemY = this.yBottom - this.stemUpYOffset;
       yBaseOffset = this.stemUpYBaseOffset;
     }
 
-    L(
-      'Rendering stem - ',
-      'Top Y: ',
-      this.yTop,
-      'Bottom Y: ',
-      this.yBottom,
-      'stem height: ',
-      stemHeight,
-    );
+    const stemHeight = this.getHeight();
+
+    L('Rendering stem - ', 'Top Y: ', this.yTop, 'Bottom Y: ', this.yBottom);
 
     // The offset from the stem's base which is required fo satisfy the stemlet height
-    const stemletYOffset = this.isStemlet
-      ? stemHeight - this.stemletHeight * this.stemDirection
-      : 0;
+    const stemletYOffset = this.isStemlet ? stemHeight - this.stemletHeight * this.stemDirection : 0;
 
-    // ctx.beginPath();
-    // ctx.moveTo(stemX, stemY - 120);
-    // ctx.lineTo(stemX, stemY + 80);
-    // ctx.stroke({ stroke: 'red', 'stroke-opacity': '0.8', 'stroke-width': '1' });
-    //
-    ctx.openGroup('stem', this.getAttribute('id'));
-    ctx.fillRect(stemX, stemY, this.getWidth(), stemHeight + this.getWidth() / 2, {
-      // use rounded corner to have a playful style
-      rx: this.getWidth() / 2,
-      ry: this.getWidth() / 2,
-    });
+    // Draw the stem
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('stem' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
+    ctx.beginPath();
+    ctx.setLineWidth(Stem.WIDTH);
+    ctx.moveTo(stemX, stemY - stemletYOffset + yBaseOffset);
+    ctx.lineTo(stemX, stemY - stemHeight - this.renderHeightAdjustment * stemDirection);
+    ctx.stroke();
     ctx.closeGroup();
   }
 }

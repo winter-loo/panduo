@@ -63,15 +63,12 @@ export class StaveHairpin extends Element {
     notes: Record<string, Note>,
     type: number,
     position: number,
-    options: StaveHairpinRenderOptions,
+    options: StaveHairpinRenderOptions
   ): void {
     const ppt = formatter.pixelsPerTick;
 
     if (ppt === null) {
-      throw new RuntimeError(
-        'BadArguments',
-        'A valid Formatter must be provide to draw offsets by ticks.',
-      );
+      throw new RuntimeError('BadArguments', 'A valid Formatter must be provide to draw offsets by ticks.');
     }
 
     const leftShiftPx = ppt * (options.leftShiftTicks ?? 0);
@@ -91,7 +88,7 @@ export class StaveHairpin extends Element {
         firstNote: notes.firstNote,
         lastNote: notes.lastNote,
       },
-      type,
+      type
     )
       .setContext(ctx)
       .setRenderOptions(hairpinOptions)
@@ -146,10 +143,7 @@ export class StaveHairpin extends Element {
    */
   setNotes(notes: Record<string, Note>): this {
     if (!notes.firstNote && !notes.lastNote) {
-      throw new RuntimeError(
-        'BadArguments',
-        'Hairpin needs to have either firstNote or lastNote set.',
-      );
+      throw new RuntimeError('BadArguments', 'Hairpin needs to have either firstNote or lastNote set.');
     }
 
     this.notes = notes;
@@ -158,13 +152,7 @@ export class StaveHairpin extends Element {
     return this;
   }
 
-  renderHairpin(params: {
-    firstX: number;
-    lastX: number;
-    firstY: number;
-    lastY: number;
-    staffHeight: number;
-  }): void {
+  renderHairpin(params: { firstX: number; lastX: number; firstY: number; lastY: number; staffHeight: number }): void {
     const ctx = this.checkContext();
     let dis = this.renderOptions.yShift + 20;
     let yShift = params.firstY;

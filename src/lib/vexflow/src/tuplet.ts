@@ -106,10 +106,8 @@ export class Tuplet extends Element {
     this.notes = notes;
     const numNotes = options.numNotes !== undefined ? options.numNotes : notes.length;
     const notesOccupied = options.notesOccupied || 2;
-    const bracketed =
-      options.bracketed !== undefined ? options.bracketed : notes.some((note) => !note.hasBeam());
-    const ratioed =
-      options.ratioed !== undefined ? options.ratioed : Math.abs(notesOccupied - numNotes) > 1;
+    const bracketed = options.bracketed !== undefined ? options.bracketed : notes.some((note) => !note.hasBeam());
+    const ratioed = options.ratioed !== undefined ? options.ratioed : Math.abs(notesOccupied - numNotes) > 1;
     const location = options.location || Tuplet.LOCATION_TOP;
     const yOffset = options.yOffset || Metrics.get('Tuplet.yOffset');
     const textYOffset = options.textYOffset || Metrics.get('Tuplet.textYOffset');
@@ -254,8 +252,7 @@ export class Tuplet extends Element {
   getYPosition(): number {
     // offset the tuplet for any nested tuplets between
     // it and the notes:
-    const nestedTupletYOffset =
-      this.getNestedTupletCount() * Tuplet.NESTING_OFFSET * -this.options.location;
+    const nestedTupletYOffset = this.getNestedTupletCount() * Tuplet.NESTING_OFFSET * -this.options.location;
 
     // offset the tuplet for any manual yOffset:
     const yOffset = this.options.yOffset ?? 0;
@@ -367,12 +364,11 @@ export class Tuplet extends Element {
     // Compute a common vertical coordinate for text rendering.
     // (Using the text element’s height as a reference)
     const commonTextY =
-      yPos +
-      this.textElement.getHeight() / 2 +
-      (location === Tuplet.LOCATION_TOP ? -1 : 1) * textYOffset;
+      yPos + this.textElement.getHeight() / 2 + (location === Tuplet.LOCATION_TOP ? -1 : 1) * textYOffset;
 
     // start grouping
-    ctx.openGroup('tuplet', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('tuplet' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     // draw bracket if the tuplet is not beamed
     if (bracketed) {
@@ -381,24 +377,9 @@ export class Tuplet extends Element {
 
       if (lineWidth > 0) {
         ctx.fillRect(xPos, yPos, lineWidth, bracketThickness);
-        ctx.fillRect(
-          xPos + bodyWidth / 2 + totalTextWidth / 2 + bracketPadding,
-          yPos,
-          lineWidth,
-          bracketThickness,
-        );
-        ctx.fillRect(
-          xPos,
-          yPos + (isTupletBottom ? 1 : 0),
-          bracketThickness,
-          location * bracketLegLength,
-        );
-        ctx.fillRect(
-          xPos + bodyWidth,
-          yPos + (isTupletBottom ? 1 : 0),
-          bracketThickness,
-          location * bracketLegLength,
-        );
+        ctx.fillRect(xPos + bodyWidth / 2 + totalTextWidth / 2 + bracketPadding, yPos, lineWidth, bracketThickness);
+        ctx.fillRect(xPos, yPos + (isTupletBottom ? 1 : 0), bracketThickness, location * bracketLegLength);
+        ctx.fillRect(xPos + bodyWidth, yPos + (isTupletBottom ? 1 : 0), bracketThickness, location * bracketLegLength);
       }
     }
 

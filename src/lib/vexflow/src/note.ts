@@ -3,7 +3,6 @@
 
 import { Beam } from './beam';
 import { BoundingBox } from './boundingbox';
-import { VexflowConfigInstance } from './config';
 import { Fraction } from './fraction';
 import { Glyphs } from './glyphs';
 import { Metrics } from './metrics';
@@ -126,8 +125,7 @@ export abstract class Note extends Tickable {
     const xAbs = note.getAbsoluteX();
     const xPost1 = note.getAbsoluteX() + metrics.notePx;
     const xPost2 = note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx;
-    const xEnd =
-      note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx + metrics.modRightPx;
+    const xEnd = note.getAbsoluteX() + metrics.notePx + metrics.rightDisplacedHeadPx + metrics.modRightPx;
     const xFreedomRight = xEnd + (note.getFormatterMetrics().freedom.right ?? 0);
 
     const xWidth = xEnd - xStart;
@@ -275,23 +273,17 @@ export abstract class Note extends Tickable {
    *
    * @param noteStruct To create a new note you need to provide a `noteStruct`.
    */
-  constructor(noteStruct: NoteStruct, config?: VexflowConfigInstance) {
-    super(config);
+  constructor(noteStruct: NoteStruct) {
+    super();
 
     if (!noteStruct) {
-      throw new RuntimeError(
-        'BadArguments',
-        'Note must have valid initialization data to identify duration and type.',
-      );
+      throw new RuntimeError('BadArguments', 'Note must have valid initialization data to identify duration and type.');
     }
 
     /** Parses `noteStruct` and get note properties. */
     const parsedNoteStruct = Note.parseNoteStruct(noteStruct);
     if (!parsedNoteStruct) {
-      throw new RuntimeError(
-        'BadArguments',
-        `Invalid note initialization object: ${JSON.stringify(noteStruct)}`,
-      );
+      throw new RuntimeError('BadArguments', `Invalid note initialization object: ${JSON.stringify(noteStruct)}`);
     }
 
     // Set note properties from parameters.
@@ -341,10 +333,6 @@ export abstract class Note extends Tickable {
       strokePx: 1,
       yShift: 0,
     };
-  }
-
-  getPrimaryNoteName(): string {
-    return this.keyProps[0].key;
   }
 
   /**
@@ -430,7 +418,7 @@ export abstract class Note extends Tickable {
 
   /** Get the stave line number for the note. */
   // eslint-disable-next-line
-  getLineNumber(_isTopNote?: boolean): number {
+  getLineNumber(isTopNote?: boolean): number {
     return 0;
   }
 
@@ -476,6 +464,12 @@ export abstract class Note extends Tickable {
    */
   getYForTopText(textLine: number): number {
     return this.checkStave().getYForTopText(textLine);
+  }
+
+  /** Return the voice that this note belongs in. */
+  override getVoice(): Voice {
+    if (!this.voice) throw new RuntimeError('NoVoice', 'Note has no voice.');
+    return this.voice;
   }
 
   /** Attach this note to `voice`. */
@@ -556,10 +550,7 @@ export abstract class Note extends Tickable {
     // Some versions of VexFlow had the two parameters reversed.
     // Check here and throw an error if the argument types are not correct.
     if (typeof modifier !== 'object' || typeof index !== 'number') {
-      throw new RuntimeError(
-        'WrongParams',
-        'Incorrect call signature. Use ' + signature + ' instead.',
-      );
+      throw new RuntimeError('WrongParams', 'Incorrect call signature. Use ' + signature + ' instead.');
     }
     modifier.setNote(this);
     modifier.setIndex(index);
@@ -574,16 +565,9 @@ export abstract class Note extends Tickable {
 
   /** Get the coordinates for where modifiers begin. */
   // eslint-disable-next-line
-  getModifierStartXY(
-    _position?: number,
-    _index?: number,
-    _options?: any,
-  ): { x: number; y: number } {
+  getModifierStartXY(position?: number, index?: number, options?: any): { x: number; y: number } {
     if (!this.preFormatted) {
-      throw new RuntimeError(
-        'UnformattedNote',
-        "Can't call GetModifierStartXY on an unformatted note",
-      );
+      throw new RuntimeError('UnformattedNote', "Can't call GetModifierStartXY on an unformatted note");
     }
 
     return {
@@ -657,8 +641,7 @@ export abstract class Note extends Tickable {
     // Position note to left edge of tick context.
     let x = tickContext.getX();
     if (this.stave) {
-      const paddingLeft = this.config.get('Stave.paddingLeft', 0);
-      x += this.stave.getNoteStartX() + paddingLeft;
+      x += this.stave.getNoteStartX() + Metrics.get('Stave.padding', 0);
     }
     if (this.isCenterAligned()) {
       x += this.getCenterXShift();

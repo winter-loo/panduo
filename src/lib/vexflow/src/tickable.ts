@@ -1,7 +1,6 @@
 // Copyright (c) 2023-present VexFlow contributors: https://github.com/vexflow/vexflow/graphs/contributors
 // MIT License
 
-import { VexflowConfigInstance } from './config';
 import { Element } from './element';
 import { Fraction } from './fraction';
 import { Modifier } from './modifier';
@@ -54,8 +53,8 @@ export abstract class Tickable extends Element {
   private _preFormatted: boolean = false;
   private _postFormatted: boolean = false;
 
-  constructor(config?: VexflowConfigInstance) {
-    super(undefined, config);
+  constructor() {
+    super();
 
     // These properties represent the duration of
     // this tickable element.
@@ -400,11 +399,7 @@ export abstract class Tickable extends Element {
 
   /** Check and get `ModifierContext`. */
   checkModifierContext(): ModifierContext {
-    return defined(
-      this.modifierContext,
-      'NoModifierContext',
-      'No modifier context attached to this tickable.',
-    );
+    return defined(this.modifierContext, 'NoModifierContext', 'No modifier context attached to this tickable.');
   }
 
   /** Get the target stave. */

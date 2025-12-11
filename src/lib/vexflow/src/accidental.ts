@@ -100,7 +100,7 @@ export class Accidental extends Modifier {
           // then we need to use this note's.
           extraXSpaceNeededForLeftDisplacedNotehead = Math.max(
             note.getLeftDisplacedHeadPx() - note.getXShift(),
-            extraXSpaceNeededForLeftDisplacedNotehead,
+            extraXSpaceNeededForLeftDisplacedNotehead
           );
         }
         prevNote = note;
@@ -139,8 +139,7 @@ export class Accidental extends Modifier {
     for (let i = 0; i < accidentalLinePositionsAndSpaceNeeds.length; i++) {
       const accidentalLinePositionAndSpaceNeeds = accidentalLinePositionsAndSpaceNeeds[i];
       const accidentalType = accidentalLinePositionAndSpaceNeeds.accidental.type;
-      const priorLineMetric =
-        staveLineAccidentalLayoutMetrics[staveLineAccidentalLayoutMetrics.length - 1];
+      const priorLineMetric = staveLineAccidentalLayoutMetrics[staveLineAccidentalLayoutMetrics.length - 1];
       let currentLineMetric: StaveLineAccidentalLayoutMetrics;
 
       // if this is the first line, or a new line, add a staveLineAccidentalLayoutMetric
@@ -176,15 +175,11 @@ export class Accidental extends Modifier {
       // for formatting lines w/ multiple accidentals:
 
       // width = accidental width + universal spacing between accidentals
-      currentLineMetric.width +=
-        accidentalLinePositionAndSpaceNeeds.accidental.getWidth() + accidentalSpacing;
+      currentLineMetric.width += accidentalLinePositionAndSpaceNeeds.accidental.getWidth() + accidentalSpacing;
 
       // if this extraXSpaceNeeded is the largest so far, use it as the starting point for
       // all accidental columns.
-      maxExtraXSpaceNeeded = Math.max(
-        accidentalLinePositionAndSpaceNeeds.extraXSpaceNeeded,
-        maxExtraXSpaceNeeded,
-      );
+      maxExtraXSpaceNeeded = Math.max(accidentalLinePositionAndSpaceNeeds.extraXSpaceNeeded, maxExtraXSpaceNeeded);
     }
 
     // ### Place Accidentals in Columns
@@ -218,7 +213,7 @@ export class Accidental extends Modifier {
         if (
           this.checkCollision(
             staveLineAccidentalLayoutMetrics[groupEnd],
-            staveLineAccidentalLayoutMetrics[groupEnd + 1],
+            staveLineAccidentalLayoutMetrics[groupEnd + 1]
           )
         ) {
           // include the next note in the group:
@@ -245,7 +240,7 @@ export class Accidental extends Modifier {
       // Set the accidental column for each line of the group
       let endCase = this.checkCollision(
         staveLineAccidentalLayoutMetrics[groupStart],
-        staveLineAccidentalLayoutMetrics[groupEnd],
+        staveLineAccidentalLayoutMetrics[groupEnd]
       )
         ? 'a'
         : 'b';
@@ -291,15 +286,11 @@ export class Accidental extends Modifier {
         let collisionDetected = true;
         while (collisionDetected === true) {
           collisionDetected = false;
-          for (
-            let line = 0;
-            line + patternLength < staveLineAccidentalLayoutMetrics.length;
-            line++
-          ) {
+          for (let line = 0; line + patternLength < staveLineAccidentalLayoutMetrics.length; line++) {
             if (
               this.checkCollision(
                 staveLineAccidentalLayoutMetrics[line],
-                staveLineAccidentalLayoutMetrics[line + patternLength],
+                staveLineAccidentalLayoutMetrics[line + patternLength]
               )
             ) {
               collisionDetected = true;
@@ -375,8 +366,7 @@ export class Accidental extends Modifier {
         accidentalLinePositionsAndSpaceNeeds[accCount].accidental.setXShift(xShift);
         // keep track of the width of accidentals we've added so far, so that when
         // we loop, we add space for them.
-        lineWidth +=
-          accidentalLinePositionsAndSpaceNeeds[accCount].accidental.getWidth() + accidentalSpacing;
+        lineWidth += accidentalLinePositionsAndSpaceNeeds[accCount].accidental.getWidth() + accidentalSpacing;
         L('Line, accCount, shift: ', line.line, accCount, xShift);
       }
     });
@@ -387,7 +377,7 @@ export class Accidental extends Modifier {
   /** Helper function to determine whether two lines of accidentals collide vertically */
   protected static checkCollision(
     line1: StaveLineAccidentalLayoutMetrics,
-    line2: StaveLineAccidentalLayoutMetrics,
+    line2: StaveLineAccidentalLayoutMetrics
   ): boolean {
     let clearance = line2.line - line1.line;
     let clearanceRequired = 3;
@@ -478,11 +468,7 @@ export class Accidental extends Modifier {
 
           // Remove accidentals
           staveNote.getModifiers().forEach((modifier, index) => {
-            if (
-              isAccidental(modifier) &&
-              modifier.type == accidentalString &&
-              modifier.getIndex() == keyIndex
-            ) {
+            if (isAccidental(modifier) && modifier.type == accidentalString && modifier.getIndex() == keyIndex) {
               staveNote.getModifiers().splice(index, 1);
             }
           });

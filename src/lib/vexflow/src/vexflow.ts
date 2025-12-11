@@ -6,19 +6,12 @@ import { Beam } from './beam';
 import { Bend } from './bend';
 import { BoundingBox } from './boundingbox';
 import { CanvasContext } from './canvascontext';
-import {
-  ChordSymbol,
-  ChordSymbolHorizontalJustify,
-  ChordSymbolVerticalJustify,
-  SymbolModifiers,
-} from './chordsymbol';
+import { ChordSymbol, ChordSymbolHorizontalJustify, ChordSymbolVerticalJustify, SymbolModifiers } from './chordsymbol';
 import { Clef } from './clef';
-import { VexflowConfig } from './config';
 import { ClefNote } from './clefnote';
 import { Crescendo } from './crescendo';
 import { Curve, CurvePosition } from './curve';
 import { Dot } from './dot';
-import { DebugGrid } from './debuggrid';
 import { EasyScore } from './easyscore';
 import { Element } from './element';
 import { Factory } from './factory';
@@ -41,7 +34,6 @@ import { ModifierContext } from './modifiercontext';
 import { MultiMeasureRest } from './multimeasurerest';
 import { Music } from './music';
 import { Note } from './note';
-import { NoteSpan } from './notespan';
 import { NoteHead } from './notehead';
 import { NoteSubGroup } from './notesubgroup';
 import { Ornament } from './ornament';
@@ -118,7 +110,6 @@ export class VexFlow {
   static Crescendo = Crescendo;
   static Curve = Curve;
   static Dot = Dot;
-  static DebugGrid = DebugGrid;
   static EasyScore = EasyScore;
   static Element = Element;
   static Factory = Factory;
@@ -139,7 +130,6 @@ export class VexFlow {
   static MultiMeasureRest = MultiMeasureRest;
   static Music = Music;
   static Note = Note;
-  static NoteSpan = NoteSpan;
   static NoteHead = NoteHead;
   static NoteSubGroup = NoteSubGroup;
   static Ornament = Ornament;
@@ -182,8 +172,6 @@ export class VexFlow {
   static VibratoBracket = VibratoBracket;
   static Voice = Voice;
   static Volta = Volta;
-
-  static Config = VexflowConfig;
 
   static RuntimeError = RuntimeError;
 
@@ -343,24 +331,20 @@ export class VexFlow {
     Metrics.clear('TabStave');
   }
 
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get STEM_HEIGHT(): number {
-    return VexflowConfig.defaults().stem().height;
+    return Tables.STEM_HEIGHT;
   }
 
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static set STEM_HEIGHT(value: number) {
-    VexflowConfig.configure({ stem: { height: value } });
+    Tables.STEM_HEIGHT = value;
   }
 
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static get STEM_WIDTH(): number {
-    return VexflowConfig.defaults().stem().width;
+    return Tables.STEM_WIDTH;
   }
 
-  // TODO: remove this method and the caller should retrieve value from VexflowConfigInstance
   static set STEM_WIDTH(value: number) {
-    VexflowConfig.configure({ stem: { width: value } });
+    Tables.STEM_WIDTH = value;
   }
 
   static get TIME4_4(): VoiceTime {

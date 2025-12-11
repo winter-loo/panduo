@@ -88,13 +88,7 @@ export class Curve extends Element {
     return !this.from || !this.to;
   }
 
-  renderCurve(params: {
-    lastY: number;
-    lastX: number;
-    firstY: number;
-    firstX: number;
-    direction: number;
-  }): void {
+  renderCurve(params: { lastY: number; lastX: number; firstY: number; firstX: number; direction: number }): void {
     const ctx = this.checkContext();
 
     const xShift = this.renderOptions.xShift;
@@ -120,7 +114,7 @@ export class Curve extends Element {
       lastX - controlPointSpacing + cp1x,
       lastY + cp1y * params.direction,
       lastX,
-      lastY,
+      lastY
     );
     if (!this.style?.lineDash)
       ctx.bezierCurveTo(
@@ -129,7 +123,7 @@ export class Curve extends Element {
         firstX + controlPointSpacing + cp0x,
         firstY + (cp0y + thickness) * params.direction,
         firstX,
-        firstY,
+        firstY
       );
     ctx.stroke();
     ctx.closePath();

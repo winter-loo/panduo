@@ -81,8 +81,7 @@ export class Annotation extends Modifier {
     for (let i = 0; i < annotations.length; ++i) {
       const annotation = annotations[i];
       // Text height is expressed in fractional stave spaces.
-      const textLines =
-        (2 + Font.convertSizeToPixelValue(annotation.fontInfo.size)) / Tables.STAVE_LINE_DISTANCE;
+      const textLines = (2 + Font.convertSizeToPixelValue(annotation.fontInfo.size)) / Tables.STAVE_LINE_DISTANCE;
       let verticalSpaceNeeded = textLines;
 
       const note = annotation.checkAttachedNote();
@@ -166,12 +165,9 @@ export class Annotation extends Modifier {
     }
     const rightOverlap = Math.min(
       Math.max(rightWidth - maxRightGlyphWidth, 0),
-      Math.max(rightWidth - state.rightShift, 0),
+      Math.max(rightWidth - state.rightShift, 0)
     );
-    const leftOverlap = Math.min(
-      Math.max(leftWidth - maxLeftGlyphWidth, 0),
-      Math.max(leftWidth - state.leftShift, 0),
-    );
+    const leftOverlap = Math.min(Math.max(leftWidth - maxLeftGlyphWidth, 0), Math.max(leftWidth - state.leftShift, 0));
     state.leftShift += leftOverlap;
     state.rightShift += rightOverlap;
     return true;
@@ -200,8 +196,7 @@ export class Annotation extends Modifier {
    * @param just value in `AnnotationVerticalJustify`.
    */
   setVerticalJustification(just: string | AnnotationVerticalJustify): this {
-    this.verticalJustification =
-      typeof just === 'string' ? Annotation.VerticalJustifyString[just] : just;
+    this.verticalJustification = typeof just === 'string' ? Annotation.VerticalJustifyString[just] : just;
     return this;
   }
 
@@ -217,8 +212,7 @@ export class Annotation extends Modifier {
    * @param just value in `Annotation.Justify`.
    */
   setJustification(just: string | AnnotationHorizontalJustify): this {
-    this.horizontalJustification =
-      typeof just === 'string' ? Annotation.HorizontalJustifyString[just] : just;
+    this.horizontalJustification = typeof just === 'string' ? Annotation.HorizontalJustifyString[just] : just;
     return this;
   }
 
@@ -230,7 +224,8 @@ export class Annotation extends Modifier {
     const start = note.getModifierStartXY(ModifierPosition.ABOVE, this.index);
 
     this.setRendered();
-    ctx.openGroup('annotation', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('annotation' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     const textWidth = this.getWidth();
     const textHeight = Font.convertSizeToPixelValue(this.fontInfo.size);

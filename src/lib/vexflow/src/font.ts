@@ -99,16 +99,11 @@ export class Font {
     f?: string | FontInfo,
     size?: string | number,
     weight?: string | number,
-    style?: string,
+    style?: string
   ): Required<FontInfo> {
     // If f is a string but all other arguments are undefined, we assume that
     // f is CSS font shorthand (e.g., 'italic bold 10pt Arial').
-    if (
-      typeof f === 'string' &&
-      size === undefined &&
-      weight === undefined &&
-      style === undefined
-    ) {
+    if (typeof f === 'string' && size === undefined && weight === undefined && style === undefined) {
       return Font.fromCSSString(f);
     }
 
@@ -307,15 +302,9 @@ export class Font {
    * @param url The absolute or relative URL to the woff2/otf file. It can also be a data URI.
    * @param descriptors See: https://developer.mozilla.org/en-US/docs/Web/API/FontFace/FontFace#descriptors
    */
-  static async load(
-    fontName: string,
-    url?: string,
-    descriptors?: Record<string, string>,
-  ): Promise<FontFace> {
+  static async load(fontName: string, url?: string, descriptors?: Record<string, string>): Promise<FontFace> {
     if (typeof FontFace === 'undefined') {
-      return Promise.reject(
-        new Error('FontFace API is not available in this environment. Cannot load fonts.'),
-      );
+      return Promise.reject(new Error('FontFace API is not available in this environment. Cannot load fonts.'));
     }
 
     // If url is not specified, we load the font from the jsDelivr CDN.

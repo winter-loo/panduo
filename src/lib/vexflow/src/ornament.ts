@@ -225,7 +225,8 @@ export class Ornament extends Modifier {
 
     const stave = note.checkStave();
 
-    ctx.openGroup('ornament', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('ornament' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     // Get initial coordinates for the modifier position
     const start = note.getModifierStartXY(this.position, this.index);
@@ -253,8 +254,7 @@ export class Ornament extends Modifier {
       } else {
         const tickables = note.getVoice().getTickables();
         const index = tickables.indexOf(note);
-        const nextContext =
-          index + 1 < tickables.length ? tickables[index + 1].checkTickContext() : undefined;
+        const nextContext = index + 1 < tickables.length ? tickables[index + 1].checkTickContext() : undefined;
         if (nextContext) {
           delayXShift += (nextContext.getX() - startX) * 0.5;
         } else {
@@ -270,7 +270,7 @@ export class Ornament extends Modifier {
       this.accidentalLower.renderText(
         ctx,
         glyphX + this.xShift - this.accidentalLower.getWidth() * 0.5,
-        glyphY + this.yShift - this.accidentalLower.getTextMetrics().actualBoundingBoxDescent,
+        glyphY + this.yShift - this.accidentalLower.getTextMetrics().actualBoundingBoxDescent
       );
       glyphY -= this.accidentalLower.getHeight() + this.renderOptions.accidentalLowerPadding;
     }
@@ -282,9 +282,7 @@ export class Ornament extends Modifier {
 
     this.x =
       glyphX -
-      (this.position === ModifierPosition.ABOVE || this.position === ModifierPosition.BELOW
-        ? this.width * 0.5
-        : 0);
+      (this.position === ModifierPosition.ABOVE || this.position === ModifierPosition.BELOW ? this.width * 0.5 : 0);
     this.y = glyphY;
 
     this.renderText(ctx, 0, 0);
@@ -294,7 +292,7 @@ export class Ornament extends Modifier {
       this.accidentalUpper.renderText(
         ctx,
         glyphX + this.xShift - this.accidentalUpper.getWidth() * 0.5,
-        glyphY + this.yShift - this.accidentalUpper.getTextMetrics().actualBoundingBoxDescent,
+        glyphY + this.yShift - this.accidentalUpper.getTextMetrics().actualBoundingBoxDescent
       );
     }
     this.drawPointerRect();

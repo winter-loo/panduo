@@ -59,7 +59,7 @@ export class Tuning {
     if (s < 1 || s > this.tuningValues.length) {
       throw new RuntimeError(
         'BadArguments',
-        `String number must be between 1 and ${this.tuningValues.length}:${stringNum}`,
+        `String number must be between 1 and ${this.tuningValues.length}:${stringNum}`
       );
     }
 

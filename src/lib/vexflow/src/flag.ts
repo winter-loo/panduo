@@ -2,7 +2,6 @@
 // MIT License
 
 import { Element } from './element';
-import { GlyphFont } from './glyphfont';
 import { Category } from './typeguard';
 import { log } from './util';
 
@@ -27,17 +26,11 @@ export class Flag extends Element {
   override draw(): void {
     const ctx = this.checkContext();
     this.setRendered();
-    ctx.openGroup('flag', this.getAttribute('id'));
+    const clsAttribute = this.getAttribute('class');
+    ctx.openGroup('flag' + (clsAttribute ? ' ' + clsAttribute : ''), this.getAttribute('id'));
 
     L("Drawing flag '", this.text, "' at", this.x, this.y);
-    GlyphFont.renderGlyph(
-      ctx,
-      this.text,
-      this.fontInfo.family,
-      this.fontSizeInPixels,
-      this.x + this.xShift,
-      this.y + this.yShift
-    );
+    this.renderText(ctx, 0, 0);
     this.drawPointerRect();
     ctx.closeGroup();
   }

@@ -135,8 +135,7 @@ export class TickContext {
   }
 
   getWidth(): number {
-    return this.width;
-    // return this.width + this.padding * 2;
+    return this.width + this.padding * 2;
   }
 
   setPadding(padding: number): this {
@@ -268,18 +267,11 @@ export class TickContext {
       this.modRightPx = Math.max(this.modRightPx, metrics.modRightPx);
 
       // Total shift
-      this.totalLeftPx = Math.max(
-        this.totalLeftPx,
-        metrics.modLeftPx + metrics.leftDisplacedHeadPx,
-      );
-      this.totalRightPx = Math.max(
-        this.totalRightPx,
-        metrics.modRightPx + metrics.rightDisplacedHeadPx,
-      );
+      this.totalLeftPx = Math.max(this.totalLeftPx, metrics.modLeftPx + metrics.leftDisplacedHeadPx);
+      this.totalRightPx = Math.max(this.totalRightPx, metrics.modRightPx + metrics.rightDisplacedHeadPx);
 
       // Recalculate the tick context total width
       this.width = this.notePx + this.totalLeftPx + this.totalRightPx;
-      console.log(`in preformat, tick ${this.currentTick}, width: ${this.width}`);
     }
 
     return this;

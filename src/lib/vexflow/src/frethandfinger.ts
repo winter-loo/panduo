@@ -104,11 +104,7 @@ export class FretHandFinger extends Modifier {
     return true;
   }
 
-  static easyScoreHook(
-    { fingerings }: { fingerings?: string } = {},
-    note: StemmableNote,
-    builder: Builder,
-  ): void {
+  static easyScoreHook({ fingerings }: { fingerings?: string } = {}, note: StemmableNote, builder: Builder): void {
     fingerings
       ?.split(',')
       .map((fingeringString: string) => {

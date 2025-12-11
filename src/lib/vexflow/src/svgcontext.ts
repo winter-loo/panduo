@@ -8,7 +8,6 @@ import { Metrics } from './metrics';
 import { RenderContext, TextMeasure } from './rendercontext';
 import { Tables } from './tables';
 import { normalizeAngle, prefix, RuntimeError } from './util';
-import { VexflowConfig, VexflowConfigInstance } from './config';
 
 export type Attributes = {
   [name: string]: string | number | undefined;
@@ -21,10 +20,7 @@ export type Attributes = {
 };
 
 /** For a particular element type (e.g., rect), we will not apply certain presentation attributes. */
-const ATTRIBUTES_TO_IGNORE: Record<
-  string /* element type */,
-  Record<string, boolean> /* ignored attributes */
-> = {
+const ATTRIBUTES_TO_IGNORE: Record<string /* element type */, Record<string, boolean> /* ignored attributes */> = {
   path: {
     x: true,
     y: true,
@@ -65,8 +61,8 @@ export class SVGContext extends RenderContext {
 
   element: HTMLElement; // the parent DOM object
   svg: SVGSVGElement;
-  _width: number = 0;
-  _height: number = 0;
+  width: number = 0;
+  height: number = 0;
   path: string;
   pen: { x: number; y: number };
   attributes: Attributes;
@@ -88,15 +84,15 @@ export class SVGContext extends RenderContext {
   /** Formatted as CSS font shorthand (e.g., 'italic bold 12pt Arial') */
   protected fontCSSString: string = '';
 
-  constructor(element: HTMLElement, config?: VexflowConfigInstance) {
+  constructor(element: HTMLElement) {
     super();
     this.element = element;
-    SVGContext.measureTextElement = new Element(undefined, config);
 
     this.precision = Math.pow(10, Tables.RENDER_PRECISION_PLACES);
 
     // Create an SVG element and add it to the container element.
     const svg = this.create('svg');
+    svg.setAttribute('pointer-events', 'none');
     this.element.appendChild(svg);
     this.svg = svg;
 
@@ -107,7 +103,7 @@ export class SVGContext extends RenderContext {
     this.pen = { x: NaN, y: NaN };
 
     const defaultFontAttributes = {
-      'font-family': (config ?? VexflowConfig.defaults()).get('fontFamily') as string,
+      'font-family': Metrics.get('fontFamily') as string,
       'font-size': '10pt',
       'font-weight': FontWeight.NORMAL,
       'font-style': FontStyle.NORMAL,
@@ -122,7 +118,7 @@ export class SVGContext extends RenderContext {
     this.attributes = {
       'stroke-width': 1.0,
       'stroke-dasharray': 'none',
-      fill: 'currentColor',
+      fill: 'black',
       stroke: 'black',
       shadowBlur: 0,
       shadowColor: 'black',
@@ -157,27 +153,16 @@ export class SVGContext extends RenderContext {
   }
 
   // Allow grouping elements in containers for interactivity.
-  openGroup(classList?: string | string[], id?: string): SVGGElement {
+  openGroup(cls?: string, id?: string): SVGGElement {
     const group = this.create('g');
     this.groups.push(group);
     this.parent.appendChild(group);
     this.parent = group;
-    if (classList) {
-      let classNames = '';
-      if (classList instanceof Array) {
-        classNames = classList.map((cls) => prefix(cls)).join(' ');
-      } else {
-        classNames = prefix(classList);
-      }
-      group.setAttribute('class', classNames);
-    }
+    if (cls) group.setAttribute('class', prefix(cls));
     if (id) group.setAttribute('id', prefix(id));
 
     this.applyAttributes(group, this.attributes);
-    this.groupAttributes.push({
-      ...this.groupAttributes[this.groupAttributes.length - 1],
-      ...this.attributes,
-    });
+    this.groupAttributes.push({ ...this.groupAttributes[this.groupAttributes.length - 1], ...this.attributes });
     return group;
   }
 
@@ -188,10 +173,7 @@ export class SVGContext extends RenderContext {
   }
 
   openRotation(angleDegrees: number, x: number, y: number) {
-    this.openGroup().setAttribute(
-      'transform',
-      `translate(${x},${y}) rotate(${angleDegrees}) translate(-${x},-${y})`,
-    );
+    this.openGroup().setAttribute('transform', `translate(${x},${y}) rotate(${angleDegrees}) translate(-${x},-${y})`);
   }
 
   closeRotation() {
@@ -276,8 +258,8 @@ export class SVGContext extends RenderContext {
   // and style.height properties eventually to allow users to
   // apply responsive sizing attributes to the SVG.
   resize(width: number, height: number): this {
-    this._width = width;
-    this._height = height;
+    this.width = width;
+    this.height = height;
     this.element.style.width = width.toString();
 
     this.svg.style.width = width.toString();
@@ -308,8 +290,8 @@ export class SVGContext extends RenderContext {
 
     this.state.scaleX = this.state.scaleX ? this.state.scaleX * x : x;
     this.state.scaleY = this.state.scaleY ? this.state.scaleY * y : y;
-    const visibleWidth = this._width / this.state.scaleX;
-    const visibleHeight = this._height / this.state.scaleY;
+    const visibleWidth = this.width / this.state.scaleX;
+    const visibleHeight = this.height / this.state.scaleY;
     this.setViewBox(0, 0, visibleWidth, visibleHeight);
 
     return this;
@@ -337,7 +319,7 @@ export class SVGContext extends RenderContext {
         continue;
       }
       if (
-        attributes[attrName] != null &&
+        attributes[attrName] &&
         (this.groupAttributes.length === 0 ||
           attributes[attrName] != this.groupAttributes[this.groupAttributes.length - 1][attrName])
       )
@@ -374,11 +356,7 @@ export class SVGContext extends RenderContext {
     }
 
     const rectangle = this.create('rect');
-    attributes = attributes ?? {
-      fill: 'none',
-      'stroke-width': this.attributes['stroke-width'],
-      stroke: 'black',
-    };
+    attributes = attributes ?? { fill: 'none', 'stroke-width': this.attributes['stroke-width'], stroke: 'black' };
     x = this.round(x);
     y = this.round(y);
     width = this.round(width);
@@ -388,24 +366,14 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  fillRect(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    optional_attributes?: Attributes,
-  ): this {
-    const attributes = { fill: 'currentColor', ...this.attributes, ...optional_attributes, stroke: 'none' };
+  fillRect(x: number, y: number, width: number, height: number): this {
+    const attributes = { fill: this.attributes.fill, stroke: 'none' };
     this.rect(x, y, width, height, attributes);
     return this;
   }
 
   pointerRect(x: number, y: number, width: number, height: number): this {
-    const attributes = {
-      fill: 'none',
-      'stroke-width': 1.0,
-      stroke: 'currentColor',
-    };
+    const attributes = { opacity: '0', 'pointer-events': 'auto' };
     this.rect(x, y, width, height, attributes);
     return this;
   }
@@ -472,14 +440,7 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  arc(
-    x: number,
-    y: number,
-    radius: number,
-    startAngle: number,
-    endAngle: number,
-    counterclockwise: boolean,
-  ): this {
+  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise: boolean): this {
     let x0 = x + radius * Math.cos(startAngle);
     let y0 = y + radius * Math.sin(startAngle);
     x0 = this.round(x0);
@@ -533,17 +494,6 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  polygon(points: string, props?: any): this {
-    const shape = this.create('polygon');
-    const attributes = {
-      points,
-      ...props,
-    };
-    this.applyAttributes(shape, attributes);
-    this.add(shape);
-    return this;
-  }
-
   closePath(): this {
     this.path += 'Z';
     return this;
@@ -572,11 +522,11 @@ export class SVGContext extends RenderContext {
     return this;
   }
 
-  stroke(props?: any): this {
+  stroke(): this {
     const path = this.create('path');
     const attributes: Attributes = {
       ...this.attributes,
-      ...props,
+      fill: 'none',
       d: this.path,
     };
     if ((this.attributes.shadowBlur as number) > 0) {
@@ -595,13 +545,13 @@ export class SVGContext extends RenderContext {
       this.attributes['font-family'],
       this.attributes['font-size'],
       this.attributes['font-weight'],
-      this.attributes['font-style'],
+      this.attributes['font-style']
     );
     const bb = SVGContext.measureTextElement.getBoundingBox();
     return { x: bb.x, y: bb.y, width: bb.w, height: bb.h };
   }
 
-  fillText(text: string, x: number, y: number, props?: Attributes): this {
+  fillText(text: string, x: number, y: number): this {
     if (!text || text.length <= 0) {
       return this;
     }
@@ -609,7 +559,6 @@ export class SVGContext extends RenderContext {
     y = this.round(y);
     const attributes: Attributes = {
       ...this.attributes,
-      ...props,
       stroke: 'none',
       x,
       y,
@@ -666,12 +615,7 @@ export class SVGContext extends RenderContext {
    * @param style is a string (e.g., 'italic', 'normal') that is inserted into the
    *              font-style attribute (e.g., font-style="italic")
    */
-  setFont(
-    f?: string | FontInfo,
-    size?: string | number,
-    weight?: string | number,
-    style?: string,
-  ): this {
+  setFont(f?: string | FontInfo, size?: string | number, weight?: string | number, style?: string): this {
     const fontInfo = Font.validate(f, size, weight, style);
     this.fontCSSString = Font.toCSSString(fontInfo);
     const fontAttributes = {
@@ -688,13 +632,5 @@ export class SVGContext extends RenderContext {
   /** Return a string of the form `'italic bold 15pt Arial'` */
   getFont(): string {
     return this.fontCSSString;
-  }
-
-  override get height(): number {
-    return this._height;
-  }
-
-  override get width(): number {
-    return this._width;
   }
 }
