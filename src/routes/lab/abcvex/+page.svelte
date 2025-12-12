@@ -952,7 +952,76 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
     let slurs = pc.buildSlurs();
     let voices = pc.buildVoices();
 
-    // 1. Format voices
+    // 1. Calculate dynamic widths and reflow staves
+    const MIN_STAVE_WIDTH = 80;
+    // const PADDING_PER_STAVE = 80; // Replaced by dynamic padding
+
+    // Reset systems x-positioning tracking
+    let systemCurrentX = []; // Track current X for each system
+
+    for (let i = 0; i < pc.systems.length; i++) {
+        systemCurrentX.push(0);
+    }
+
+    let globalMaxStaveWidth = 0;
+
+    for (let i = 0; i < pc.staves.length; i++) {
+        const stave = pc.staves[i];
+        const voice = voices[i];
+        
+        // Find which system this stave belongs to
+        let systemIndex = -1;
+        for(let s=0; s<pc.systems.length; s++) {
+            if (pc.systems[s].includes(stave)) {
+                systemIndex = s;
+                break;
+            }
+        }
+        
+        let newWidth = pc.staveWidth; // Default fallback
+
+        if (voice) {
+            const formatter = new VexFlow.Formatter();
+            formatter.joinVoices([voice]);
+            // Pre-calculate to populate width requirements
+            formatter.preCalculateMinTotalWidth([voice]); 
+            const minVoiceWidth = formatter.getMinTotalWidth();
+            
+            // Calculate space needed for Clef, KeySig, TimeSig
+            const startX = stave.getNoteStartX();
+            const modifiersWidth = startX - stave.getX();
+
+            // Dynamic padding based on duration (ticks)
+            // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
+            const totalTicks = voice.getTicksUsed().value();
+            const numQuarters = totalTicks / (VexFlow.RESOLUTION / 4);
+            const dynamicPadding = numQuarters * 40;
+
+            newWidth = modifiersWidth + minVoiceWidth + dynamicPadding;
+        }
+
+        // Enforce limits
+        newWidth = Math.max(newWidth, MIN_STAVE_WIDTH);
+        
+        // Apply new width
+        stave.setWidth(newWidth);
+
+        // Position Stave in System
+        if (systemIndex !== -1) {
+             stave.setX(systemCurrentX[systemIndex]);
+             // Update x for next stave in this system
+             systemCurrentX[systemIndex] += newWidth;
+             
+             // Track max width for the renderer resize later
+             globalMaxStaveWidth = Math.max(globalMaxStaveWidth, systemCurrentX[systemIndex]);
+        }
+    }
+    
+    // Update global context width
+    pc.maxStaveWidth = globalMaxStaveWidth;
+
+
+    // 2. Format voices (Now with correct stave widths)
     let formatter = new VexFlow.Formatter();
     for (let i = 0; i < pc.staves.length; i++) {
       if (voices[i] != undefined) {
@@ -1092,7 +1161,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
     }
 
-    renderer.resize(pc.maxStaveWidth, currentY);
+    renderer.resize(Math.ceil(pc.maxStaveWidth), Math.ceil(currentY));
 
     pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
