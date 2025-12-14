@@ -27,6 +27,8 @@
     KeySignature,
     TimeSignature,
     CurvePosition,
+    Metrics,
+    MetricsDefaults,
   } from "$lib/vexflow/vexflow-core";
   // } from "vexflow";
 
@@ -42,13 +44,7 @@ A:Stanton Harcourt
 P:A2B4
 K:Gm
 P:A
-GA|B2AB G2cB |B2AB G2d2|e2c2  cdef|d2c2 B3d |
-ccB2 A2G2 |FGFE D2d2|cBAG  F2A2|G4   G2 ||
-P:B
-d=e|f2d2 d=efd|g2d2 c4  |gg=ed cBAG|A2F2 F4  |
-G2GA B2B2 |c2c2 g2g2|f2d2  e2fe|d2G2 c2dc|
-BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
-`);
+GA|`);
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -923,6 +919,14 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
   let staffRef: any;
   let renderer: Renderer;
   function toVex() {
+    // Tuning: Reduce default stave padding to avoid excessive space
+    MetricsDefaults.Stave.padding = 12; // Default 12
+    MetricsDefaults.Stave.endPaddingMax = 0;
+    MetricsDefaults.Stave.endPaddingMin = 0;
+    MetricsDefaults.NoteHead.minPadding = 12;
+    // Clear cache to apply changes if verified that 'Stave.padding' keys are used
+    Metrics.clear();
+
     errMessage = "";
     pc.reset();
     if (staffRef) {
@@ -990,14 +994,16 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
         // Calculate space needed for Clef, KeySig, TimeSig
         const startX = stave.getNoteStartX();
         const modifiersWidth = startX - stave.getX();
-
         // Dynamic padding based on duration (ticks)
         // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
         const totalTicks = voice.getTicksUsed().value();
         const numQuarters = totalTicks / (VexFlow.RESOLUTION / 4);
-        const dynamicPadding = numQuarters * 40;
+        const extraSpacesPx = numQuarters * 40;
 
-        newWidth = modifiersWidth + minVoiceWidth + dynamicPadding;
+        // Add default padding (Stave.padding + Stave.endPaddingMax = 0 + 10 = 10)
+        // We use the same source of truth as the Stave class uses internally
+        const stavePadding = Stave.defaultPadding ?? 10;
+        newWidth = modifiersWidth + minVoiceWidth + stavePadding;
       }
 
       // Enforce limits
@@ -1160,7 +1166,7 @@ BAGF GABc |d2d2 G2d2|cBAG  F2A2|G4   G2 ||
       currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
     }
 
-    renderer.resize(Math.ceil(pc.maxStaveWidth), Math.ceil(currentY));
+    renderer.resize(Number(pc.maxStaveWidth.toFixed(2)), Number(currentY.toFixed(2)));
 
     pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
