@@ -1,6 +1,5 @@
 <script lang="ts">
   import abcNotation from "../parser/abc.ohm?raw";
-  import { onMount } from "svelte";
   import * as ohm from "ohm-js";
   import {
     RenderContext,
@@ -8,7 +7,6 @@
     Stave,
     StaveConnector,
     StaveNote,
-    Stem,
     VexFlow,
     // VexflowConfig,
     Font,
@@ -37,13 +35,16 @@
   const abcGrammar = ohm.grammar(abcNotation);
 
   let abcInputText = $state(`
-X: 1
-T: Metric Staff
-M: 4/4
-L: 1/8
-Q: 1/4=120
-K: C
-F2 FF F2 FF | F2 B,2 D2 F2 |]`);
+X: 5
+T:Princess Royal, Stanton Harcourt
+M:4/4
+L:1/8
+Q:1/4=120
+A:Stanton Harcourt
+P:A2B4
+K:Gm
+P:A
+GA|`);
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -118,7 +119,6 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
         spaceBelowStaffLn: 0,
         leftBar: false,
         rightBar: false,
-        spacingBetweenLinesPx: 72, // Explicit 72px line spacing
       });
 
       // Apply modifiers only at start of system or if changed (logic simplified for start of system)
@@ -919,195 +919,262 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
   let staffRef: any;
   let renderer: Renderer;
   function toVex() {
-    // Exact Metrics Implementation driven by ABC
-    // Scale Adjustments for 72px noteheads
-    MetricsDefaults.fontSize = 216; 
-    MetricsDefaults.Stave.padding = 0; 
+    // Tuning: Reduce default stave padding to avoid excessive space
+    MetricsDefaults.Stave.padding = 12; // Default 12
     MetricsDefaults.Stave.endPaddingMax = 0;
+    MetricsDefaults.Stave.endPaddingMin = 0;
+    MetricsDefaults.NoteHead.minPadding = 12;
+    // Clear cache to apply changes if verified that 'Stave.padding' keys are used
     Metrics.clear();
 
-    // VISUAL FIX: Monkey-patch Stem.WIDTH and Stem.HEIGHT to overcome hardcoded defaults
-    try {
-        Object.defineProperty(Stem, 'WIDTH', { get: () => 9 });
-        Object.defineProperty(Stem, 'HEIGHT', { get: () => 252 }); // 3.5 * 72
-    } catch (e) {
-        console.warn("Could not patch Stem dimensions", e);
-    }
-
-    const div = document.getElementById("abcvex");
-    if (!div) return;
-    div.innerHTML = "";
-    div.className = ""; 
-
-    const renderer = new Renderer(div, Renderer.Backends.SVG);
-    renderer.resize(2500, 1200); 
-    const ctx = renderer.getContext();
-    
-    // VISUAL FIX: Thicker lines for large scale
-    ctx.lineWidth = 5;
-
-    // Reset parser state
+    errMessage = "";
     pc.reset();
-    
-    // Parse ABC
+    if (staffRef) {
+      staffRef.innerHTML = "";
+    }
     let mr = abcGrammar.match(abcInputText, "File");
+
     try {
-        semantics(mr).toVex();
+      semantics(mr).toVex();
     } catch (e) {
-        if (e instanceof Error) errMessage = e.message;
-        console.error(e);
-        return;
+      if (e instanceof Error) errMessage = e.message;
+      return;
     }
 
-    // Retrieve generated content
+    // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
+    // Reset staff HTML before drawing
+    if (staffRef) staffRef.innerHTML = "";
+
+    renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
+    let rctx = renderer.getContext();
+    // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
+    // stave.addClef("treble");
+    // stave.addTimeSignature(pc.meter.toString());
+
     let beams = pc.buildBeams();
     let ties = pc.buildTies();
     let slurs = pc.buildSlurs();
     let voices = pc.buildVoices();
-    let staves = pc.staves;
 
-    const startX = 100;
-    const startY = 200;
-    let currentX = startX;
-    // const padding = 7; 
-    // User logic implies padding is part of the width calculation or handled by VexFlow's NoteStartX?
-    // "Start stave after these modifiers" -> modifiers + content.
-    // Content = 864px (4 beats). 
-    // Usually spacing is handled by formatter.
-    // We will use 7px padding for note start relative to modifiers?
-    // User Image: | [Clef] [Key] [Time]   [Note] ...
-    //             <------- Mods --------> <7px>
-    // Actually, VexFlow NoteStartX includes modifiers.
-    // We want to ADD 7px after modifiers? Or is 7px the total padding?
-    // Let's assume we add 7px to the modifier width.
-    const notePadding = 7;
+    // 1. Calculate dynamic widths and reflow staves
+    const MIN_STAVE_WIDTH = 80;
+    // const PADDING_PER_STAVE = 80; // Replaced by dynamic padding
 
-    for (let i = 0; i < staves.length; i++) {
-        const stave = staves[i];
-        const voice = voices[i];
+    // Reset systems x-positioning tracking
+    let systemCurrentX = []; // Track current X for each system
 
-        // 1. Initial Positioning to calculate modifiers
-        stave.setX(currentX);
-        stave.setY(startY);
-        
-        // Ensure 9px Barline (End modifier)
-        // We can try to style the modifiers or assumed 5px lineWidth handles it?
-        // User asked for 9px.
-        // Let's iterate modifiers and style them if they are barlines.
-        stave.getModifiers().forEach(mod => {
-            if (mod.getCategory() === 'barline') {
-                mod.setStyle({ lineWidth: 9 });
-            }
-        });
-        
-        // 2. Calculate Width
-        // We need to know how wide the modifiers are.
-        // Stave.getNoteStartX() calculates this based on current width/modifiers.
-        // It relies on formatting.
-        // We set a dummy width first to allow calculation.
-        stave.setWidth(1000); 
-        const modStart = stave.getNoteStartX(); // Absolute X of where notes start
-        const modWidth = modStart - stave.getX(); // Pixel width of modifiers
-        
-        // M1: Width = Modifiers + 864. 
-        // M2: Width = 864. (Usually M2 has no start modifiers except barline).
-        // Check if i==0 ?
-        let totalWidth = 0;
-        let contentWidth = 864; // User specified 864 covers the beats + barline?
-        
-        if (i === 0) {
-             // M1 includes Clef etc.
-             // We want 864px of *content* space (or content+barline).
-             // User said: "Resize Stave 1: setWidth(modifierWidth + 864)"
-             totalWidth = modWidth + 864;
-             stave.setEndBarType(BarlineType.SINGLE);
-        } else {
-             // M2 (No clef usually).
-             // Just 864.
-             totalWidth = 864;
-             stave.setEndBarType(BarlineType.END); // Double bar? User inputs |]
-        }
-        
-        stave.setWidth(totalWidth);
-        
-        // Re-apply padding?
-        // modWidth already includes VexFlow's internal padding.
-        // User wants 7px padding.
-        // stave.setNoteStartX(stave.getX() + modWidth + notePadding ???)
-        // If we change NoteStartX, we must ensure it doesn't overlap modifiers.
-        // Let's trust VexFlow's layout + our manual width.
-        // But we explicitly set NoteStartX in previous steps.
-        // If we want *extra* 7px:
-        stave.setNoteStartX(stave.getX() + modWidth + notePadding);
-
-        // Draw Stave
-        stave.setContext(ctx).draw();
-
-        // Format and Draw Voice
-        if (voice) {
-            // Available width for notes = Total - Modifiers - Padding?
-            // Formatter takes `width` as the space to distribute notes.
-            // We want that space to be 864 roughly.
-            const voiceWidth = totalWidth - modWidth - notePadding;
-            
-            new Formatter()
-                .joinVoices([voice])
-                .format([voice], voiceWidth);
-            
-            // VISUAL FIX: Styles for Stems
-            voice.getTickables().forEach(t => {
-                if (t instanceof StaveNote) {
-                    t.setStemStyle({ lineWidth: 5 });
-                }
-            });
-
-            voice.draw(ctx, stave);
-        }
-        
-        // Barline styling again (just in case receive new modifiers)
-         stave.getModifiers().forEach(mod => {
-            const cat = mod.getCategory();
-            if (cat === 'barline') {
-                mod.setStyle({ lineWidth: 9 });
-            }
-            // Fix Tempo Font
-            if (cat === 'staveTempo') { // Check actual category name if needed
-                 mod.setFont({ size: '60px', weight: 'bold' });
-                 // Tempo might need y-shift if it's too close/far
-                 mod.setYShift(-20);
-            }
-            // Fix TimeSignature
-            if (cat === 'timeSignature') {
-                // FINAL FIX: Disable lineShift entirely and use direct line positioning.
-                // lineShift spreads the digits apart; we set it to 0.
-                // Position top digit at line 1 (center of top 2 spaces).
-                // Position bottom digit at line 3 (center of bottom 2 spaces).
-                // Font size 50px: cap height ~35px, easily fits in 144px half-space.
-                const ts = mod as any;
-                ts.lineShift = 0;  // Disable the automatic spreading
-                ts.topLine = 1;    // Render at line 1 (no shift applied)
-                ts.bottomLine = 3; // Render at line 3 (no shift applied)
-                mod.setFont({ size: '50px', weight: 'bold' }); 
-            }
-        });
-
-        currentX += totalWidth;
+    for (let i = 0; i < pc.systems.length; i++) {
+      systemCurrentX.push(0);
     }
 
-    // Draw Decorations
-    beams.forEach(b => {
-        // VISUAL FIX: Beam thickness
-        // Beam renders as polygon, thickness is controlled by beamWidth option
-        b.renderOptions.beamWidth = 9; 
-        b.setContext(ctx).draw();
-    });
-    ties.forEach(t => t.setContext(ctx).draw());
-    slurs.forEach(s => s.setContext(ctx).draw());
-  }
+    let globalMaxStaveWidth = 0;
 
-  onMount(() => {
-    // Wait for DOM
-  });
+    for (let i = 0; i < pc.staves.length; i++) {
+      const stave = pc.staves[i];
+      const voice = voices[i];
+
+      // Find which system this stave belongs to
+      let systemIndex = -1;
+      for (let s = 0; s < pc.systems.length; s++) {
+        if (pc.systems[s].includes(stave)) {
+          systemIndex = s;
+          break;
+        }
+      }
+
+      let newWidth = pc.staveWidth; // Default fallback
+
+      if (voice) {
+        const formatter = new VexFlow.Formatter();
+        formatter.joinVoices([voice]);
+        // Pre-calculate to populate width requirements
+        formatter.preCalculateMinTotalWidth([voice]);
+        const minVoiceWidth = formatter.getMinTotalWidth();
+
+        // Calculate space needed for Clef, KeySig, TimeSig
+        const startX = stave.getNoteStartX();
+        const modifiersWidth = startX - stave.getX();
+        // Dynamic padding based on duration (ticks)
+        // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
+        const totalTicks = voice.getTicksUsed().value();
+        const numQuarters = totalTicks / (VexFlow.RESOLUTION / 4);
+        const extraSpacesPx = numQuarters * 40;
+
+        // Add default padding (Stave.padding + Stave.endPaddingMax = 0 + 10 = 10)
+        // We use the same source of truth as the Stave class uses internally
+        const stavePadding = Stave.defaultPadding ?? 10;
+        newWidth = modifiersWidth + minVoiceWidth + stavePadding;
+      }
+
+      // Enforce limits
+      newWidth = Math.max(newWidth, MIN_STAVE_WIDTH);
+
+      // Apply new width
+      stave.setWidth(newWidth);
+
+      // Position Stave in System
+      if (systemIndex !== -1) {
+        stave.setX(systemCurrentX[systemIndex]);
+        // Update x for next stave in this system
+        systemCurrentX[systemIndex] += newWidth;
+
+        // Track max width for the renderer resize later
+        globalMaxStaveWidth = Math.max(globalMaxStaveWidth, systemCurrentX[systemIndex]);
+      }
+    }
+
+    // Update global context width
+    pc.maxStaveWidth = globalMaxStaveWidth;
+
+    // 2. Format voices (Now with correct stave widths)
+    let formatter = new VexFlow.Formatter();
+    for (let i = 0; i < pc.staves.length; i++) {
+      if (voices[i] != undefined) {
+        formatter.joinVoices([voices[i]!]).formatToStave([voices[i]!], pc.staves[i], {
+          alignRests: true,
+          stave: pc.staves[i],
+        });
+      }
+    }
+
+    // 2. Layout
+    let currentY = 0;
+    const PIXELS_PER_SPACE = 10;
+    const DEFAULT_TOP_PADDING = 30; // pixels
+    const DEFAULT_BOTTOM_PADDING = 30; // pixels
+    const SYSTEM_SPACING = 50; // pixels between systems
+
+    // Render Title if exists
+    if (pc.title) {
+      // Simple SVG text for title
+      // rendering context text
+      rctx.save();
+      rctx.setFont("Times New Roman", 24, "bold"); // VexFlow font handling is tricky, simpler to use standard canvas/svg text if possible?
+      // VexFlow RenderContext doesn't always support setFont clearly across backends?
+      // Let's use standard VexFlow text drawing if possible, or just append HTML?
+      // Renderer is SVG. We can't easily append HTML inside the SVG without foreignObject.
+      // Let's try rctx.fillText
+      rctx.fillText(pc.title, pc.maxStaveWidth / 2, 30);
+      rctx.restore();
+      currentY += 50;
+    }
+
+    for (let system of pc.systems) {
+      if (system.length === 0) continue;
+
+      let maxTopY = 0;
+      let maxBottomY = 0;
+
+      // First pass: Calculate required space
+      for (let stave of system) {
+        // Find voice for this stave
+        const staveIndex = pc.staves.indexOf(stave);
+        const voice = voices[staveIndex];
+
+        let topY = stave.getYForLine(0); // Top line Y (0-indexed)
+        let bottomY = stave.getYForLine(4); // Bottom line Y
+
+        if (voice) {
+          const bbox = voice.getBoundingBox();
+          if (bbox) {
+            // Check extension above
+            // bbox.y is the top-most coordinate
+            if (bbox.y < topY) {
+              // Calculate spaces needed
+              const pixelsAbove = topY - bbox.y;
+              const spacesAbove = Math.ceil(pixelsAbove / PIXELS_PER_SPACE);
+              // We want at least some padding
+              // We kept the calculation to know how much to offset layout,
+              // but we do NOT set it on the stave to avoid drawing tall barlines.
+            }
+
+            // Check extension below
+            // bbox.y + bbox.h is bottom
+            const voiceBottom = bbox.y + bbox.h;
+            if (voiceBottom > bottomY) {
+              const pixelsBelow = voiceBottom - bottomY;
+              const spacesBelow = Math.ceil(pixelsBelow / PIXELS_PER_SPACE);
+              // We kept the calculation to know how much to offset layout,
+              // but we do NOT set it on the stave to avoid drawing tall barlines.
+            }
+          }
+        }
+
+        // After setting options, recalculate extents for layout
+        // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y,
+        // but getBox or getHeight might change.
+        // Actually we control Y, giving it space is about placing the next system.
+
+        // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
+        // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually?
+        // Actually: new Stave(x, y, ...). y is the top line of the staff.
+        // Wait, let's verify VexFlow coordinate system.
+        // Usually y passed to Stave constructor is the y position of the top line.
+
+        // Let's just use the voice bounding box relative to stave.
+        // But voice bounding box is absolute coordinates based on current stave Y.
+        // Since we initialized staves with Y=0, the bounding box is relative to 0.
+
+        if (voice) {
+          const bbox = voice.getBoundingBox();
+          if (bbox) {
+            // bbox.y is absolute (currently relative to 0)
+            // bbox.y might be negative if notes are very high
+            // We need enough room above (negative Y)
+            // maxTopY should be positive value of required space above 0
+            if (bbox.y < -DEFAULT_TOP_PADDING) {
+              maxTopY = Math.max(maxTopY, Math.abs(bbox.y));
+            } else {
+              maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+            }
+
+            // bbox.y + bbox.h is absolute bottom
+            // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
+            const bottomLineY = 40;
+            const voiceBottom = bbox.y + bbox.h;
+            if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
+              maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
+            } else {
+              maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+            }
+          } else {
+            maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+            maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+          }
+        } else {
+          maxTopY = Math.max(maxTopY, DEFAULT_TOP_PADDING);
+          maxBottomY = Math.max(maxBottomY, DEFAULT_BOTTOM_PADDING);
+        }
+      }
+
+      // Apply Layout
+      // currentY is where the previous system ended.
+      // We need to place the top line of current system such that we accommodate maxTopY.
+      // So Stave Y = currentY + maxTopY.
+
+      const systemStaveY = currentY + maxTopY;
+
+      for (let stave of system) {
+        stave.setY(systemStaveY);
+      }
+
+      // Advance currentY
+      // The system lines take ~40px (for 5 lines).
+      // Plus maxBottomY.
+      // Plus spacing between systems.
+      const staveHeight = 40; // 5 lines * 10 spacing = 40 height diff.
+      currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
+    }
+
+    renderer.resize(Number(pc.maxStaveWidth.toFixed(2)), Number(currentY.toFixed(2)));
+
+    pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
+
+    voices.forEach((voice) => voice?.setContext(rctx).drawWithStyle());
+    beams.forEach((beam) => beam.setContext(rctx).drawWithStyle());
+    ties.forEach((tie) => tie.setContext(rctx).drawWithStyle());
+    slurs.forEach((slur) => slur.setContext(rctx).drawWithStyle());
+  }
 </script>
 
 <div>
