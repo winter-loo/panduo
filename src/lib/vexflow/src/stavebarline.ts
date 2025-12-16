@@ -26,7 +26,6 @@ export class Barline extends StaveModifier {
   protected paddings: Record<string, number>;
   protected layoutMetricsMap: Record<number, LayoutMetrics>;
 
-  protected thickness: number;
   protected type!: BarlineType;
 
   static get type(): typeof BarlineType {
@@ -47,7 +46,6 @@ export class Barline extends StaveModifier {
 
   constructor(type: BarlineType | string) {
     super();
-    this.thickness = Tables.STAVE_LINE_THICKNESS;
 
     const TYPE = BarlineType;
     this.widths = {};
@@ -174,10 +172,12 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
+    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, 1, botY - topY);
+      staveCtx.fillRect(x - 3, topY, thickness, botY - topY);
     }
-    staveCtx.fillRect(x, topY, 1, botY - topY);
+    staveCtx.fillRect(x, topY, thickness, botY - topY);
   }
 
   drawVerticalEndBar(stave: Stave, x: number): void {
