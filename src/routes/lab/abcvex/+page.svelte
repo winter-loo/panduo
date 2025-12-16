@@ -29,22 +29,21 @@
     CurvePosition,
     Metrics,
     MetricsDefaults,
+    Stem,
   } from "$lib/vexflow/vexflow-core";
+  import { Barline } from "vexflow";
   // } from "vexflow";
 
   const abcGrammar = ohm.grammar(abcNotation);
 
   let abcInputText = $state(`
-X: 5
-T:Princess Royal, Stanton Harcourt
-M:4/4
-L:1/8
-Q:1/4=120
-A:Stanton Harcourt
-P:A2B4
-K:Gm
-P:A
-GA|`);
+X: 1
+T: Metric Staff
+M: 4/4
+L: 1/8
+Q: 1/4=120
+K: C
+F2 FF F2 FF | F2 B,2 D2 F2 |]`);
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -119,6 +118,8 @@ GA|`);
         spaceBelowStaffLn: 0,
         leftBar: false,
         rightBar: false,
+        // TODO: change to variable
+        spacingBetweenLinesPx: 72,
       });
 
       // Apply modifiers only at start of system or if changed (logic simplified for start of system)
@@ -919,13 +920,24 @@ GA|`);
   let staffRef: any;
   let renderer: Renderer;
   function toVex() {
+    // Exact Metrics Implementation driven by ABC
+    // Scale Adjustments for 72px noteheads
+    MetricsDefaults.fontSize = 216;
     // Tuning: Reduce default stave padding to avoid excessive space
-    MetricsDefaults.Stave.padding = 12; // Default 12
+    MetricsDefaults.Stave.padding = 7; // Default 12
     MetricsDefaults.Stave.endPaddingMax = 0;
     MetricsDefaults.Stave.endPaddingMin = 0;
     MetricsDefaults.NoteHead.minPadding = 12;
     // Clear cache to apply changes if verified that 'Stave.padding' keys are used
     Metrics.clear();
+
+    // VISUAL fix: Monkey-patch Stem.WIDTH and Stem.HEIGHT to overcome hardcoded defaults
+    try {
+      Object.defineProperty(Stem, 'WIDTH', { get: () => 9 });
+      Object.defineProperty(Stem, 'HEIGHT', { get: () => 252 }); // 3.5 * 72
+    } catch (e) {
+      console.warn("Could not patch Stem dimensions", e);
+    }
 
     errMessage = "";
     pc.reset();
@@ -941,12 +953,10 @@ GA|`);
       return;
     }
 
-    // let cfg = VexflowConfig.create({ fontFamily: "Bravura" });
-    // Reset staff HTML before drawing
-    if (staffRef) staffRef.innerHTML = "";
-
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
     let rctx = renderer.getContext();
+    // VISUAL fix: Thicker lines for large scale
+    rctx.setLineWidth(9);
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     // stave.addClef("treble");
     // stave.addTimeSignature(pc.meter.toString());
@@ -1021,6 +1031,17 @@ GA|`);
         // Track max width for the renderer resize later
         globalMaxStaveWidth = Math.max(globalMaxStaveWidth, systemCurrentX[systemIndex]);
       }
+
+      stave.getModifiers().forEach(mod => {
+        const cat = mod.getCategory();
+        if (cat === 'Barline') {
+          let barline = mod as unknown as Barline;
+          if (barline.getType() != BarlineType.NONE) {
+            console.log('set its with to 9');
+            barline.setStyle({ lineWidth: 9});
+          }
+        }
+      });
     }
 
     // Update global context width
