@@ -924,10 +924,10 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
     // Scale Adjustments for 72px noteheads
     MetricsDefaults.fontSize = 216;
     // Tuning: Reduce default stave padding to avoid excessive space
-    MetricsDefaults.Stave.padding = 7; // Default 12
-    MetricsDefaults.Stave.endPaddingMax = 0;
-    MetricsDefaults.Stave.endPaddingMin = 0;
-    MetricsDefaults.NoteHead.minPadding = 12;
+    MetricsDefaults.Stave.padding = 7; // From image
+    MetricsDefaults.Stave.endPaddingMax = 20; // From image
+    MetricsDefaults.Stave.endPaddingMin = 20; // From image
+    MetricsDefaults.NoteHead.minPadding = 0; // Let formatter handle it
     // Clear cache to apply changes if verified that 'Stave.padding' keys are used
     Metrics.clear();
 
@@ -1008,12 +1008,15 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
         // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
         const totalTicks = voice.getTicksUsed().value();
         const numQuarters = totalTicks / (VexFlow.RESOLUTION / 4);
-        const extraSpacesPx = numQuarters * 40;
 
-        // Add default padding (Stave.padding + Stave.endPaddingMax = 0 + 10 = 10)
+        // Image metrics: 216px per quarter (108px per eighth)
+        const pixelsPerQuarter = 216;
+        const contentWidth = numQuarters * pixelsPerQuarter;
+
+        // Add default padding (Stave.padding + Stave.endPaddingMax = 7 + 20 = 27)
         // We use the same source of truth as the Stave class uses internally
-        const stavePadding = Stave.defaultPadding ?? 10;
-        newWidth = modifiersWidth + minVoiceWidth + stavePadding;
+        const stavePadding = (MetricsDefaults.Stave.padding ?? 10) + (MetricsDefaults.Stave.endPaddingMin ?? 10);
+        newWidth = modifiersWidth + contentWidth + stavePadding;
       }
 
       // Enforce limits
