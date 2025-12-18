@@ -13,6 +13,7 @@ import { Stave } from './stave';
 import { StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Category } from './typeguard';
 import { RuntimeError } from './util';
+import { Metrics } from './metrics';
 
 export interface TimeSignatureInfo {
   glyph: string;
@@ -129,7 +130,8 @@ export class TimeSignature extends StaveModifier {
 
     // If the height of the digits is more than three staff spaces (30), shift half a line line
     // in order to center the digits on lines 1.5 and 4.5 rather than 2 and 4.
-    this.lineShift = height > 30 ? 0.5 : 0;
+    // this.lineShift = height > 30 ? 0.5 : 0;
+    // this.lineShift = 0; // calculated at draw time
 
     this.width = Math.max(topWidth, botWidth);
     this.topStartX = (this.width - topWidth) / 2.0;
@@ -218,19 +220,40 @@ export class TimeSignature extends StaveModifier {
     this.setRendered();
 
     if (this.isNumeric) {
+      const space = stave.getSpacingBetweenLines();
+      const maxLimit = space * 2;
+
+      // Reset value to default to ensure we verify against default size
+      const fontInfo = Metrics.getFontInfo(TimeSignature.CATEGORY);
+      this.topText.setFont(fontInfo);
+      this.botText.setFont(fontInfo);
+
+      const topHeight = this.topText.getHeight();
+      
+      if (topHeight > maxLimit) {
+        const ratio = maxLimit / topHeight;
+        const newSize = Number(fontInfo.size) * ratio;
+        this.topText.setFontSize(newSize);
+        this.botText.setFontSize(newSize);
+      }
+
       // render top text
-      let startX = x + this.topStartX;
+      const currTopWidth = this.topText.getWidth();
+      const topStartX = (this.width - currTopWidth) / 2.0;
+
       if (this.botText.getText().length > 0) {
-        this.topRenderY = stave.getYForLine(this.topLine - this.lineShift);
+        this.topRenderY = stave.getYForLine(this.topLine);
       } else {
         this.topRenderY = (stave.getYForLine(this.topLine) + stave.getYForLine(this.bottomLine)) / 2;
       }
-      this.topText.renderText(ctx, startX, this.topRenderY);
+      this.topText.renderText(ctx, x + topStartX, this.topRenderY);
 
       // render bottom text
-      startX = x + this.botStartX;
-      this.botRenderY = stave.getYForLine(this.bottomLine + this.lineShift);
-      this.botText.renderText(ctx, startX, this.botRenderY);
+      const currBotWidth = this.botText.getWidth();
+      const botStartX = (this.width - currBotWidth) / 2.0;
+      
+      this.botRenderY = stave.getYForLine(this.bottomLine);
+      this.botText.renderText(ctx, x + botStartX, this.botRenderY);
     } else {
       this.renderText(ctx, x - this.x, stave.getYForLine(this.line));
     }
