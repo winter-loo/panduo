@@ -43,7 +43,9 @@ M: 4/4
 L: 1/8
 Q: 1/4=120
 K: C
-F2 FF F2 FF | F2 B,2 D2 F2 |]`);
+F2 FF e2 FF | F2 B,2 D2 F2 |]`);
+
+  let spacingBetweenLinesPx = $state(57);
 
   class ParseContext {
     _unitNoteLength: number | null = null;
@@ -114,12 +116,11 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
       }
 
       const stave = new Stave(this.staveX, 0, w, {
-        spaceAboveStaffLn: 0,
-        spaceBelowStaffLn: 0,
+        spaceAboveStaffLn: 2,
+        spaceBelowStaffLn: 2,
         leftBar: false,
         rightBar: false,
-        // TODO: change to variable
-        spacingBetweenLinesPx: 72,
+        spacingBetweenLinesPx: spacingBetweenLinesPx,
       });
 
       // Apply modifiers only at start of system or if changed (logic simplified for start of system)
@@ -920,9 +921,18 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
   let staffRef: any;
   let renderer: Renderer;
   function toVex() {
-    // Exact Metrics Implementation driven by ABC
-    // Scale Adjustments for 72px noteheads
-    MetricsDefaults.fontSize = 216;
+    // see duolingo_piano_staff.png and src/lab/music-font/+page.svelte
+    const staffSpace = 57;
+    // font size = 1em = 4 staff space
+    const fontSize = 4 * staffSpace;
+    // staffLineThickness = 0.13 staff space = 0.13 * 57px = 7.41px
+    const staffLineThickness = 0.13 * staffSpace;
+    // stemThickness = 0.12 staff space = 0.12 * 57px = 6.84px
+    const stemThickness  = 0.12 * staffSpace;
+    // barlineSingle width = 0.144 staff space = 0.144 * 57px = 8.208px
+    const barlineSingleWidth = 0.144 * staffSpace;
+    // have to convert to unit: pt
+    MetricsDefaults.fontSize = Font.convertSizeToPointValue(`${fontSize}px`); // = 228px
     // Tuning: Reduce default stave padding to avoid excessive space
     MetricsDefaults.Stave.padding = 7; // From image
     MetricsDefaults.Stave.endPaddingMax = 20; // From image
@@ -933,8 +943,8 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
 
     // VISUAL fix: Monkey-patch Stem.WIDTH and Stem.HEIGHT to overcome hardcoded defaults
     try {
-      Object.defineProperty(Stem, 'WIDTH', { get: () => 9 });
-      Object.defineProperty(Stem, 'HEIGHT', { get: () => 252 }); // 3.5 * 72
+      Object.defineProperty(Stem, 'WIDTH', { get: () => stemThickness });
+      Object.defineProperty(Stem, 'HEIGHT', { get: () => 3.5 * staffSpace });
     } catch (e) {
       console.warn("Could not patch Stem dimensions", e);
     }
@@ -956,7 +966,7 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
     renderer = new VexFlow.Renderer("abcvex", VexFlow.Renderer.Backends.SVG);
     let rctx = renderer.getContext();
     // VISUAL fix: Thicker lines for large scale
-    rctx.setLineWidth(9);
+    rctx.setLineWidth(staffLineThickness);
     // const stave = new Stave(0, 0, 400, { spaceAboveStaffLn: 8, spaceBelowStaffLn: 8 });
     // stave.addClef("treble");
     // stave.addTimeSignature(pc.meter.toString());
@@ -1040,8 +1050,7 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
         if (cat === 'Barline') {
           let barline = mod as unknown as Barline;
           if (barline.getType() != BarlineType.NONE) {
-            console.log('set its with to 9');
-            barline.setStyle({ lineWidth: 9});
+            barline.setStyle({ lineWidth: barlineSingleWidth });
           }
         }
       });
@@ -1204,6 +1213,10 @@ F2 FF F2 FF | F2 B,2 D2 F2 |]`);
 <div>
   <textarea id="abcInput" class="w-screen p-4 min-h-[200px]" bind:value={abcInputText}></textarea>
   <button onclick={toVex}>toVex</button>
+  <div class="mt-4">
+    <label for="spacing">Line Spacing: {spacingBetweenLinesPx}px</label>
+    <input type="range" id="spacing" min="10" max="100" bind:value={spacingBetweenLinesPx} />
+  </div>
 </div>
 <div id="abcvex" bind:this={staffRef} class="ml-10"></div>
 

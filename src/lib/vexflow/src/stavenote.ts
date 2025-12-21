@@ -23,6 +23,7 @@ import { StemmableNote } from './stemmablenote';
 import { Tables } from './tables';
 import { Category } from './typeguard';
 import { defined, log, midLine, RuntimeError } from './util';
+import { getStemAttachment } from './glyphAnchors';
 
 export interface StaveNoteHeadBounds {
   yTop: number;
@@ -667,8 +668,19 @@ export class StaveNote extends StemmableNote {
     if (this.noteType === 'r') {
       return this.getCenterGlyphX();
     } else {
-      // We adjust the origin of the stem because we want the stem left-aligned
-      // with the notehead if stemmed-down, and right-aligned if stemmed-up
+      // Use SMuFL anchor-based positioning if available
+      const stave = this.stave;
+      if (stave && this.stemDirection) {
+        const glyphName = this.glyphProps.codeHead;
+        const anchor = getStemAttachment(glyphName, this.stemDirection);
+        if (anchor) {
+          const staffSpace = stave.getSpacingBetweenLines();
+          // anchor[0] is X offset in staff spaces from notehead origin
+          const xBegin = this.getAbsoluteX() + this.xShift;
+          return xBegin + anchor[0] * staffSpace + (this.stemDirection ? Stem.WIDTH / (2 * -this.stemDirection) : 0)
+        }
+      }
+      // Fallback to original logic
       return super.getStemX() + (this.stemDirection ? Stem.WIDTH / (2 * -this.stemDirection) : 0);
     }
   }
@@ -704,7 +716,27 @@ export class StaveNote extends StemmableNote {
 
     if (this.stem) {
       const { yTop, yBottom } = this.getNoteHeadBounds();
-      this.stem.setYBounds(yTop, yBottom);
+      
+      // Apply SMuFL anchor Y offset for stems
+      let yOffset = 0;
+      if (this.stemDirection) {
+        const glyphName = this.glyphProps.codeHead;
+        const anchor = getStemAttachment(glyphName, this.stemDirection);
+        if (anchor) {
+          const staffSpace = stave.getSpacingBetweenLines();
+          // anchor[1] is Y offset in staff spaces (positive = up, negative = down)
+          // For up-stems (direction=1), positive Y moves stem base up (into notehead)
+          // For down-stems (direction=-1), negative Y moves stem base down (into notehead)
+          yOffset = anchor[1] * staffSpace;
+        }
+      }
+      
+      // Apply Y offset: for up-stems we offset yBottom, for down-stems we offset yTop
+      if (this.stemDirection === Stem.UP) {
+        this.stem.setYBounds(yTop, yBottom - yOffset);
+      } else {
+        this.stem.setYBounds(yTop - yOffset, yBottom);
+      }
     }
 
     return this;

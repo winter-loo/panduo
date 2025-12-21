@@ -166,7 +166,7 @@ export const MetricsDefaults: Record<string, any> = {
   },
 
   Stave: {
-    strokeStyle: '#999999',
+    strokeStyle: '#ccc',
     fontSize: 8,
     padding: 12,
     endPaddingMax: 10,
