@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Bravura } from "$lib/vexflow/src/fonts/bravura";
   import bravuraFontUrl from "@vexflow-fonts/bravura/bravura.otf?url";
   import opentype from "opentype.js";
   import { onMount } from "svelte";
@@ -49,6 +50,12 @@
 
   //
   // render onto staff
+  //
+  // https://w3c.github.io/smufl/latest/specification/scoring-metrics-glyph-registration.html
+  // https://github.com/steinbergmedia/bravura/blob/master/redist/bravura_metadata.json
+  //
+  // font size = spacingBetweenLines * 4
+  //
   // staffSpacePx = 20 = 1/4 font units = 250 units
   // stepPx = staffSpacePx / 2 = 10
   // y = topLineY + n * stepPx
@@ -61,18 +68,18 @@
   //
   // Note to Y-coordinate mapping
   const NOTE_MAP = {
-    C4: 120,
-    D4: 110,
-    E4: 100, // bottomStaffLine
-    F4: 90,
-    G4: 80,
-    A4: 70,
-    B4: 60,
-    C5: 50,
-    D5: 40,
-    E5: 30,
-    F5: 20, // topStaffLine
-    G5: 10,
+    C4: 240,
+    D4: 220,
+    E4: 200, // bottomStaffLine
+    F4: 180,
+    G4: 160,
+    A4: 140,
+    B4: 120,
+    C5: 100,
+    D5: 80,
+    E5: 60,
+    F5: 40, // topStaffLine
+    G5: 20,
     A5: 0,
   } as const; // Added 'as const' to infer literal types for keys
   type NoteMapKey = keyof typeof NOTE_MAP;
@@ -81,10 +88,10 @@
   async function renderNote() {
     let font = await loadFont(bravuraFontUrl);
     if (!font) return null;
-    const glyph = font.charToGlyph("\ue0a4");
+    const glyph = font.charToGlyph("\ue1d5");
     if (glyph == undefined) return;
 
-    let path = glyph.getPath(0, 0, 80);
+    let path = glyph.getPath(0, 0, 160);
     let pathData = path.toPathData(4);
     // console.log(pathData);
 
@@ -184,14 +191,22 @@
   <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden relative">
     <!-- Staff Container -->
     <div class="p-8 flex justify-center overflow-x-auto">
-      <svg width="300" height="120" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg" bind:this={svgRef}>
+      <svg width="300" height="240" viewBox="0 0 300 240" xmlns="http://www.w3.org/2000/svg" bind:this={svgRef}>
         <!-- Staff Group -->
-        <g id="staff-lines" stroke="black" stroke-width="1" stroke-linecap="round">
-          <line x1="20" y1="20" x2="280" y2="20" />
+        <!--
+          Metrics come from Bravura font standard:
+            https://w3c.github.io/smufl/latest/specification/scoring-metrics-glyph-registration.html
+            https://github.com/steinbergmedia/bravura/blob/master/redist/bravura_metadata.json
+
+          one staff space = 1em / 4 = 160px / 4 = 40px
+          staffLineThickness = 0.13 staff space = 0.13 * 40px = 5.2px
+        -->
+        <g id="staff-lines" stroke="#cccccc" stroke-width="5.20" stroke-linecap="round">
           <line x1="20" y1="40" x2="280" y2="40" />
-          <line x1="20" y1="60" x2="280" y2="60" />
           <line x1="20" y1="80" x2="280" y2="80" />
-          <line x1="20" y1="100" x2="280" y2="100" />
+          <line x1="20" y1="120" x2="280" y2="120" />
+          <line x1="20" y1="160" x2="280" y2="160" />
+          <line x1="20" y1="200" x2="280" y2="200" />
         </g>
       </svg>
     </div>
