@@ -731,11 +731,11 @@ export class StaveNote extends StemmableNote {
         }
       }
       
-      // Apply Y offset: for up-stems we offset yBottom, for down-stems we offset yTop
+      this.stem.setYBounds(yTop, yBottom);
       if (this.stemDirection === Stem.UP) {
-        this.stem.setYBounds(yTop, yBottom - yOffset);
+        this.stem.setOptions({ stemUpYOffset: yOffset });
       } else {
-        this.stem.setYBounds(yTop - yOffset, yBottom);
+        this.stem.setOptions({ stemDownYOffset: -yOffset });
       }
     }
 

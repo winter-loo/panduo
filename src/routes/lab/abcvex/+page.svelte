@@ -43,7 +43,7 @@ M: 4/4
 L: 1/8
 Q: 1/4=120
 K: C
-F2 FF e2 FF | F2 B,2 D2 F2 |]`);
+F2 F>F e2 | F2 B,2 DF FD |]`);
 
   let spacingBetweenLinesPx = $state(57);
 

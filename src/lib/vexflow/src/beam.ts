@@ -497,15 +497,17 @@ export class Beam extends Element {
     this.notes = notes;
     this._beamCount = this.getBeamCount();
     this.breakOnIndexes = [];
+
+    const staffSpace = notes[0].getStave()?.getSpacingBetweenLines() ?? Tables.STAVE_LINE_DISTANCE;
     this.renderOptions = {
-      beamWidth: 5,
+      beamWidth: 0.5 * staffSpace,
       maxSlope: 0.25,
       minSlope: -0.25,
       slopeIterations: 20,
       slopeCost: 100,
       showStemlets: false,
       stemletExtension: 7,
-      partialBeamLength: 10,
+      partialBeamLength: staffSpace,
       flatBeams: false,
       minFlatBeamOffset: 15,
     };
@@ -944,8 +946,8 @@ export class Beam extends Element {
           ctx.beginPath();
           ctx.moveTo(startBeamX, startBeamY);
           ctx.lineTo(startBeamX, startBeamY + beamThickness);
-          ctx.lineTo(lastBeamX + 1, lastBeamY + beamThickness);
-          ctx.lineTo(lastBeamX + 1, lastBeamY);
+          ctx.lineTo(lastBeamX + Stem.WIDTH, lastBeamY + beamThickness);
+          ctx.lineTo(lastBeamX + Stem.WIDTH, lastBeamY);
           ctx.closePath();
           ctx.fill();
         } else {
