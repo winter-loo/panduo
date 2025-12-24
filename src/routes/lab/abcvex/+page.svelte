@@ -80,6 +80,7 @@ F2 F>F e2 | F2 B,2 DF FD |]`);
     staveWidth: number = 180;
     maxStaveWidth: number = 180;
     voices: [number, number][] = [];
+    pendingBegBarType: number | null = null;
 
     constructor() {
       this.reset();
@@ -103,6 +104,7 @@ F2 F>F e2 | F2 B,2 DF FD |]`);
       this.staveX = 0;
       this.staveY = 0;
       this.voices = [];
+      this.pendingBegBarType = null;
     }
 
     NewStave(): Stave {
@@ -149,6 +151,11 @@ F2 F>F e2 | F2 B,2 DF FD |]`);
         // Use SystemText or similar for Rehearsal Marks, or Section modifiers
         stave.setSection(this.nextRehearsalMark, 0);
         this.nextRehearsalMark = null;
+      }
+
+      if (this.pendingBegBarType !== null) {
+        stave.setBegBarType(this.pendingBegBarType);
+        this.pendingBegBarType = null;
       }
 
       this.staves.push(stave);
@@ -611,15 +618,16 @@ F2 F>F e2 | F2 B,2 DF FD |]`);
       }
 
       if (pc.currentStave) {
-        // right bar
-        pc.currentStave.setEndBarType(barType);
+        // Instead of setting end bar type, we save it for the NEXT stave's beginning.
+        // This solves the z-index issue where the next measure's lines cover the previous measure's barline.
+        pc.pendingBegBarType = barType;
 
         let voice = pc.CurrentVoice();
         if (voice != undefined) voice[1] = pc.notes.length - 1;
         // reset it so we can initialize a new stave lately on demand
         pc.currentStave = null;
       } else {
-        // left bar
+        // left bar (happens at the very beginning of the score)
         pc.CurrentStave().setBegBarType(barType);
       }
     },
@@ -958,6 +966,10 @@ F2 F>F e2 | F2 B,2 DF FD |]`);
 
     try {
       semantics(mr).toVex();
+      if (pc.pendingBegBarType !== null && pc.staves.length > 0) {
+        pc.staves[pc.staves.length - 1].setEndBarType(pc.pendingBegBarType);
+        pc.pendingBegBarType = null;
+      }
     } catch (e) {
       if (e instanceof Error) errMessage = e.message;
       return;
