@@ -109,6 +109,11 @@ export const MetricsDefaults: Record<string, any> = {
     fontSize: 10,
   },
 
+  Barline: {
+    strokeStyle: '#ccc',
+    fillStyle: '#ccc',
+  },
+
   Bend: {
     fontSize: 10,
     line: {

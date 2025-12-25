@@ -2,6 +2,7 @@
 //
 // @author: Larry Kuhns 2011
 
+import { ElementStyle } from './element';
 import { Stave } from './stave';
 import { LayoutMetrics, StaveModifier, StaveModifierPosition } from './stavemodifier';
 import { Tables } from './tables';
@@ -123,6 +124,11 @@ export class Barline extends StaveModifier {
     this.setWidth(this.widths[this.type]);
     this.setPadding(this.paddings[this.type]);
     this.setLayoutMetrics(this.layoutMetricsMap[this.type]);
+    return this;
+  }
+
+  override setStyle(style: ElementStyle): this {
+    this.style = { ...this.style, ...style };
     return this;
   }
 
