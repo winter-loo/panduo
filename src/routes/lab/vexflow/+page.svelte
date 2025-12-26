@@ -1,15 +1,12 @@
 <script lang="ts">
   import { Button } from '$lib/components/ui/button';
   import {
-    RenderContext,
-    Renderer,
     Stave,
     StaveConnector,
     StaveNote,
     VexFlow,
-    VexflowConfig,
     Font,
-    VexflowConfigInstance,
+    BarlineType,
     type StaveNoteStruct,
   } from '$lib/vexflow/vexflow-core';
   import { onMount } from 'svelte';
@@ -17,11 +14,12 @@
   let trebleStaffRef: HTMLDivElement | null = null;
   let bassStaffRef: HTMLDivElement | null = null;
   let grandStaffRef: HTMLDivElement | null = null;
+  let horizontalStaveRef: HTMLDivElement | null = null;
 
-  function createStaveNotes(notes: StaveNoteStruct[], cfg?: VexflowConfigInstance): StaveNote[] {
+  function createStaveNotes(notes: StaveNoteStruct[]): StaveNote[] {
     let sNotes = [];
     for (let i = 0; i < notes.length; i++) {
-      let sNote = new VexFlow.StaveNote({ ...notes[i], autoStem: true }, cfg);
+      let sNote = new VexFlow.StaveNote({ ...notes[i], autoStem: true });
       sNotes.push(sNote);
     }
     return sNotes;
@@ -30,12 +28,9 @@
   let trebleStaffFontFamily = $state('Bravura');
 
   $effect(() => {
-    let cfg = VexflowConfig.create({
-      fontFamily: trebleStaffFontFamily,
-    });
-    let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG, cfg);
+    let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG);
     renderer.resize(800, 80);
-    const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 }, cfg);
+    const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
     staff.addClef('treble');
     staff.setContext(renderer.getContext()).draw();
     const g4 = new VexFlow.StaveNote({
@@ -44,22 +39,20 @@
       duration: '4',
       autoStem: true,
       alignCenter: true,
-    }, cfg);
+    });
     const c5 = new VexFlow.StaveNote({
       clef: 'treble',
       keys: ['c/5'],
       duration: '4',
       autoStem: true,
       alignCenter: true,
-    }, cfg);
+    });
     VexFlow.Formatter.FormatAndDraw(
       renderer.getContext(),
       staff,
-      { notes: [g4, c5] },
+      [g4, c5],
       {
-        params: {
-          autoBeam: true,
-        },
+        autoBeam: true,
       },
     );
     return () => {
@@ -91,11 +84,9 @@
       VexFlow.Formatter.FormatAndDraw(
         renderer.getContext(),
         staff,
-        { notes: [f3, c3] },
+        [f3, c3],
         {
-          params: {
-            autoBeam: true,
-          },
+          autoBeam: true,
         },
       );
     })();
@@ -104,29 +95,13 @@
       let fontSize = 48;
       let staffLineSpacing = Font.convertSizeToPixelValue(fontSize) / 4;
       let numSpacesPerStaff = 8;
-      let cfg = VexflowConfig.create({
-        fontFamily: 'Bravura Playful',
-        fontSize,
-        Stave: {
-          spaceAboveStaffLn: 2,
-          spaceBelowStaffLn: 2,
-          spacingBetweenLinesPx: staffLineSpacing,
-          style: {
-            lineWidth: 2,
-            backgroundColor: 'var(--app-color-200)',
-          },
-        },
-        Stem: {
-          width: 2,
-        },
-      });
       let renderer = new VexFlow.Renderer(grandStaffRef!, VexFlow.Renderer.Backends.SVG);
       let staveWidth = 1400;
-      renderer.resize(staveWidth + (cfg.get('Stave.style.lineWidth') ?? 0), 20 * staffLineSpacing);
+      renderer.resize(staveWidth, 20 * staffLineSpacing);
       let ctx = renderer.getContext();
-      const treble = new Stave(0, 0, staveWidth, {}, cfg);
+      const treble = new Stave(0, 0, staveWidth, {});
       treble.addClef('treble');
-      const bass = new Stave(0, (numSpacesPerStaff - 2) * staffLineSpacing, staveWidth, {}, cfg);
+      const bass = new Stave(0, (numSpacesPerStaff - 2) * staffLineSpacing, staveWidth, {});
       bass.addClef('bass');
       treble.setContext(ctx);
       bass.setContext(ctx);
@@ -183,8 +158,7 @@
             keys: ['c/4'],
             duration: '2',
           },
-        ],
-        cfg,
+        ]
       );
 
       const trebleNotes = createStaveNotes(
@@ -233,29 +207,37 @@
             keys: ['b/4'],
             duration: '2',
           },
-        ],
-        cfg,
+        ]
       );
       VexFlow.Formatter.FormatAndDraw(
         renderer.getContext(),
         bass,
-        { notes: bassNotes },
+        bassNotes,
         {
-          params: {
-            autoBeam: true,
-          },
+          autoBeam: true,
         },
       );
       VexFlow.Formatter.FormatAndDraw(
         renderer.getContext(),
         treble,
-        { notes: trebleNotes },
+        trebleNotes,
         {
-          params: {
-            autoBeam: true,
-          },
+          autoBeam: true,
         },
       );
+    })();
+
+    (() => {
+      if (!horizontalStaveRef) return;
+      let renderer = new VexFlow.Renderer(horizontalStaveRef, VexFlow.Renderer.Backends.SVG);
+      renderer.resize(600, 100);
+      let ctx = renderer.getContext();
+      const stave1 = new Stave(10, 10, 250).addClef('treble').setContext(ctx);
+      stave1.setEndBarType(BarlineType.REPEAT_BOTH);
+      stave1.draw();
+      const stave2 = new Stave(260, 10, 250).setContext(ctx);
+      stave2.setBegBarType(BarlineType.REPEAT_BOTH);
+      stave2.draw();
     })();
   });
 </script>
@@ -280,6 +262,12 @@
   <div
     class="grand-staff items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
     bind:this={grandStaffRef}
+  ></div>
+</section>
+<section class="m-4">
+  <div
+    class="horizontal-stave flex items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
+    bind:this={horizontalStaveRef}
   ></div>
 </section>
 <section class="m-4 align-baseline">
