@@ -181,7 +181,7 @@ export class Barline extends StaveModifier {
     const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
 
     if (doubleBar) {
-      staveCtx.fillRect(x - 3, topY, thickness, botY - topY);
+      staveCtx.fillRect(x - 3 * thickness, topY, thickness, botY - topY);
     }
     staveCtx.fillRect(x, topY, thickness, botY - topY);
   }
@@ -190,8 +190,9 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    staveCtx.fillRect(x - 5, topY, 1, botY - topY);
-    staveCtx.fillRect(x - 2, topY, 3, botY - topY);
+    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    staveCtx.fillRect(x - 5 * thickness, topY, thickness, botY - topY);
+    staveCtx.fillRect(x - 2 * thickness, topY, 3 * thickness, botY - topY);
   }
 
   drawRepeatBar(stave: Stave, x: number, begin: boolean): void {
@@ -199,22 +200,23 @@ export class Barline extends StaveModifier {
 
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    let xShift = 3;
+    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    let xShift = 3 * thickness;
 
     if (!begin) {
-      xShift = -5;
+      xShift = -5 * thickness;
     }
 
-    staveCtx.fillRect(x + xShift, topY, 1, botY - topY);
-    staveCtx.fillRect(x - 2, topY, 3, botY - topY);
+    staveCtx.fillRect(x + xShift, topY, thickness, botY - topY);
+    staveCtx.fillRect(x - 2 * thickness, topY, 3 * thickness, botY - topY);
 
-    const dotRadius = 2;
+    const dotRadius = thickness;
 
     // Shift dots left or right
     if (begin) {
-      xShift += 4;
+      xShift += 4 * thickness;
     } else {
-      xShift -= 4;
+      xShift -= 4 * thickness;
     }
 
     const dotX = x + xShift + dotRadius / 2;
