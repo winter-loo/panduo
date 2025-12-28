@@ -238,6 +238,28 @@
       const stave2 = new Stave(260, 10, 250).setContext(ctx);
       stave2.setBegBarType(BarlineType.REPEAT_BOTH);
       stave2.draw();
+
+      let notes = createStaveNotes([
+        {
+          keys: ['b/4'], duration: '8'
+        }
+      ]);
+      VexFlow.Formatter.FormatAndDraw(
+        renderer.getContext(),
+        stave1,
+        notes,
+        {
+          autoBeam: true,
+        },
+      );
+      VexFlow.Formatter.FormatAndDraw(
+        renderer.getContext(),
+        stave2,
+        notes,
+        {
+          autoBeam: true,
+        },
+      );
     })();
   });
 </script>
