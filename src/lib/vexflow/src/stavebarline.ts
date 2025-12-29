@@ -132,6 +132,17 @@ export class Barline extends StaveModifier {
     return this;
   }
 
+  override getLayoutMetrics(): LayoutMetrics {
+    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    const baseMetrics = this.layoutMetricsMap[this.type];
+    return {
+      xMin: baseMetrics.xMin * thickness,
+      xMax: baseMetrics.xMax * thickness,
+      paddingLeft: baseMetrics.paddingLeft,
+      paddingRight: baseMetrics.paddingRight,
+    };
+  }
+
   // Draw barlines
   override draw(): void {
     const stave = this.checkStave();

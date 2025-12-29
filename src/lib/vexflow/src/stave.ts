@@ -641,24 +641,15 @@ export class Stave extends Element {
       const layoutMetrics = modifier.getLayoutMetrics();
 
       if (layoutMetrics) {
-        if (i !== 0) {
-          widths.right = layoutMetrics.xMax ?? 0;
-          widths.paddingRight = layoutMetrics.paddingRight ?? 0;
-        }
+        widths.right = layoutMetrics.xMax ?? 0;
+        widths.paddingRight = i !== 0 ? layoutMetrics.paddingRight ?? 0 : 0;
         widths.left = -(layoutMetrics.xMin ?? 0);
-        widths.paddingLeft = layoutMetrics.paddingLeft ?? 0;
-
-        if (i === endModifiers.length - 1) {
-          widths.paddingLeft = 0;
-        }
+        widths.paddingLeft = i === endModifiers.length - 1 ? 0 : layoutMetrics.paddingLeft ?? 0;
       } else {
-        widths.paddingRight = modifier.getPadding(i - lastBarlineIdx);
-        if (i !== 0) {
-          widths.right = modifier.getWidth();
-        }
-        if (i === 0) {
-          widths.left = modifier.getWidth();
-        }
+        widths.right = modifier.getWidth();
+        widths.paddingRight = i !== 0 ? modifier.getPadding(i - lastBarlineIdx) : 0;
+        widths.left = 0;
+        widths.paddingLeft = 0;
       }
       x -= widths.paddingRight;
       x -= widths.right;
