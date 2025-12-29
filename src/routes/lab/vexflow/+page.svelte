@@ -1,15 +1,7 @@
 <script lang="ts">
-  import { Button } from '$lib/components/ui/button';
-  import {
-    Stave,
-    StaveConnector,
-    StaveNote,
-    VexFlow,
-    Font,
-    BarlineType,
-    type StaveNoteStruct,
-  } from '$lib/vexflow/vexflow-core';
-  import { onMount } from 'svelte';
+  import { Button } from "$lib/components/ui/button";
+  import { Stave, StaveConnector, StaveNote, VexFlow, Font, BarlineType, type StaveNoteStruct } from "vexflow";
+  import { onMount } from "svelte";
 
   let trebleStaffRef: HTMLDivElement | null = null;
   let bassStaffRef: HTMLDivElement | null = null;
@@ -25,36 +17,31 @@
     return sNotes;
   }
 
-  let trebleStaffFontFamily = $state('Bravura');
+  let trebleStaffFontFamily = $state("Bravura");
 
   $effect(() => {
     let renderer = new VexFlow.Renderer(trebleStaffRef!, VexFlow.Renderer.Backends.SVG);
     renderer.resize(800, 80);
     const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
-    staff.addClef('treble');
+    staff.addClef("treble");
     staff.setContext(renderer.getContext()).draw();
     const g4 = new VexFlow.StaveNote({
-      clef: 'treble',
-      keys: ['g/4'],
-      duration: '4',
+      clef: "treble",
+      keys: ["g/4"],
+      duration: "4",
       autoStem: true,
       alignCenter: true,
     });
     const c5 = new VexFlow.StaveNote({
-      clef: 'treble',
-      keys: ['c/5'],
-      duration: '4',
+      clef: "treble",
+      keys: ["c/5"],
+      duration: "4",
       autoStem: true,
       alignCenter: true,
     });
-    VexFlow.Formatter.FormatAndDraw(
-      renderer.getContext(),
-      staff,
-      [g4, c5],
-      {
-        autoBeam: true,
-      },
-    );
+    VexFlow.Formatter.FormatAndDraw(renderer.getContext(), staff, [g4, c5], {
+      autoBeam: true,
+    });
     return () => {
       trebleStaffRef?.replaceChildren();
     };
@@ -65,30 +52,25 @@
       let renderer = new VexFlow.Renderer(bassStaffRef!, VexFlow.Renderer.Backends.SVG);
       renderer.resize(800, 80);
       const staff = new Stave(0, 0, 200, { spaceAboveStaffLn: 2, spaceBelowStaffLn: 2 });
-      staff.addClef('bass');
+      staff.addClef("bass");
       staff.setContext(renderer.getContext()).draw();
       const f3 = new VexFlow.StaveNote({
-        clef: 'bass',
-        keys: ['f/3'],
-        duration: '4',
+        clef: "bass",
+        keys: ["f/3"],
+        duration: "4",
         autoStem: true,
         alignCenter: true,
       });
       const c3 = new VexFlow.StaveNote({
-        clef: 'bass',
-        keys: ['c/3'],
-        duration: '4',
+        clef: "bass",
+        keys: ["c/3"],
+        duration: "4",
         autoStem: true,
         alignCenter: true,
       });
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        staff,
-        [f3, c3],
-        {
-          autoBeam: true,
-        },
-      );
+      VexFlow.Formatter.FormatAndDraw(renderer.getContext(), staff, [f3, c3], {
+        autoBeam: true,
+      });
     })();
 
     (() => {
@@ -100,9 +82,9 @@
       renderer.resize(staveWidth, 20 * staffLineSpacing);
       let ctx = renderer.getContext();
       const treble = new Stave(0, 0, staveWidth, {});
-      treble.addClef('treble');
+      treble.addClef("treble");
       const bass = new Stave(0, (numSpacesPerStaff - 2) * staffLineSpacing, staveWidth, {});
-      bass.addClef('bass');
+      bass.addClef("bass");
       treble.setContext(ctx);
       bass.setContext(ctx);
 
@@ -113,118 +95,104 @@
       treble.drawWithStyle();
       bass.drawWithStyle();
 
-      connector.setStyle({ lineWidth: 2, fillStyle: 'var(--app-color-200)' });
+      connector.setStyle({ lineWidth: 2, fillStyle: "var(--app-color-200)" });
       connector.drawWithStyle();
 
-      const bassNotes = createStaveNotes(
-        [
-          {
-            clef: 'bass',
-            keys: ['f/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['e/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['d/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['c/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['g/3'],
-            duration: '1',
-          },
-          {
-            clef: 'bass',
-            keys: ['a/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['b/3'],
-            duration: '4',
-          },
-          {
-            clef: 'bass',
-            keys: ['c/4'],
-            duration: '2',
-          },
-        ]
-      );
+      const bassNotes = createStaveNotes([
+        {
+          clef: "bass",
+          keys: ["f/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["e/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["d/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["c/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["g/3"],
+          duration: "1",
+        },
+        {
+          clef: "bass",
+          keys: ["a/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["b/3"],
+          duration: "4",
+        },
+        {
+          clef: "bass",
+          keys: ["c/4"],
+          duration: "2",
+        },
+      ]);
 
-      const trebleNotes = createStaveNotes(
-        [
-          {
-            keys: ['c/4'],
-            duration: '4',
-          },
-          {
-            keys: ['d/4'],
-            duration: '8',
-          },
-          {
-            keys: ['e/4'],
-            duration: '8',
-          },
-          {
-            keys: ['f/4'],
-            duration: '2',
-          },
-          {
-            keys: ['g/4'],
-            duration: '16',
-          },
-          {
-            keys: ['a/4'],
-            duration: '16',
-          },
-          {
-            keys: ['b/4'],
-            duration: '8',
-          },
-          {
-            keys: ['c/5'],
-            duration: '4',
-          },
-          {
-            keys: ['c/5'],
-            duration: '2',
-          },
-          {
-            keys: ['b/4'],
-            duration: '2',
-          },
-          {
-            keys: ['b/4'],
-            duration: '2',
-          },
-        ]
-      );
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        bass,
-        bassNotes,
+      const trebleNotes = createStaveNotes([
         {
-          autoBeam: true,
+          keys: ["c/4"],
+          duration: "4",
         },
-      );
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        treble,
-        trebleNotes,
         {
-          autoBeam: true,
+          keys: ["d/4"],
+          duration: "8",
         },
-      );
+        {
+          keys: ["e/4"],
+          duration: "8",
+        },
+        {
+          keys: ["f/4"],
+          duration: "2",
+        },
+        {
+          keys: ["g/4"],
+          duration: "16",
+        },
+        {
+          keys: ["a/4"],
+          duration: "16",
+        },
+        {
+          keys: ["b/4"],
+          duration: "8",
+        },
+        {
+          keys: ["c/5"],
+          duration: "4",
+        },
+        {
+          keys: ["c/5"],
+          duration: "2",
+        },
+        {
+          keys: ["b/4"],
+          duration: "2",
+        },
+        {
+          keys: ["b/4"],
+          duration: "2",
+        },
+      ]);
+      VexFlow.Formatter.FormatAndDraw(renderer.getContext(), bass, bassNotes, {
+        autoBeam: true,
+      });
+      VexFlow.Formatter.FormatAndDraw(renderer.getContext(), treble, trebleNotes, {
+        autoBeam: true,
+      });
     })();
 
     (() => {
@@ -232,42 +200,41 @@
       let renderer = new VexFlow.Renderer(horizontalStaveRef, VexFlow.Renderer.Backends.SVG);
       renderer.resize(600, 100);
       let ctx = renderer.getContext();
-      const stave1 = new Stave(10, 10, 250).addClef('treble').setContext(ctx);
+      const stave1 = new Stave(10, 0, 250, {
+        spaceAboveStaffLn: 3,
+        spaceBelowStaffLn: 3,
+      }).setContext(ctx);
       stave1.setEndBarType(BarlineType.REPEAT_BOTH);
       stave1.draw();
-      const stave2 = new Stave(260, 10, 250).setContext(ctx);
+      const stave2 = new Stave(260, 0, 250, {
+        spaceAboveStaffLn: 3,
+        spaceBelowStaffLn: 3,
+      }).setContext(ctx);
       stave2.setBegBarType(BarlineType.REPEAT_BOTH);
       stave2.draw();
 
       let notes = createStaveNotes([
         {
-          keys: ['b/4'], duration: '8'
-        }
+          keys: ["b/4"],
+          duration: "4",
+        },
       ]);
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        stave1,
-        notes,
-        {
-          autoBeam: true,
-        },
-      );
-      VexFlow.Formatter.FormatAndDraw(
-        renderer.getContext(),
-        stave2,
-        notes,
-        {
-          autoBeam: true,
-        },
-      );
+      VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave1, notes, {
+        autoBeam: true,
+      });
+      VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave2, notes, {
+        autoBeam: true,
+      });
     })();
   });
 </script>
 
 <section class="m-4">
   <div class="w-full">
-    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = 'Bravura')}>Bravura</Button>
-    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = 'Bravura Playful')}>Bravura Playful</Button>
+    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = "Bravura")}>Bravura</Button>
+    <Button variant="ghost" size="sm" onclick={() => (trebleStaffFontFamily = "Bravura Playful")}
+      >Bravura Playful</Button
+    >
   </div>
   <div
     class="treble-staff flex items-center justify-start pl-4 ring ring-[var(--app-color-400)]"
@@ -295,15 +262,15 @@
 <section class="m-4 align-baseline">
   <!-- noteHeadWhole  -->
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(24)}px">
-    &#xe0a3; O (fontSize: 24 &leftarrow; {Font.convertSizeToPixelValue(24) + 'px'})
+    &#xe0a3; O (fontSize: 24 &leftarrow; {Font.convertSizeToPixelValue(24) + "px"})
   </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(30)}px">
-    &#xe0a3; O (fontSize: 30 &leftarrow; {Font.convertSizeToPixelValue(30) + 'px'})
+    &#xe0a3; O (fontSize: 30 &leftarrow; {Font.convertSizeToPixelValue(30) + "px"})
   </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(36)}px">
-    &#xe0a3; O (fontSize: 36 &leftarrow; {Font.convertSizeToPixelValue(36) + 'px'})
+    &#xe0a3; O (fontSize: 36 &leftarrow; {Font.convertSizeToPixelValue(36) + "px"})
   </p>
   <p style:font-family="Bravura" style:font-size="{Font.convertSizeToPixelValue(48)}px">
-    &#xe0a3; O (fontSize: 48 &leftarrow; {Font.convertSizeToPixelValue(48) + 'px'})
+    &#xe0a3; O (fontSize: 48 &leftarrow; {Font.convertSizeToPixelValue(48) + "px"})
   </p>
 </section>
