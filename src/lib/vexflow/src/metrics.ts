@@ -92,6 +92,7 @@ export const MetricsDefaults: Record<string, any> = {
   fontScale: 1.0,
   fontWeight: 'normal',
   fontStyle: 'normal',
+  staveSpace: 10,
 
   Accidental: {
     cautionary: {

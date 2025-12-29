@@ -2,6 +2,7 @@
 //
 // @author: Larry Kuhns 2011
 
+import { Metrics } from './metrics';
 import { ElementStyle } from './element';
 import { Stave } from './stave';
 import { LayoutMetrics, StaveModifier, StaveModifierPosition } from './stavemodifier';
@@ -48,67 +49,70 @@ export class Barline extends StaveModifier {
   constructor(type: BarlineType | string) {
     super();
 
+    const staveSpace = Metrics.get('staveSpace');
+    const singleLineWidth = 0.144 * staveSpace;
+
     const TYPE = BarlineType;
     this.widths = {};
-    this.widths[TYPE.SINGLE] = 5;
-    this.widths[TYPE.DOUBLE] = 5;
-    this.widths[TYPE.END] = 5;
-    this.widths[TYPE.REPEAT_BEGIN] = 5;
-    this.widths[TYPE.REPEAT_END] = 5;
-    this.widths[TYPE.REPEAT_BOTH] = 5;
-    this.widths[TYPE.NONE] = 5;
+    this.widths[TYPE.SINGLE] = singleLineWidth;
+    this.widths[TYPE.DOUBLE] = singleLineWidth;
+    this.widths[TYPE.END] = singleLineWidth;
+    this.widths[TYPE.REPEAT_BEGIN] = singleLineWidth;
+    this.widths[TYPE.REPEAT_END] = singleLineWidth;
+    this.widths[TYPE.REPEAT_BOTH] = 18 * singleLineWidth;
+    this.widths[TYPE.NONE] = singleLineWidth;
 
     this.paddings = {};
     this.paddings[TYPE.SINGLE] = 0;
     this.paddings[TYPE.DOUBLE] = 0;
     this.paddings[TYPE.END] = 0;
-    this.paddings[TYPE.REPEAT_BEGIN] = 15;
-    this.paddings[TYPE.REPEAT_END] = 15;
-    this.paddings[TYPE.REPEAT_BOTH] = 15;
+    this.paddings[TYPE.REPEAT_BEGIN] = 3 * singleLineWidth;
+    this.paddings[TYPE.REPEAT_END] = 3 * singleLineWidth;
+    this.paddings[TYPE.REPEAT_BOTH] = 3 * singleLineWidth;
     this.paddings[TYPE.NONE] = 0;
 
     this.layoutMetricsMap = {};
     this.layoutMetricsMap[TYPE.SINGLE] = {
       xMin: 0,
-      xMax: 1,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMax: singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.DOUBLE] = {
-      xMin: -3,
-      xMax: 1,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMin: -3 * singleLineWidth,
+      xMax: singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.END] = {
-      xMin: -5,
-      xMax: 1,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMin: -5 * singleLineWidth,
+      xMax: singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.REPEAT_END] = {
-      xMin: -10,
-      xMax: 1,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMin: -10 * singleLineWidth,
+      xMax: singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BEGIN] = {
-      xMin: -2,
-      xMax: 10,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMin: -2 * singleLineWidth,
+      xMax: 10 * singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BOTH] = {
-      xMin: -10,
-      xMax: 10,
-      paddingLeft: 5,
-      paddingRight: 5,
+      xMin: -10 * singleLineWidth,
+      xMax: 10 * singleLineWidth,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.layoutMetricsMap[TYPE.NONE] = {
       xMin: 0,
       xMax: 0,
-      paddingLeft: 5,
-      paddingRight: 5,
+      paddingLeft: singleLineWidth,
+      paddingRight: singleLineWidth,
     };
     this.setPosition(StaveModifierPosition.BEGIN);
     this.setType(type);
@@ -125,22 +129,6 @@ export class Barline extends StaveModifier {
     this.setPadding(this.paddings[this.type]);
     this.setLayoutMetrics(this.layoutMetricsMap[this.type]);
     return this;
-  }
-
-  override setStyle(style: ElementStyle): this {
-    this.style = { ...this.style, ...style };
-    return this;
-  }
-
-  override getLayoutMetrics(): LayoutMetrics {
-    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
-    const baseMetrics = this.layoutMetricsMap[this.type];
-    return {
-      xMin: baseMetrics.xMin * thickness,
-      xMax: baseMetrics.xMax * thickness,
-      paddingLeft: baseMetrics.paddingLeft,
-      paddingRight: baseMetrics.paddingRight,
-    };
   }
 
   // Draw barlines
@@ -189,7 +177,7 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    const thickness = this.widths[BarlineType.SINGLE];
 
     if (doubleBar) {
       staveCtx.fillRect(x - 3 * thickness, topY, thickness, botY - topY);
@@ -201,7 +189,7 @@ export class Barline extends StaveModifier {
     const staveCtx = stave.checkContext();
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    const thickness = this.widths[BarlineType.SINGLE];
     staveCtx.fillRect(x - 5 * thickness, topY, thickness, botY - topY);
     staveCtx.fillRect(x - 2 * thickness, topY, 3 * thickness, botY - topY);
   }
@@ -211,7 +199,7 @@ export class Barline extends StaveModifier {
 
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
-    const thickness = this.style.lineWidth ?? Tables.STAVE_LINE_THICKNESS;
+    const thickness = this.widths[BarlineType.SINGLE];
     let xShift = 3 * thickness;
 
     if (!begin) {

@@ -31,6 +31,8 @@
     VexFlow,
     Voice,
     type StaveNoteStruct,
+    StaveModifierPosition,
+    Category
   } from "$lib/vexflow/vexflow-core";
   // } from "vexflow";
 
@@ -76,8 +78,8 @@ FA :: B
     // Multiple measures make up a System (one horizontal row).
     // Multiple Systems make up the full sheet of music (stacked vertically).
     systems: Stave[][] = [];
-    staveWidth: number = 180;
-    maxStaveWidth: number = 180;
+    staveWidth: number = 864;
+    maxStaveWidth: number = 864;
     voices: [number, number][] = [];
 
     constructor() {
@@ -160,7 +162,7 @@ FA :: B
       return stave;
     }
 
-    // should be invoked on note createtion, i.e., baseNote
+    // should be invoked on note creation, i.e., baseNote
     CurrentStave(): Stave {
       if (this.currentStave == null) {
         this.currentStave = this.NewStave();
@@ -930,14 +932,13 @@ FA :: B
     const staffLineThickness = 0.13 * staffSpace;
     // stemThickness = 0.12 staff space = 0.12 * 57px = 6.84px
     const stemThickness  = 0.12 * staffSpace;
-    // barlineSingle width = 0.144 staff space = 0.144 * 57px = 8.208px
-    const barlineSingleWidth = 0.144 * staffSpace;
     // have to convert to unit: pt
     MetricsDefaults.fontSize = Font.convertSizeToPointValue(`${fontSize}px`); // = 228px
     // Tuning: Reduce default stave padding to avoid excessive space
+    MetricsDefaults.staveSpace = staffSpace;
     MetricsDefaults.Stave.padding = 7; // From image
-    MetricsDefaults.Stave.endPaddingMax = 20; // From image
-    MetricsDefaults.Stave.endPaddingMin = 20; // From image
+    MetricsDefaults.Stave.endPaddingMax = 0;
+    MetricsDefaults.Stave.endPaddingMin = 0;
     MetricsDefaults.NoteHead.minPadding = 0; // Let formatter handle it
     // Clear cache to apply changes if verified that 'Stave.padding' keys are used
     Metrics.clear();
@@ -1010,12 +1011,9 @@ FA :: B
         formatter.joinVoices([voice]);
         // Pre-calculate to populate width requirements
         formatter.preCalculateMinTotalWidth([voice]);
-        const minVoiceWidth = formatter.getMinTotalWidth();
 
         // Calculate space needed for Clef, KeySig, TimeSig
         const startX = stave.getNoteStartX();
-        const endX = stave.getNoteEndX();
-        console.log('endx=', endX);
         const modifiersWidth = startX - stave.getX();
         // Dynamic padding based on duration (ticks)
         // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
@@ -1024,12 +1022,15 @@ FA :: B
 
         const contentWidth = numQuarters * pixelsPerQuarter;
 
-        // Add default padding (Stave.padding + Stave.endPaddingMax = 7 + 20 = 27)
-        // We use the same source of truth as the Stave class uses internally
-        const stavePadding = (MetricsDefaults.Stave.padding ?? 10) + (MetricsDefaults.Stave.endPaddingMin ?? 10);
+        let endModsWidth = 0;
+        stave.getModifiers(StaveModifierPosition.END, Category.Barline).forEach(mod => {
+          endModsWidth += (mod as unknown as Barline).getWidth();
+        });
+
+        const stavePadding = Stave.defaultPadding;
         console.log('modifiersWidth=', modifiersWidth, '; contentWidth=', contentWidth, '; stavePadding=',
-          stavePadding);
-        newWidth = modifiersWidth + contentWidth + stavePadding;
+          stavePadding, 'endModsWidth=', endModsWidth);
+        newWidth = modifiersWidth + contentWidth + stavePadding + endModsWidth;
       }
 
       // Enforce limits
@@ -1047,16 +1048,6 @@ FA :: B
         // Track max width for the renderer resize later
         globalMaxStaveWidth = Math.max(globalMaxStaveWidth, systemCurrentX[systemIndex]);
       }
-
-      stave.getModifiers().forEach(mod => {
-        const cat = mod.getCategory();
-        if (cat === 'Barline') {
-          let barline = mod as unknown as Barline;
-          if (barline.getType() != BarlineType.NONE) {
-            barline.setStyle({ lineWidth: barlineSingleWidth });
-          }
-        }
-      });
     }
 
     // Update global context width

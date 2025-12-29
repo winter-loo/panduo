@@ -642,12 +642,12 @@ export class Stave extends Element {
 
       if (layoutMetrics) {
         widths.right = layoutMetrics.xMax ?? 0;
-        widths.paddingRight = i !== 0 ? layoutMetrics.paddingRight ?? 0 : 0;
+        widths.paddingRight = layoutMetrics.paddingRight ?? 0;
         widths.left = -(layoutMetrics.xMin ?? 0);
-        widths.paddingLeft = i === endModifiers.length - 1 ? 0 : layoutMetrics.paddingLeft ?? 0;
+        widths.paddingLeft = layoutMetrics.paddingLeft ?? 0;
       } else {
         widths.right = modifier.getWidth();
-        widths.paddingRight = i !== 0 ? modifier.getPadding(i - lastBarlineIdx) : 0;
+        widths.paddingRight = modifier.getPadding(i - lastBarlineIdx);
         widths.left = 0;
         widths.paddingLeft = 0;
       }
@@ -660,7 +660,7 @@ export class Stave extends Element {
       x -= widths.paddingLeft;
     }
 
-    this.endX = endModifiers.length === 1 ? this.x + this.width : x;
+    this.endX = x;
     this.formatted = true;
   }
 
