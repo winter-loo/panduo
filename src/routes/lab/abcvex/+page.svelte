@@ -38,12 +38,11 @@
 
   let abcInputText = $state(`
 X: 1
-T: Metric Staff
 M: 4/4
 L: 1/8
-Q: 1/4=120
 K: C
-F2 F>F | e2 :: F2 B,2 || DF FD |]`);
+FA :: B
+`);
 
   let spacingBetweenLinesPx = $state(57);
 
@@ -80,7 +79,6 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
     staveWidth: number = 180;
     maxStaveWidth: number = 180;
     voices: [number, number][] = [];
-    pendingBegBarType: number | null = null;
 
     constructor() {
       this.reset();
@@ -104,7 +102,6 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
       this.staveX = 0;
       this.staveY = 0;
       this.voices = [];
-      this.pendingBegBarType = null;
     }
 
     NewStave(): Stave {
@@ -151,11 +148,6 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
         // Use SystemText or similar for Rehearsal Marks, or Section modifiers
         stave.setSection(this.nextRehearsalMark, 0);
         this.nextRehearsalMark = null;
-      }
-
-      if (this.pendingBegBarType !== null) {
-        stave.setBegBarType(this.pendingBegBarType);
-        this.pendingBegBarType = null;
       }
 
       this.staves.push(stave);
@@ -618,9 +610,8 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
       }
 
       if (pc.currentStave) {
+        // right bar
         pc.CurrentStave().setEndBarType(barType);
-        // This solves the z-index issue where the next measure's lines cover the previous measure's barline.
-        pc.pendingBegBarType = barType;
 
         let voice = pc.CurrentVoice();
         if (voice != undefined) voice[1] = pc.notes.length - 1;
@@ -929,6 +920,8 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
   let staffRef: any;
   let renderer: Renderer;
   function toVex() {
+    // Image metrics: 216px per quarter (108px per eighth)
+    const pixelsPerQuarter = 216;
     // see duolingo_piano_staff.png and src/lab/music-font/+page.svelte
     const staffSpace = 57;
     // font size = 1em = 4 staff space
@@ -966,10 +959,6 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
 
     try {
       semantics(mr).toVex();
-      if (pc.pendingBegBarType !== null && pc.staves.length > 0) {
-        pc.staves[pc.staves.length - 1].setEndBarType(pc.pendingBegBarType);
-        pc.pendingBegBarType = null;
-      }
     } catch (e) {
       if (e instanceof Error) errMessage = e.message;
       return;
@@ -1025,19 +1014,21 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
 
         // Calculate space needed for Clef, KeySig, TimeSig
         const startX = stave.getNoteStartX();
+        const endX = stave.getNoteEndX();
+        console.log('endx=', endX);
         const modifiersWidth = startX - stave.getX();
         // Dynamic padding based on duration (ticks)
         // Use VexFlow.RESOLUTION (usually 16384 for a quarter note) as reference
         const totalTicks = voice.getTicksUsed().value();
         const numQuarters = totalTicks / (VexFlow.RESOLUTION / 4);
 
-        // Image metrics: 216px per quarter (108px per eighth)
-        const pixelsPerQuarter = 216;
         const contentWidth = numQuarters * pixelsPerQuarter;
 
         // Add default padding (Stave.padding + Stave.endPaddingMax = 7 + 20 = 27)
         // We use the same source of truth as the Stave class uses internally
         const stavePadding = (MetricsDefaults.Stave.padding ?? 10) + (MetricsDefaults.Stave.endPaddingMin ?? 10);
+        console.log('modifiersWidth=', modifiersWidth, '; contentWidth=', contentWidth, '; stavePadding=',
+          stavePadding);
         newWidth = modifiersWidth + contentWidth + stavePadding;
       }
 
@@ -1084,10 +1075,9 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
 
     // 2. Layout
     let currentY = 0;
-    const PIXELS_PER_SPACE = 10;
-    const DEFAULT_TOP_PADDING = 30; // pixels
-    const DEFAULT_BOTTOM_PADDING = 30; // pixels
-    const SYSTEM_SPACING = 50; // pixels between systems
+    const DEFAULT_TOP_PADDING = 0 * staffSpace;
+    const DEFAULT_BOTTOM_PADDING = 0 * staffSpace;
+    const SYSTEM_SPACING = 2 * staffSpace;
 
     // Render Title if exists
     if (pc.title) {
@@ -1116,46 +1106,6 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
         const staveIndex = pc.staves.indexOf(stave);
         const voice = voices[staveIndex];
 
-        let topY = stave.getYForLine(0); // Top line Y (0-indexed)
-        let bottomY = stave.getYForLine(4); // Bottom line Y
-
-        if (voice) {
-          const bbox = voice.getBoundingBox();
-          if (bbox) {
-            // Check extension above
-            // bbox.y is the top-most coordinate
-            if (bbox.y < topY) {
-              // Calculate spaces needed
-              const pixelsAbove = topY - bbox.y;
-              const spacesAbove = Math.ceil(pixelsAbove / PIXELS_PER_SPACE);
-              // We want at least some padding
-              // We kept the calculation to know how much to offset layout,
-              // but we do NOT set it on the stave to avoid drawing tall barlines.
-            }
-
-            // Check extension below
-            // bbox.y + bbox.h is bottom
-            const voiceBottom = bbox.y + bbox.h;
-            if (voiceBottom > bottomY) {
-              const pixelsBelow = voiceBottom - bottomY;
-              const spacesBelow = Math.ceil(pixelsBelow / PIXELS_PER_SPACE);
-              // We kept the calculation to know how much to offset layout,
-              // but we do NOT set it on the stave to avoid drawing tall barlines.
-            }
-          }
-        }
-
-        // After setting options, recalculate extents for layout
-        // Note: setSection might not change getYForLine returns immediately if they are purely geometric based on Y,
-        // but getBox or getHeight might change.
-        // Actually we control Y, giving it space is about placing the next system.
-
-        // We need to know the visual top and bottom of this stave relative to its Y=0 anchor
-        // Stave Y is usually the top line? No, Stave Y is the top of the bounding box of the stave lines usually?
-        // Actually: new Stave(x, y, ...). y is the top line of the staff.
-        // Wait, let's verify VexFlow coordinate system.
-        // Usually y passed to Stave constructor is the y position of the top line.
-
         // Let's just use the voice bounding box relative to stave.
         // But voice bounding box is absolute coordinates based on current stave Y.
         // Since we initialized staves with Y=0, the bounding box is relative to 0.
@@ -1174,8 +1124,8 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
             }
 
             // bbox.y + bbox.h is absolute bottom
-            // bottom line of 5-line stave is at y=40 (approx 4 spaces * 10)
-            const bottomLineY = 40;
+            // bottom line of 5-line stave is at y= approx 4 spaces
+            const bottomLineY = 4 * staffSpace;
             const voiceBottom = bbox.y + bbox.h;
             if (voiceBottom > bottomLineY + DEFAULT_BOTTOM_PADDING) {
               maxBottomY = Math.max(maxBottomY, voiceBottom - bottomLineY);
@@ -1207,7 +1157,7 @@ F2 F>F | e2 :: F2 B,2 || DF FD |]`);
       // The system lines take ~40px (for 5 lines).
       // Plus maxBottomY.
       // Plus spacing between systems.
-      const staveHeight = 40; // 5 lines * 10 spacing = 40 height diff.
+      const staveHeight = 4 * staffSpace;
       currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
     }
 
