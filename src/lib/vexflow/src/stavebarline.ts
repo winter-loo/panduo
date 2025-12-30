@@ -58,9 +58,9 @@ export class Barline extends StaveModifier {
     this.widths[TYPE.DOUBLE] = 4 * singleLineWidth;
     this.widths[TYPE.END] = singleLineWidth;
     this.widths[TYPE.REPEAT_BEGIN] = 9 * singleLineWidth;
-    this.widths[TYPE.REPEAT_END] = 9 * singleLineWidth;
-    this.widths[TYPE.REPEAT_BOTH] = 18 * singleLineWidth;
-    this.widths[TYPE.NONE] = singleLineWidth;
+    this.widths[TYPE.REPEAT_END] = 10 * singleLineWidth;
+    this.widths[TYPE.REPEAT_BOTH] = 17 * singleLineWidth;
+    this.widths[TYPE.NONE] = 0;
 
     this.paddings = {};
     this.paddings[TYPE.SINGLE] = 0;
@@ -91,7 +91,7 @@ export class Barline extends StaveModifier {
       paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_END] = {
-      xMin: -10 * singleLineWidth,
+      xMin: -9 * singleLineWidth,
       xMax: singleLineWidth,
       paddingLeft: 0,
       paddingRight: 0,
@@ -103,8 +103,8 @@ export class Barline extends StaveModifier {
       paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BOTH] = {
-      xMin: -8.5 * singleLineWidth,
-      xMax: 8.5 * singleLineWidth,
+      xMin: -9 * singleLineWidth,
+      xMax: 8 * singleLineWidth,
       paddingLeft: 0,
       paddingRight: 0,
     };
@@ -209,7 +209,7 @@ export class Barline extends StaveModifier {
     staveCtx.fillRect(x + xShift, topY, thickness, botY - topY);
     staveCtx.fillRect(x - 2 * thickness, topY, 3 * thickness, botY - topY);
 
-    const dotRadius = thickness;
+    let dotRadius = thickness;
 
     // Shift dots left or right
     if (begin) {
@@ -218,7 +218,10 @@ export class Barline extends StaveModifier {
       xShift -= 4 * thickness;
     }
 
-    const dotX = x + xShift + dotRadius / 2;
+    let dotX = x + xShift;
+    if (!begin) {
+      dotX += dotRadius;
+    }
 
     // calculate the y offset based on number of stave lines
     let yOffset = (stave.getNumLines() - 1) * stave.getSpacingBetweenLines();

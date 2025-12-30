@@ -43,7 +43,7 @@ X: 1
 M: 4/4
 L: 1/8
 K: C
-FA |
+FA ::
 `);
 
   let spacingBetweenLinesPx = $state(57);
@@ -941,7 +941,7 @@ FA |
     MetricsDefaults.fontSize = Font.convertSizeToPointValue(`${fontSize}px`); // = 228px
     // Tuning: Reduce default stave padding to avoid excessive space
     MetricsDefaults.staveSpace = staffSpace;
-    MetricsDefaults.Stave.padding = 7; // From image
+    MetricsDefaults.Stave.padding = 0; // From image
     MetricsDefaults.Stave.endPaddingMax = 0;
     MetricsDefaults.Stave.endPaddingMin = 0;
     MetricsDefaults.NoteHead.minPadding = 0; // Let formatter handle it
@@ -1157,7 +1157,24 @@ FA |
       currentY = systemStaveY + staveHeight + maxBottomY + SYSTEM_SPACING;
     }
 
-    renderer.resize(Number(pc.maxStaveWidth.toFixed(2)), Number(currentY.toFixed(2)));
+    let w = Number(pc.maxStaveWidth.toFixed(2));
+    let h = Number(currentY.toFixed(2));
+    renderer.resize(w, h);
+
+    let noteStartX = pc.staves[0].getNoteStartX() + Stave.defaultPadding;
+    rctx.save();
+    rctx.setFillStyle('red');
+    rctx.fillRect(noteStartX, 0, 1, h);
+    rctx.fillRect(pc.staves[0].getNoteEndX(), 0, 1, h);
+    rctx.fillRect(pc.staves[0].getX() + w - 1, 0, 1, h);
+    rctx.restore();
+
+    // expected
+    rctx.save();
+    rctx.setFillStyle('green');
+    rctx.fillRect(noteStartX + 108, 0, 1, h);
+    rctx.fillRect(noteStartX + 216, 0, 1, h);
+    rctx.restore();
 
     pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
