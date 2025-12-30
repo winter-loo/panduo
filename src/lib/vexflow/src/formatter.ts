@@ -1090,7 +1090,7 @@ export class Formatter {
     const options: FormatParams = { context: stave.getContext(), ...optionsParam };
 
     const justifyWidth = stave.getNoteEndX() - stave.getNoteStartX() - Stave.defaultPadding;
-    L('Formatting voices to width: ', justifyWidth);
+    console.log('...... Formatting voices to width: ', justifyWidth);
     return this.format(voices, justifyWidth, options);
   }
 

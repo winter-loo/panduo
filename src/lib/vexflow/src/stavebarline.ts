@@ -111,8 +111,8 @@ export class Barline extends StaveModifier {
     this.layoutMetricsMap[TYPE.NONE] = {
       xMin: 0,
       xMax: 0,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.setPosition(StaveModifierPosition.BEGIN);
     this.setType(type);

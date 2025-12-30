@@ -43,7 +43,7 @@ X: 1
 M: 4/4
 L: 1/8
 K: C
-FA |]
+FA |
 `);
 
   let spacingBetweenLinesPx = $state(57);
@@ -78,8 +78,9 @@ FA |]
     // Multiple measures make up a System (one horizontal row).
     // Multiple Systems make up the full sheet of music (stacked vertically).
     systems: Stave[][] = [];
-    staveWidth: number = 864;
-    maxStaveWidth: number = 864;
+    // will be calculated by the number of notes and pixelsPerQuarter
+    staveWidth: number = 0;
+    maxStaveWidth: number = 0;
     voices: [number, number][] = [];
 
     constructor() {
@@ -619,6 +620,10 @@ FA |]
         if (voice != undefined) voice[1] = pc.notes.length - 1;
         // reset it so we can initialize a new stave lately on demand
         pc.currentStave = null;
+
+        if (barType == BarlineType.REPEAT_BEGIN) {
+          pc.CurrentStave().setBegBarType(barType);
+        }
       } else {
         // left bar (happens at the very beginning of the score)
         pc.CurrentStave().setBegBarType(barType);
