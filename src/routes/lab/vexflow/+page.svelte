@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/components/ui/button";
-  import { Stave, StaveConnector, StaveNote, VexFlow, Font, BarlineType, type StaveNoteStruct } from "vexflow";
+  import { Stave, StaveConnector, StaveNote, VexFlow, Font, BarlineType, type StaveNoteStruct, Metrics, MetricsDefaults, StaveModifierPosition, Barline } from "vexflow";
   import { onMount } from "svelte";
 
   let trebleStaffRef: HTMLDivElement | null = null;
@@ -200,23 +200,32 @@
       let renderer = new VexFlow.Renderer(horizontalStaveRef, VexFlow.Renderer.Backends.SVG);
       renderer.resize(600, 100);
       let ctx = renderer.getContext();
-      const stave1 = new Stave(10, 0, 250, {
+      MetricsDefaults.Stave.padding = 0;
+      MetricsDefaults.Stave.endPaddingMin = 0;
+      MetricsDefaults.Stave.endPaddingMax = 0;
+      MetricsDefaults.Stave.endPadding = 0;
+      MetricsDefaults.Stave.unalignedNotePadding = 0;
+      MetricsDefaults.NoteHead.minPadding = 0;
+      Metrics.clear();
+      const stave1 = new Stave(10, 0, 16, {
         spaceAboveStaffLn: 3,
         spaceBelowStaffLn: 3,
       }).setContext(ctx);
-      stave1.setEndBarType(BarlineType.REPEAT_BOTH);
+      stave1.setEndBarType(BarlineType.SINGLE);
+      (stave1.getModifiers(StaveModifierPosition.BEGIN)[0] as unknown as Barline).setWidth(0);
+      (stave1.getModifiers(StaveModifierPosition.END)[0] as unknown as Barline).setWidth(0);
       stave1.draw();
       const stave2 = new Stave(260, 0, 250, {
         spaceAboveStaffLn: 3,
         spaceBelowStaffLn: 3,
       }).setContext(ctx);
-      stave2.setBegBarType(BarlineType.REPEAT_BOTH);
+      stave2.setBegBarType(BarlineType.END);
       stave2.draw();
 
       let notes = createStaveNotes([
         {
           keys: ["b/4"],
-          duration: "4",
+          duration: "1",
         },
       ]);
       VexFlow.Formatter.FormatAndDraw(renderer.getContext(), stave1, notes, {
