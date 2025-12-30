@@ -55,10 +55,10 @@ export class Barline extends StaveModifier {
     const TYPE = BarlineType;
     this.widths = {};
     this.widths[TYPE.SINGLE] = singleLineWidth;
-    this.widths[TYPE.DOUBLE] = singleLineWidth;
+    this.widths[TYPE.DOUBLE] = 4 * singleLineWidth;
     this.widths[TYPE.END] = singleLineWidth;
-    this.widths[TYPE.REPEAT_BEGIN] = singleLineWidth;
-    this.widths[TYPE.REPEAT_END] = singleLineWidth;
+    this.widths[TYPE.REPEAT_BEGIN] = 9 * singleLineWidth;
+    this.widths[TYPE.REPEAT_END] = 9 * singleLineWidth;
     this.widths[TYPE.REPEAT_BOTH] = 18 * singleLineWidth;
     this.widths[TYPE.NONE] = singleLineWidth;
 
@@ -75,38 +75,38 @@ export class Barline extends StaveModifier {
     this.layoutMetricsMap[TYPE.SINGLE] = {
       xMin: 0,
       xMax: singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.DOUBLE] = {
       xMin: -3 * singleLineWidth,
       xMax: singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.END] = {
       xMin: -5 * singleLineWidth,
       xMax: singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_END] = {
       xMin: -10 * singleLineWidth,
       xMax: singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BEGIN] = {
       xMin: -2 * singleLineWidth,
       xMax: 10 * singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BOTH] = {
-      xMin: -10 * singleLineWidth,
-      xMax: 10 * singleLineWidth,
-      paddingLeft: singleLineWidth,
-      paddingRight: singleLineWidth,
+      xMin: -8.5 * singleLineWidth,
+      xMax: 8.5 * singleLineWidth,
+      paddingLeft: 0,
+      paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.NONE] = {
       xMin: 0,
