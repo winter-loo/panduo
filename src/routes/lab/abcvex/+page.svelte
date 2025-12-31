@@ -43,7 +43,7 @@ X: 1
 M: 4/4
 L: 1/8
 K: C
-FA ::
+FA |: A
 `);
 
   let spacingBetweenLinesPx = $state(57);
@@ -1166,7 +1166,7 @@ FA ::
     rctx.setFillStyle('red');
     rctx.fillRect(noteStartX, 0, 1, h);
     rctx.fillRect(pc.staves[0].getNoteEndX(), 0, 1, h);
-    rctx.fillRect(pc.staves[0].getX() + w - 1, 0, 1, h);
+    rctx.fillRect(pc.staves[0].getX() + pc.staves[0].width - 1, 0, 1, h);
     rctx.restore();
 
     // expected
@@ -1175,6 +1175,16 @@ FA ::
     rctx.fillRect(noteStartX + 108, 0, 1, h);
     rctx.fillRect(noteStartX + 216, 0, 1, h);
     rctx.restore();
+
+    if (pc.staves.length > 1) {
+      let noteStartX = pc.staves[1].getNoteStartX() + Stave.defaultPadding;
+      rctx.save();
+      rctx.setFillStyle('red');
+      rctx.fillRect(noteStartX, 0, 1, h);
+      rctx.fillRect(pc.staves[1].getNoteEndX(), 0, 1, h);
+      rctx.fillRect(pc.staves[1].getX() + pc.staves[1].width - 1, 0, 1, h);
+      rctx.restore();
+    }
 
     pc.staves.forEach((stave) => stave.setContext(rctx).drawWithStyle());
 
