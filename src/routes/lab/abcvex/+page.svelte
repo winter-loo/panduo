@@ -43,7 +43,7 @@ X: 1
 M: 4/4
 L: 1/8
 K: C
-FA |: A
+FA :: Ac | fc |: cF :|
 `);
 
   let spacingBetweenLinesPx = $state(57);
@@ -621,9 +621,10 @@ FA |: A
         // reset it so we can initialize a new stave lately on demand
         pc.currentStave = null;
 
-        if (barType == BarlineType.REPEAT_BEGIN) {
-          pc.CurrentStave().setBegBarType(barType);
-        }
+        if (barType == BarlineType.REPEAT_BOTH)
+          pc.CurrentStave().setBegBarType(BarlineType.REPEAT_BOTH);
+        if (barType == BarlineType.REPEAT_BEGIN)
+          pc.CurrentStave().setBegBarType(BarlineType.REPEAT_BEGIN);
       } else {
         // left bar (happens at the very beginning of the score)
         pc.CurrentStave().setBegBarType(barType);

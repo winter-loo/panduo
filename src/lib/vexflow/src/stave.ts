@@ -380,8 +380,8 @@ export class Stave extends Element {
   // Bar Line functions
   setBegBarType(type: number | BarlineType): this {
     // Only valid bar types at beginning of stave is none, single or begin repeat
-    const { SINGLE, REPEAT_BEGIN, NONE } = BarlineType;
-    if (type === SINGLE || type === REPEAT_BEGIN || type === NONE) {
+    const { SINGLE, REPEAT_BEGIN, REPEAT_BOTH, NONE } = BarlineType;
+    if (type === SINGLE || type === REPEAT_BEGIN || type === REPEAT_BOTH || type === NONE) {
       (this.modifiers[0] as Barline).setType(type);
       this.formatted = false;
     }

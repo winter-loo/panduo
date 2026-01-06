@@ -57,7 +57,7 @@ export class Barline extends StaveModifier {
     this.widths[TYPE.SINGLE] = singleLineWidth;
     this.widths[TYPE.DOUBLE] = 4 * singleLineWidth;
     this.widths[TYPE.END] = singleLineWidth;
-    this.widths[TYPE.REPEAT_BEGIN] = 9 * singleLineWidth;
+    this.widths[TYPE.REPEAT_BEGIN] = 10 * singleLineWidth;
     this.widths[TYPE.REPEAT_END] = 10 * singleLineWidth;
     this.widths[TYPE.REPEAT_BOTH] = 17 * singleLineWidth;
     this.widths[TYPE.NONE] = 0;
@@ -97,14 +97,14 @@ export class Barline extends StaveModifier {
       paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BEGIN] = {
-      xMin: -2 * singleLineWidth,
-      xMax: 10 * singleLineWidth,
+      xMin: 0,
+      xMax: 0,
       paddingLeft: 0,
       paddingRight: 0,
     };
     this.layoutMetricsMap[TYPE.REPEAT_BOTH] = {
       xMin: -9 * singleLineWidth,
-      xMax: 8 * singleLineWidth,
+      xMax: singleLineWidth,
       paddingLeft: 0,
       paddingRight: 0,
     };
@@ -125,7 +125,15 @@ export class Barline extends StaveModifier {
   setType(type: string | number): this {
     this.type = typeof type === 'string' ? Barline.typeString[type] : type;
 
-    this.setWidth(this.widths[this.type]);
+    if (this.type == BarlineType.REPEAT_BOTH && this.getPosition() == StaveModifierPosition.BEGIN) {
+      // right half excluding thicker barline
+      this.setWidth(7 * this.widths[BarlineType.SINGLE]);
+    } else if (this.type == BarlineType.REPEAT_BOTH && this.getPosition() == StaveModifierPosition.END) {
+      // left half including thicker barline
+      this.setWidth(10 * this.widths[BarlineType.SINGLE]);
+    } else {
+      this.setWidth(this.widths[this.type]);
+    }
     this.setPadding(this.paddings[this.type]);
     this.setLayoutMetrics(this.layoutMetricsMap[this.type]);
     return this;
@@ -162,8 +170,12 @@ export class Barline extends StaveModifier {
         this.drawRepeatBar(stave, this.x, false);
         break;
       case BarlineType.REPEAT_BOTH:
-        this.drawRepeatBar(stave, this.x, false);
-        this.drawRepeatBar(stave, this.x, true);
+        let x = this.x;
+        if (this.getPosition() == StaveModifierPosition.BEGIN) {
+          x -= this.widths[BarlineType.SINGLE];
+        }
+        this.drawRepeatBar(stave, x, false);
+        this.drawRepeatBar(stave, x - 2 * this.widths[BarlineType.SINGLE], true);
         break;
       default:
         // Default is NONE, so nothing to draw
@@ -200,14 +212,18 @@ export class Barline extends StaveModifier {
     const topY = stave.getTopLineTopY();
     const botY = stave.getBottomLineBottomY();
     const thickness = this.widths[BarlineType.SINGLE];
-    let xShift = 3 * thickness;
 
+    let xShift = 0;
+    if (!begin) {
+      xShift = -2 * thickness;
+    }
+    staveCtx.fillRect(x + xShift, topY, 3 * thickness, botY - topY);
+
+    xShift = 5 * thickness;
     if (!begin) {
       xShift = -5 * thickness;
     }
-
     staveCtx.fillRect(x + xShift, topY, thickness, botY - topY);
-    staveCtx.fillRect(x - 2 * thickness, topY, 3 * thickness, botY - topY);
 
     let dotRadius = thickness;
 
