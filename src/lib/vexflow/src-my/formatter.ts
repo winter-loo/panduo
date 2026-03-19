@@ -230,12 +230,15 @@ export class Formatter {
   static FormatAndDraw(
     ctx: RenderContext,
     stave: Stave,
-    mm: MusicMeasure,
+    mmOrNotes: MusicMeasure | Note[],
     options: {
       config?: VexflowConfigInstance,
       params?: FormatParams | boolean,
-    }
+    } = {},
   ): BoundingBox | undefined {
+    const mm: MusicMeasure = Array.isArray(mmOrNotes)
+      ? { notes: mmOrNotes }
+      : mmOrNotes;
     const baseOptions: Partial<FormatParams> = {};
     if (typeof options.params === 'object') {
       Object.assign(baseOptions, options.params);

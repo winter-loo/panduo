@@ -9,8 +9,23 @@
 //
 // The webpack config inside Gruntfile.js sets the mode to 'production' to produce a minified build.
 
-import { VexFlow } from './src/vexflow';
+import { VexFlow } from './src-my/vexflow';
 
 VexFlow.BUILD.INFO = 'vexflow-core';
 export * from './src/index';
+export { VexFlow } from './src-my/vexflow';
+export { BlockNote } from './src-my/blocknote';
+export { Formatter } from './src-my/formatter';
+export { Metrics, MetricsDefaults } from './src-my/metrics';
+export { ModifierContext } from './src-my/modifiercontext';
+export { Note } from './src-my/note';
+export { NoteHead } from './src-my/notehead';
+export { RenderContext } from './src-my/rendercontext';
+export { Renderer } from './src-my/renderer';
+export { Stave } from './src-my/stave';
+export { StaveNote } from './src-my/stavenote';
+export { Stem } from './src-my/stem';
+export * from './src-my/config';
+export * from './src-my/debuggrid';
+export * from './src-my/notespan';
 export default VexFlow;

@@ -13,9 +13,9 @@
   let config = VexflowConfig.create();
 
   function showNote(noteNames: string[]) {
-    VexFlow.Clef.DEBUG = true;
-    VexFlow.NoteHead.DEBUG = true;
-    VexFlow.NoteSpan.DEBUG = true;
+    if (VexFlow.Clef) VexFlow.Clef.DEBUG = true;
+    if (VexFlow.NoteHead) VexFlow.NoteHead.DEBUG = true;
+    if (VexFlow.NoteSpan) VexFlow.NoteSpan.DEBUG = true;
 
     const renderer = new VexFlow.Renderer(outputContainer, VexFlow.Renderer.Backends.SVG, config);
     const width = 160;

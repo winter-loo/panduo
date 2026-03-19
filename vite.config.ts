@@ -26,6 +26,7 @@ export default defineConfig(({ mode: _mode }) => {
       __VF_BUILD_DATE__: JSON.stringify(buildDate),
     },
     server: {
+      port: 6173,
       open: true,
     },
     test: {
