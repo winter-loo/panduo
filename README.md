@@ -5,42 +5,52 @@
 - [ ] roadmap to piano master
 - [ ] use [canvas-confetti](https://github.com/catdad/canvas-confetti) for congraturations!
 
-# sv
+# Panduo
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit app for piano / staff / notation experiments.
 
-## Creating a project
+## Package manager
 
-If you're seeing this, you've probably already done this step. Congrats!
+This repo uses `pnpm`.
 
 ```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+corepack pnpm install
 ```
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Start the dev server:
 
 ```sh
-npm run dev
+corepack pnpm run dev
 
 # or start the server and open the app in a new browser tab
-npm run dev -- --open
+corepack pnpm run dev -- --open
 ```
+
+The Vite dev server is configured to run on port `6173`.
 
 ## Building
 
 To create a production version of your app:
 
 ```sh
-npm run build
+corepack pnpm run build
 ```
 
-You can preview the production build with `npm run preview`.
+Preview the production build:
+
+```sh
+corepack pnpm run preview
+```
+
+Useful checks:
+
+```sh
+corepack pnpm run check
+corepack pnpm run lint
+corepack pnpm run test
+```
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 

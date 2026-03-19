@@ -42,7 +42,7 @@ npm-debug.log
 .project
 .settings/
 
-pnpm-lock.yaml
+package-lock.json
 /.idea
 dist/
 .vscode/
